@@ -8,7 +8,7 @@ static int is_flip_state(ID id)
   {
     return 1;
   }
-#if RUBY_VERSION_CODE >= 190
+#if RUBY_VERSION_CODE >= 180
   if(!rb_is_local_id(id))
   {
     return 1;

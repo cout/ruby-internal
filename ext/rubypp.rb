@@ -19,7 +19,7 @@ class Preprocessor
         line = getline
         break if line.nil?
         case line
-        when /(.*[^\\]|^)\#{(.*?)}(.*)/
+        when /(.*[^\\]|^)\#\{(.*?)\}(.*)/
           puts "#{$1}#{evaluate($2, @linenum)}#{$3}"
         when /^\#ruby\s+<<(.*)/
           marker = $1

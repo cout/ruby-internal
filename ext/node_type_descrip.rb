@@ -111,18 +111,13 @@ NODE_TYPE_DESCRIPS = [
 ]
 if RUBY_VERSION_CODE < 190 then
 NODE_TYPE_DESCRIPS.concat [
-  [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
-]
-else # RUBY_VERSION_CODE >= 190
-NODE_TYPE_DESCRIPS.concat [
-  [ 'DSYM'        , 'LIT'   , 'NEXT'  , 'NONE'  ],
-  [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
 ]
 end
 if RUBY_VERSION_CODE < 180 then
 NODE_TYPE_DESCRIPS.concat [
+  [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'RESTARGS'    , 'HEAD'  , 'NONE'  , 'NONE'  ], 
   [ 'CLASS'       , 'SUPER' , 'CNAME' , 'BODY'  ], 
   [ 'MODULE'      , 'CNAME' , 'BODY'  , 'NONE'  ], 
@@ -138,6 +133,8 @@ else # RUBY_VERSION_CODE >= 180
 NODE_TYPE_DESCRIPS.concat [
   [ 'CLASS'       , 'SUPER' , 'CPATH' , 'BODY'  ], 
   [ 'MODULE'      , 'CPATH' , 'BODY'  , 'NONE'  ], 
+  [ 'DSYM'        , 'LIT'   , 'NEXT'  , 'NONE'  ],
+  [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
 ]
 end
 if C_ALLOCA then

@@ -1149,7 +1149,7 @@ void Init_nodewrap(void)
   rb_define_const(rb_mNoex, "UNDEF",     INT2NUM(NOEX_UNDEF));
   rb_define_const(rb_mNoex, "PRIVATE",   INT2NUM(NOEX_PRIVATE));
   rb_define_const(rb_mNoex, "PROTECTED", INT2NUM(NOEX_PROTECTED));
-#if RUBY_VERSION_CODE < 190
+#if RUBY_VERSION_CODE < 170
   rb_define_const(rb_mNoex, "CFUNC",     INT2NUM(NOEX_CFUNC));
 #else
   rb_define_const(rb_mNoex, "NOSUPER",   INT2NUM(NOEX_NOSUPER));

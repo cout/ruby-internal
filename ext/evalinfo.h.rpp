@@ -15,7 +15,7 @@
       when /^struct (METHOD|BLOCK)/
         write = true
         stopwrite = false
-      when /^}/
+      when /^\}/
         stopwrite = true if write
       end
       puts line if write
