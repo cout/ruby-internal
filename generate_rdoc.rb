@@ -20,6 +20,7 @@ def generate_rdoc
 
   r = RDoc::RDoc.new
   rdoc_files = []
+  rdoc_files.concat [ 'README' ]
   rdoc_files.concat list_files('lib', /\.rb$/) if File.exist?('lib')
   rdoc_files.concat list_files('ext', /\.c$/)  if File.exist?('ext')
   r.document(rdoc_files)
