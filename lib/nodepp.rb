@@ -27,7 +27,7 @@ if __FILE__ == $0 then
   end
 
   m = method(:foo)
-  n = m.node
+  n = m.body
   puts n.pretty_print
 end
 

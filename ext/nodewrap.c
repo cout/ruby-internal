@@ -293,10 +293,11 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
  */
 
 /*
- * Given a Method, returns the Node for that Method.  This can be used
- * to directly copy one class's method to another (using add_method).
+ * Given a Method, returns the Node for that Method's body.  This can be
+ * used to directly copy one class's method to another (using
+ * add_method).
  */
-static VALUE method_node(VALUE method)
+static VALUE method_body(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
@@ -331,7 +332,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
   }
   rb_ary_push(arr, ID2SYM(method->id));
   rb_ary_push(arr, ID2SYM(method->oid));
-  rb_ary_push(arr, method_node(self));
+  rb_ary_push(arr, method_body(self));
   return marshal_dump(arr, limit);
 }
 
@@ -384,13 +385,23 @@ static VALUE method_load(VALUE klass, VALUE str)
  */
 
 /*
- * Given a Proc, returns the Node for that Proc.
+ * Given a Proc, returns the Node for that Proc's body.
  */
-static VALUE proc_node(VALUE proc)
+static VALUE proc_body(VALUE proc)
 {
   struct BLOCK * b;
   Data_Get_Struct(proc, struct BLOCK, b);
   return wrap_node(b->body);
+}
+
+/*
+ * Given a Proc, returns the Node for that Proc's arguments.
+ */
+static VALUE proc_var(VALUE proc)
+{
+  struct BLOCK * b;
+  Data_Get_Struct(proc, struct BLOCK, b);
+  return wrap_node(b->var);
 }
 
 /*
@@ -476,7 +487,7 @@ static VALUE unboundproc_binding(VALUE self)
 /*
  * Given a Binding, returns the Node for that Binding.
  */
-static VALUE binding_node(VALUE binding)
+static VALUE binding_body(VALUE binding)
 {
   struct BLOCK * b;
   Data_Get_Struct(binding, struct BLOCK, b);
@@ -1017,7 +1028,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
   rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
-  rb_define_method(rb_cProc, "node", proc_node, 0);
+  rb_define_method(rb_cProc, "body", proc_body, 0);
+  rb_define_method(rb_cProc, "var", proc_var, 0);
   rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
   rb_define_method(rb_cProc, "_dump", proc_dump, 1);
   rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
@@ -1032,12 +1044,12 @@ void Init_nodewrap(void)
 
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
-  rb_define_method(rb_cMethod, "node", method_node, 0);
+  rb_define_method(rb_cMethod, "body", method_body, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
   rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
 
   VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
-  rb_define_method(rb_cBinding, "node", binding_node, 0);
+  rb_define_method(rb_cBinding, "body", binding_body, 0);
 
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);

@@ -1,7 +1,6 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
 require 'nodewrap'
-require 'nodepp'
 
 dir = File.dirname(__FILE__)
 require "#{dir}/node_samples"
@@ -38,13 +37,13 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   def test_method_node
     m = method(:foo)
-    n = m.node
+    n = m.body
     assert_equal Node::SCOPE, n.class
   end
 
   def test_add_method
     m = method(:foo)
-    n = m.node
+    n = m.body
     klass = Class.new
     klass.instance_eval do
       add_method(:foo, n, Noex::PUBLIC)
@@ -55,7 +54,7 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   def test_marshal_node
     m = method(:foo)
-    n = m.node
+    n = m.body
     d = Marshal.dump(n)
     n2 = Marshal.load(d)
     assert_equal n.nd_file, n2.nd_file
@@ -194,7 +193,7 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       o = c.new
       m = o.method(:foo)
-      n = m.node
+      n = m.body
       d = Marshal.dump(n)
       n2 = Marshal.load(d)
 
