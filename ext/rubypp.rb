@@ -68,6 +68,11 @@ end
 if __FILE__ == $0 then
   input_file = ARGV[0]
   output_file = ARGV[1]
+  if not input_file or not output_file
+    puts "Usage: ruby rubypp.rb <input_file> <output_file>"
+    exit 1
+  end
+
   File.open(input_file, 'r') do |input|
     sucess = false
     begin
