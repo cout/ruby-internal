@@ -152,5 +152,5 @@ end
 
 Test::Unit::UI::Console::TestRunner.run(
     TC_Nodewrap,
-    Test::Unit::UI::Console::TestRunner::VERBOSE)
+    Test::Unit::UI::VERBOSE)
 
