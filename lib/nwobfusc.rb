@@ -16,7 +16,8 @@
 #   
 #   puts foo()
 #
-#   $ ruby -I../ext -r nwobfusc.rb test.rb | ruby -I../ext     
+#   $ ruby -rnwobfusc test.rb > test2.rb
+#   $ ruby test2.rb
 #   2
 
 require 'nodewrap'
