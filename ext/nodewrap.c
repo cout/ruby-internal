@@ -43,10 +43,6 @@ static void mark_node(
 static void free_node(
     void * data)
 {
-  // TODO: When I use LONG2NUM here, a Bignum might get created in the
-  // middle of while the GC is sweeping... I think that might be the
-  // cause of the segfault, but I'm not sure.  At any rate, using
-  // LONG2FIX seems to solve the problem.
   VALUE key = LONG2FIX((long)data / 4);
   VALUE node_info = rb_hash_aref(wrapped_nodes, key);
   if(NIL_P(node_info))
@@ -54,15 +50,15 @@ static void free_node(
     rb_bug("tried to free a node twice!");
     return;
   }
-  VALUE ref_count = NUM2LONG(RARRAY(node_info)->ptr[1]);
+  VALUE ref_count = FIX2LONG(RARRAY(node_info)->ptr[1]);
   --ref_count;
   if(ref_count == 0)
   {
-    rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data));
+    rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data / 4));
   }
   else
   {
-    RARRAY(node_info)->ptr[1] = LONG2NUM(ref_count);
+    RARRAY(node_info)->ptr[1] = LONG2FIX(ref_count);
   }
 }
 
@@ -72,9 +68,9 @@ VALUE wrap_node(NODE * n)
   if(!NIL_P(node_info))
   {
     VALUE node_id = RARRAY(node_info)->ptr[0];
-    VALUE ref_count = NUM2LONG(RARRAY(node_info)->ptr[1]);
+    VALUE ref_count = FIX2LONG(RARRAY(node_info)->ptr[1]);
     ++ref_count;
-    RARRAY(node_info)->ptr[1] = LONG2NUM(ref_count);
+    RARRAY(node_info)->ptr[1] = LONG2FIX(ref_count);
     return (VALUE)(node_id ^ FIXNUM_FLAG);
   }
   else
@@ -82,7 +78,7 @@ VALUE wrap_node(NODE * n)
     VALUE node = Data_Wrap_Struct(
         rb_cNodeSubclass[nd_type(n)], mark_node, free_node, n);
     VALUE node_id = rb_obj_id(node);
-    VALUE ref_count = LONG2NUM(0);
+    VALUE ref_count = LONG2FIX(0);
     VALUE node_info = rb_assoc_new(node_id, ref_count);
     rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_info);
     return node;
@@ -813,6 +809,7 @@ void Init_nodewrap(void)
 #endif
 
   wrapped_nodes = rb_hash_new();
+  rb_global_variable(&wrapped_nodes);
 
   VALUE rb_mNoex = rb_define_module("Noex");
   rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));
