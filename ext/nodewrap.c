@@ -257,39 +257,6 @@ static char const * insert_module_sorted_str =
   "}\n";
 static VALUE insert_module_sorted_proc = Qnil;
 
-static VALUE constants_hash(VALUE module)
-{
-  VALUE constants = rb_ary_new();
-  VALUE modules = rb_ary_new();
-#if RUBY_VERSION_CODE > 170
-  VALUE constants_list = rb_const_list(rb_mod_const_at(mod, 0));
-#else
-  VALUE constants_list = rb_mod_const_at(module, rb_ary_new());
-#endif
-  size_t j;
-  VALUE v;
-  ID id;
-
-  for(j = 0; j < RARRAY(constants_list)->len; ++j)
-  {
-    id = rb_intern(STR2CSTR(RARRAY(constants_list)->ptr[j]));
-    v = rb_assoc_new(ID2SYM(id), rb_const_get(module, id));
-    if(rb_obj_is_kind_of(v, rb_cModule))
-    {
-      rb_funcall(
-          insert_module_sorted_proc, rb_intern("call"),
-          2, modules, v);
-    }
-    else
-    {
-      rb_ary_push(constants, v);
-    }
-  }
-  rb_ary_concat(constants, modules);
-
-  return constants;
-}
-
 static VALUE generate_method_hash(VALUE module, VALUE method_list)
 {
   VALUE methods = rb_hash_new();
@@ -303,7 +270,7 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
   {
     s = STR2CSTR(RARRAY(method_list)->ptr[j]);
     id = rb_intern(s);
-    if(!st_lookup(RCLASS(module)->m_tbl, id, &body))
+    if(!st_lookup(RCLASS(module)->m_tbl, id, (st_data_t *)&body))
     {
       rb_raise(
           rb_eArgError,
@@ -364,15 +331,30 @@ static VALUE superclass_name(VALUE module)
   }
 }
 
+static int add_var_to_hash(ID key, VALUE value, VALUE hash)
+{
+  /* These are special variables and should not be dumped */
+  if(   key != rb_intern("__classpath__")
+     && key != rb_intern("__classid__")
+     && key != rb_intern("__attached__"))
+  {
+    rb_hash_aset(hash, ID2SYM(key), value);
+  }
+  return ST_CONTINUE;
+}
+
 static VALUE class_variable_hash(VALUE module)
 {
-  return rb_hash_new(); /* TODO */
+  VALUE class_variables = rb_hash_new();
+  if (ROBJECT(module)->iv_tbl) {
+    st_foreach(RCLASS(module)->iv_tbl, add_var_to_hash, class_variables);
+  }
+  return class_variables;
 }
 
 static VALUE module_dump(VALUE self, VALUE limit)
 {
   VALUE flags = INT2NUM(RBASIC(self)->flags);
-  VALUE constants = constants_hash(self);
   VALUE instance_methods = instance_method_hash(self);
   VALUE class_variables = class_variable_hash(self);
   VALUE included_modules = included_modules_list(self);
@@ -390,7 +372,6 @@ static VALUE module_dump(VALUE self, VALUE limit)
   }
 
   rb_ary_push(arr, flags);
-  rb_ary_push(arr, constants);
   rb_ary_push(arr, instance_methods);
   rb_ary_push(arr, class_variables);
   rb_ary_push(arr, included_modules);
@@ -424,13 +405,14 @@ static void include_modules(module, included_modules)
   }
 }
 
-static void add_method_iter(VALUE name, VALUE value, VALUE module)
+static int add_method_iter(VALUE name, VALUE value, VALUE module)
 {
   NODE * n;
   rb_check_type(name, T_SYMBOL);
   /* TODO: Check that this is a node */
   Data_Get_Struct(value, NODE, n);
   rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
+  return ST_CONTINUE;
 }
 
 static void add_methods(VALUE module, VALUE methods)
@@ -439,33 +421,20 @@ static void add_methods(VALUE module, VALUE methods)
   st_foreach(RHASH(methods)->tbl, add_method_iter, module);
 }
 
-static void add_constants(VALUE module, VALUE constants)
+static int set_cvar_from_hash(VALUE key, VALUE value, VALUE module)
 {
-  rb_check_type(constants, T_ARRAY);
-  size_t j;
-  VALUE assoc;
-  VALUE name;
-  VALUE value;
-
-  for(j = 0; j < RARRAY(constants)->len; ++j)
-  {
-    assoc = RARRAY(constants)->ptr[j];
-    rb_check_type(assoc, T_ARRAY);
-    if(RARRAY(assoc)->len != 2)
-    {
-      rb_raise(rb_eArgError, "Expecting assoc with length 2");
-    }
-    name = RARRAY(assoc)->ptr[0];
-    value = RARRAY(assoc)->ptr[1];
-    rb_check_type(name, T_SYMBOL);
-    rb_const_set(module, SYM2ID(name), value);
-  }
+#ifdef RB_CVAR_SET_4ARGS
+  rb_cvar_set(module, SYM2ID(key), value, Qtrue);
+#else
+  rb_cvar_set(module, SYM2ID(key), value);
+#endif
+  return ST_CONTINUE;
 }
 
 static void add_class_variables(VALUE module, VALUE class_variables)
 {
   rb_check_type(class_variables, T_HASH);
-  /* TODO */
+  st_foreach(RHASH(class_variables)->tbl, set_cvar_from_hash, module);
 }
 
 static VALUE module_load(VALUE klass, VALUE str)
@@ -476,7 +445,6 @@ static VALUE module_load(VALUE klass, VALUE str)
   VALUE included_modules = rb_ary_pop(arr);
   VALUE class_variables = rb_ary_pop(arr);
   VALUE instance_methods = rb_ary_pop(arr);
-  VALUE constants = rb_ary_pop(arr);
   VALUE flags = rb_ary_pop(arr);
   VALUE module;
 
@@ -496,7 +464,6 @@ static VALUE module_load(VALUE klass, VALUE str)
   include_modules(module, included_modules);
   add_class_variables(module, class_variables);
   add_methods(module, instance_methods);
-  add_constants(module, constants);
 
   if(RTEST(metaclass))
   {

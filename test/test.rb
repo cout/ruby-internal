@@ -4,7 +4,7 @@ require 'nodewrap'
 
 class TC_Nodewrap < Test::Unit::TestCase
   module Foo
-    def foo
+    def foo(n=1)
       # A fancy way to return 42
       if false then
         answer = 0
@@ -14,12 +14,13 @@ class TC_Nodewrap < Test::Unit::TestCase
           answer += (i / i)
         end
       end
-      return answer
-      return 42
+      return n * answer
     end
   end
 
   include Foo
+
+  Tmp_Foo = nil
 
   def test_method_node
     m = method(:foo)
@@ -84,27 +85,33 @@ class TC_Nodewrap < Test::Unit::TestCase
     end
     assert_equal 4, result
 
-    # TODO: Class instance variable lookup
-    # result = c.instance_eval do
-    #   @foo
-    # end
-    # assert_equal 2, result
+    # Class instance variable lookup
+    result = c.instance_eval do
+      @foo
+    end
+    assert_equal 2, result
 
-    # TODO: Singleton class instance variable lookup
-    # result = class << c
-    #   @foo
-    # end
-    # assert_equal 5, result
+    # Singleton class instance variable lookup
+    result = class << c
+      @foo
+    end
+    assert_equal 5, result
 
-    # TODO: Class variable lookup
-    # result = c.instance_eval do
-    #   @@foo
-    # end
-    # assert_equal 3, result
+    # Class variable lookup
+    # This is a little bit messy, but it was the only way I could figure
+    # to get at @@foo
+    self.class.instance_eval do
+      remove_const :Tmp_Foo
+      const_set :Tmp_Foo, c
+    end
+    eval "class Tmp_Foo; $at_at_foo = @@foo; end"
+    result = $at_at_foo
+    assert_equal 3, result
 
     # Test method call
     f = c.new
-    assert_equal 42, f.foo
+    assert_equal 42, f.foo()
+    assert_equal 42*42, f.foo(42)
   end
 end
 
