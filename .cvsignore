@@ -1,6 +1,2 @@
-Makefile
-evalinfo.h
-mkmf.log
-nodeinfo.c
-nodeinfo.h
-
+doc
+config.save
