@@ -1,14 +1,30 @@
-#include "ruby.h"
-#include "node.h"
-#include "st.h"
 #include "nodeinfo.h"
 #include "evalinfo.h"
 #include "nodewrap.h"
 #include "node_type_descrip.h"
 
+#include "ruby.h"
+#include "version.h"
+#include "rubysig.h"
+#include "node.h"
+#include "st.h"
+
 static VALUE rb_cNode = Qnil;
 static VALUE rb_mMarshal;
-static VALUE node_dump_fmt = Qnil;
+
+#if RUBY_VERSION_CODE >= 180
+struct Class_Restorer
+{
+  VALUE klass;
+  struct st_table m_tbl;
+  struct st_table iv_tbl;
+  int thread_critical;
+};
+
+static VALUE rb_cClass_Restorer;
+
+static void mark_class_restorer(struct Class_Restorer * class_restorer);
+#endif
 
 /* ---------------------------------------------------------------------
  * Node methods
@@ -241,6 +257,15 @@ static VALUE node_load(VALUE klass, VALUE str)
  * ---------------------------------------------------------------------
  */
 
+#if RUBY_VERSION_CODE >= 180
+static VALUE module_instance_allocate(VALUE klass)
+{
+  NEWOBJ(obj, struct RClass);
+  OBJSETUP(obj, klass, T_CLASS);
+  return (VALUE)obj;
+}
+#endif
+
 static char const * insert_module_sorted_str = 
   "proc { |modules, m|\n"
   "  added = false\n"
@@ -276,10 +301,11 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
        || id == rb_intern("allocate")
        || id == rb_intern("superclass"))
     {
-      // Don't dump any of these methods, since they are probably
-      // written in C and aren't really members of the class.  I don't
-      // know why I get these methods when I call
-      // rb_class_instance_methods on a singleton class, but I do.
+      /* Don't dump any of these methods, since they are probably
+       * written in C and aren't really members of the class.  I don't
+       * know why I get these methods when I call
+       * rb_class_instance_methods on a singleton class, but I do.
+       */
       continue;
     }
     if(!st_lookup(RCLASS(module)->m_tbl, id, (st_data_t *)&body))
@@ -390,7 +416,45 @@ static VALUE module_dump(VALUE self, VALUE limit)
   rb_ary_push(arr, included_modules);
   rb_ary_push(arr, superclass);
   rb_ary_push(arr, metaclass);
-  return marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
+
+  VALUE str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
+
+#if RUBY_VERSION_CODE >= 180
+  /* On Ruby 1.8, there is a check in marshal_dump() to ensure that the
+   * object being dumped has no modifications to its singleton class
+   * (e.g. no singleton instance variables, and no singleton methods
+   * defined).  Since we need to dump the class's singleton class in
+   * order dump dump class methods, we need a way around this
+   * restriction.  The solution found here temporarily removes the
+   * singleton instance variables and singleton methods while the class
+   * is being dumped, and sets a special singleton instance variable
+   * that restores the tables when dumping is complete.  A hack for
+   * sure, but it seems to work.
+   */
+  struct RClass * singleton_class = RCLASS(CLASS_OF(self));
+  if(!singleton_class->iv_tbl)
+  {
+    rb_raise(
+        rb_eTypeError,
+        "can't dump singleton class on Ruby 1.8 without iv_tbl");
+  }
+
+  struct Class_Restorer * class_restorer = ALLOC(struct Class_Restorer);
+  class_restorer->klass = self;
+  class_restorer->m_tbl = *singleton_class->m_tbl;
+  class_restorer->iv_tbl = *singleton_class->iv_tbl;
+  class_restorer->thread_critical = rb_thread_critical;
+  VALUE obj = Data_Wrap_Struct(
+      rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
+      class_restorer);
+  rb_iv_set(self, "__class_restorer__", obj);
+
+  singleton_class->iv_tbl->num_entries = 1;
+  singleton_class->m_tbl->num_entries = 0;
+  rb_thread_critical = 1;
+#endif
+
+  return str;
 }
 
 static char const * lookup_module_str = 
@@ -464,9 +528,17 @@ static VALUE module_load(VALUE klass, VALUE str)
   if(RTEST(superclass))
   {
     rb_check_type(superclass, T_STRING);
+#if RUBY_VERSION_CODE >= 180
+    /* Can't make subclass of Class on 1.8.x */
+    module = rb_class_boot(rb_const_get(
+            rb_cObject,
+            rb_intern(STR2CSTR(superclass))));
+    rb_define_alloc_func(module, module_instance_allocate);
+#else
     module = rb_class_new(rb_const_get(
             rb_cObject,
             rb_intern(STR2CSTR(superclass))));
+#endif
   }
   else
   {
@@ -486,6 +558,30 @@ static VALUE module_load(VALUE klass, VALUE str)
 
   return module;
 }
+
+#if RUBY_VERSION_CODE >= 180
+
+static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
+{
+  struct Class_Restorer * class_restorer;
+  Data_Get_Struct(
+      ruby_class_restorer,
+      struct Class_Restorer,
+      class_restorer);
+  struct RClass * klass = RCLASS(class_restorer->klass);
+  *klass->m_tbl = class_restorer->m_tbl;
+  *klass->iv_tbl = class_restorer->iv_tbl;
+  rb_thread_critical = class_restorer->thread_critical;
+  return rb_str_new2("");
+}
+
+static void mark_class_restorer(struct Class_Restorer * class_restorer)
+{
+  rb_mark_tbl(&class_restorer->m_tbl);
+  rb_mark_tbl(&class_restorer->iv_tbl);
+}
+
+#endif
 
 /* ---------------------------------------------------------------------
  * Initialization
@@ -511,17 +607,20 @@ void Init_nodewrap(void)
 
   rb_define_singleton_method(rb_cNode, "method_node", method_node, 1);
 
-  // VALUE rb_cModule = rb_define_class("Module", rb_cObject);
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
 
-  rb_define_method(rb_cModule, "_dump", module_dump, 1);
-  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
-
-  node_dump_fmt =
-    rb_str_new2("@flags=%d @nd_file=%s @s1=%s @s2=%s @s3=%s");
-
   insert_module_sorted_proc = rb_eval_string(insert_module_sorted_str);
   lookup_module_proc = rb_eval_string(lookup_module_str);
+
+#if RUBY_VERSION_CODE >= 180
+  rb_cClass_Restorer = rb_class_new(rb_cObject);
+  rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
+  rb_define_method(rb_cModule, "_dump", module_dump, 1);
+  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
+#else
+  rb_define_method(rb_cModule, "_dump", module_dump, 1);
+  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
+#endif
 }
 
