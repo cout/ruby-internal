@@ -32,7 +32,7 @@
 #     |     |-rest = -1
 #     |     +-opt = false
 #     |-mid = :foo
-#     +-noex = PRIVATE
+#     +-noex = 2
 
 require 'nodepp'
 
