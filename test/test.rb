@@ -65,7 +65,14 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal 42, obj.foo
   end
 
-  class TestClass
+  class TestClassBase
+    # for testing super()
+    def foo
+      return 42
+    end
+  end
+
+  class TestClass < TestClassBase
     include Foo
     FOO = 1
     @foo = 2
@@ -128,23 +135,25 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   Node_Samples.each do |node_name, sample_code|
     p = proc {
-      eval <<-END_DEF
-        def self.foo
+      c = TestClass.dup
+      c.class_eval <<-END_DEF
+        def foo
           #{sample_code}
         end
       END_DEF
 
-      m = self.method(:foo)
+      o = c.new
+      m = o.method(:foo)
       n = Node.method_node(m)
       d = Marshal.dump(n)
       n2 = Marshal.load(d)
 
-      klass2 = Class.new
-      klass2.instance_eval do
+      klass2 = Class.new(TestClassBase)
+      klass2.class_eval do
         add_method(:foo, n2, 0)
       end
       obj2 = klass2.new
-      assert_equal self.foo(), obj2.foo()
+      assert_equal o.foo(), obj2.foo()
     }
     define_method "test_#{node_name}", p
   end

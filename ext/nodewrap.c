@@ -532,16 +532,17 @@ static VALUE module_load(VALUE klass, VALUE str)
   if(RTEST(superclass))
   {
     rb_check_type(superclass, T_STRING);
+    VALUE v = rb_funcall(
+        lookup_module_proc,
+        rb_intern("call"),
+        1,
+        superclass);
 #if RUBY_VERSION_CODE >= 180
     /* Can't make subclass of Class on 1.8.x */
-    module = rb_class_boot(rb_const_get(
-            rb_cObject,
-            rb_intern(STR2CSTR(superclass))));
+    module = rb_class_boot(v);
     rb_define_alloc_func(module, module_instance_allocate);
 #else
-    module = rb_class_new(rb_const_get(
-            rb_cObject,
-            rb_intern(STR2CSTR(superclass))));
+    module = rb_class_new(v);
 #endif
   }
   else
