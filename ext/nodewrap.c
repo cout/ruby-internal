@@ -146,7 +146,7 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
  * Given a Method, returns the Node for that Method.  This can be used
  * to directly copy one class's method to another (using add_method).
  */
-static VALUE method_node(VALUE self, VALUE method)
+static VALUE method_node(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
@@ -666,7 +666,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
 
-  rb_define_singleton_method(rb_cNode, "method_node", method_node, 1);
+  VALUE rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
+  rb_define_method(rb_cMethod, "node", method_node, 0);
 
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);

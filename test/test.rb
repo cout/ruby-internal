@@ -34,13 +34,13 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   def test_method_node
     m = method(:foo)
-    n = Node.method_node(m)
+    n = m.node
     assert_equal Node::SCOPE, n.class
   end
 
   def test_add_method
     m = method(:foo)
-    n = Node.method_node(m)
+    n = m.node
     klass = Class.new
     klass.instance_eval do
       add_method(:foo, n, 0)
@@ -51,7 +51,7 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   def test_marshal_node
     m = method(:foo)
-    n = Node.method_node(m)
+    n = m.node
     d = Marshal.dump(n)
     n2 = Marshal.load(d)
     assert_equal n.nd_file, n2.nd_file
@@ -144,7 +144,7 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       o = c.new
       m = o.method(:foo)
-      n = Node.method_node(m)
+      n = m.node
       d = Marshal.dump(n)
       n2 = Marshal.load(d)
 

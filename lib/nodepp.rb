@@ -2,14 +2,14 @@ require 'nodewrap'
 
 class Node
   def pretty_print(indent = 0)
-    s = "#{self.nd_type}:\n"
+    s = "node type #{self.nd_type}\n"
     indent += 2
     self.members.each do |member|
-      s += ' ' * indent + "#{member}: "
+      s += "#{' ' * indent}#{member} = "
       value = self[member]
       case value
       when Node
-        s += "\n" + value.pretty_print(indent + 2)
+        s += value.pretty_print(indent + 2)
       else
         s += value.inspect + "\n"
       end
@@ -24,7 +24,7 @@ if __FILE__ == $0 then
   end
 
   m = method(:foo)
-  n = Node.method_node(m)
+  n = m.node
   puts n.pretty_print
 end
 
