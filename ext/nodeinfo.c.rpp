@@ -55,7 +55,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
 
     if node_elem_name == "noex" then
       # noex points to an id but is really a long
-      node_elem_ref.sub('id', 'cnt')
+      node_elem_ref.sub!('id', 'cnt')
     end
 
     case node_elem_ref
@@ -100,7 +100,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     when /\.(argc|state|cnt)$/
       puts <<-END
       {
-      VALUE retval = LONG2NUM(n->#{node_elem_ref});
+      VALUE retval = LONG2NUM((long)n->nd_#{node_elem_name});
       return retval;
       }
       END
@@ -145,7 +145,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
 
     if node_elem_name == "noex" then
       # noex points to an id but is really a long
-      node_elem_ref.sub('id', 'cnt')
+      node_elem_ref = '*(long*)(&u1.id)'
     end
 
     case node_elem_ref
@@ -246,7 +246,7 @@ END
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     if node_elem_name == "noex" then
       # noex points to an id but is really a long
-      node_elem_ref.sub('id', 'cnt')
+      node_elem_ref.sub!('id', 'cnt')
     end
 
     case node_elem_ref
@@ -342,7 +342,7 @@ void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass)
 #ruby <<END
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts <<-END
-      case NEN_#{node_elem_name.upcase}:
+    case NEN_#{node_elem_name.upcase}:
       rb_define_method(klass, "#{node_elem_name}", node_#{node_elem_name}, 0);
       rb_ary_push(members, rb_str_new2("#{node_elem_name}"));
       return;
