@@ -1,7 +1,9 @@
+# Require this file to get a node pretty-printer.
+#
+
 require 'nodewrap'
 
 class Node
-  ##
   # Return a string containing an ascii-art tree of the node's
   # structure.
   #
@@ -23,7 +25,7 @@ class Node
 end
 
 if __FILE__ == $0 then
-  def foo
+  def foo # :nodoc:
     1 + 1
   end
 
