@@ -1,4 +1,5 @@
 require 'mkmf'
+require 'rbconfig'
 
 rpp_files = Dir['*.rpp']
 generated_files = rpp_files.map { |f| f.sub(/\.rpp$/, '') }
@@ -11,14 +12,14 @@ generated_files.each do |f|
 end
 srcs.uniq!
 $objs = srcs.map { |f| f.sub(/\.c$/, ".#{$OBJEXT}") }
-$CFLAGS << '-Wall -g'
+$CFLAGS << ' -Wall -g'
 create_makefile('nodewrap')
 
 append_to_makefile = ''
 rpp_files.each do |rpp_file|
 append_to_makefile << <<END
 #{rpp_file.sub(/\.rpp$/, '')}: #{rpp_file}
-	ruby rubypp.rb $< $@
+	#{Config::CONFIG['RUBY_INSTALL_NAME']} rubypp.rb $< $@
 END
 end
 

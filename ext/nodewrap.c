@@ -15,6 +15,7 @@ static VALUE node_dump_fmt = Qnil;
  * ---------------------------------------------------------------------
  */
 
+#if RUBY_VERSION_CODE >= 180
 /*
  * Allocate a new node
  */
@@ -24,6 +25,7 @@ static VALUE node_allocate(VALUE klass)
   /* TODO: Need a free function in this case */
   return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
 }
+#endif
 
 /*
  * Returns a node's flags
@@ -270,6 +272,16 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
   {
     s = STR2CSTR(RARRAY(method_list)->ptr[j]);
     id = rb_intern(s);
+    if(   id == rb_intern("new")
+       || id == rb_intern("allocate")
+       || id == rb_intern("superclass"))
+    {
+      // Don't dump any of these methods, since they are probably
+      // written in C and aren't really members of the class.  I don't
+      // know why I get these methods when I call
+      // rb_class_instance_methods on a singleton class, but I do.
+      continue;
+    }
     if(!st_lookup(RCLASS(module)->m_tbl, id, (st_data_t *)&body))
     {
       rb_raise(
@@ -286,8 +298,9 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
 
 static VALUE instance_method_hash(VALUE module)
 {
+  VALUE args[] = { Qfalse };
   VALUE instance_method_list =
-    rb_class_instance_methods(0, NULL, module);
+    rb_class_instance_methods(1, args, module);
   return generate_method_hash(module, instance_method_list);
 }
 
@@ -485,7 +498,9 @@ void Init_nodewrap(void)
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* TODO: should be a private class method */
-  rb_define_singleton_method(rb_cNode, "allocate", node_allocate, 0);
+#if RUBY_VERSION_CODE >= 180
+  rb_define_alloc_func(rb_cNode, node_allocate);
+#endif
 
   rb_define_method(rb_cNode, "flags", node_flags, 0);
   rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
