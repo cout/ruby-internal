@@ -1,0 +1,136 @@
+#include "nodeinfo.h"
+
+VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
+{
+  switch(nen)
+  {
+    case NEN_NONE:
+      return Qnil;
+#ruby <<END
+  require 'read_node_h.rb'
+
+  NODEINFO.sort.each do |node_elem_name, node_elem_ref|
+    puts "case NEN_#{node_elem_name.upcase}:"
+    case node_elem_name
+    when "rval"
+      puts "return dump_node_elem(NEN_HEAD, n, node_hash);"
+    else
+      case node_elem_ref
+      when /\.node$/
+        puts "if(n->nd_#{node_elem_name})"
+        puts "{"
+        puts "  dump_node_to_hash(n->nd_#{node_elem_name}, node_hash);"
+        puts "  return node_id(n->nd_#{node_elem_name});"
+        puts "}"
+        puts "else"
+        puts "{"
+        puts "  return Qnil;"
+        puts "}"
+      when /\.id$/
+        puts "return ID2SYM(n->nd_#{node_elem_name});"
+      when /\.value$/
+        puts "return n->nd_#{node_elem_name};"
+      when /\.(argc|state|cnt)$/
+        puts "return INT2NUM(n->nd_#{node_elem_name});"
+      when /\.(tbl)$/
+        puts "if(n->nd_#{node_elem_name})"
+        puts "{"
+        puts "  size_t j;"
+        puts "  VALUE arr = rb_ary_new();"
+        puts "  for(j = 1; j < n->nd_#{node_elem_name}[0] + 1; ++j)"
+        puts "  {"
+        puts "    rb_ary_push(arr, ID2SYM(n->nd_#{node_elem_name}[j]));"
+        puts "  }"
+        puts "  return arr;"
+        puts "}"
+        puts "else"
+        puts "{"
+        puts "  return Qnil;"
+        puts "}"
+      when /\.(cfunc)$/,
+           /\.(argc|state|cnt)$/,
+           /\.(entry)$/
+        puts "rb_raise(rb_eArgError, \"Cannot dump #{$1}\");"
+      end
+    end
+  end
+  nil
+END
+  }
+  rb_raise(rb_eArgError, "Invalid Node_Elem_Name %d", nen);
+}
+
+void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash, VALUE id_hash)
+{
+  switch(nen)
+  {
+    case NEN_NONE:
+      return;
+#ruby <<END
+  NODEINFO.sort.each do |node_elem_name, node_elem_ref|
+    puts "case NEN_#{node_elem_name.upcase}:"
+    case node_elem_name
+    when "rval"
+      puts "return load_node_elem(NEN_HEAD, v, n, node_hash, id_hash);"
+    else
+      case node_elem_ref
+      when /\.node$/
+        puts "{"
+        puts "  VALUE nid = rb_hash_aref(id_hash, v);"
+        puts "  if(RTEST(nid))"
+        puts "  {"
+        puts "    n->nd_#{node_elem_name} = id_to_node(nid);"
+        puts "  }"
+        puts "  else if(v == Qnil)"
+        puts "  {"
+        puts "    n->nd_#{node_elem_name} = 0;"
+        puts "  }"
+        puts "  else"
+        puts "  {"
+        puts "    NODE * new_node = NEW_NIL();"
+        puts "    load_node_from_hash(new_node, v, node_hash, id_hash);"
+        puts "    n->nd_#{node_elem_name} = new_node;"
+        puts "  }"
+        puts "  return;"
+        puts "}"
+      when /\.id$/
+        puts "n->nd_#{node_elem_name} = SYM2ID(v);"
+        puts "return;"
+      when /\.value$/
+        puts "n->nd_#{node_elem_name} = v;"
+        puts "return;"
+      when /\.(argc|state|cnt)$/
+        puts "n->nd_#{node_elem_name} = NUM2INT(v);"
+        puts "  return;"
+      when /\.(tbl)$/
+        puts "if(v == Qnil)"
+        puts "{"
+        puts "  n->nd_#{node_elem_name} = 0;"
+        puts "}"
+        puts "else"
+        puts "{"
+        puts "  Check_Type(v, T_ARRAY);"
+        puts "  size_t len = RARRAY(v)->len;"
+        puts "  ID * tmp_tbl = ALLOCA_N(ID, len);"
+        puts "  size_t j;"
+        puts "  for(j = 0; j < len; ++j)"
+        puts "  {"
+        puts "    tmp_tbl[j] = SYM2ID(RARRAY(v)->ptr[j]);"
+        puts "    n->nd_#{node_elem_name} = ALLOC_N(ID, len);"
+        puts "    memcpy(n->nd_#{node_elem_name}, tmp_tbl, len);"
+        puts "  }"
+        puts "}"
+        puts "return;"
+      when /\.(cfunc)$/,
+           /\.(argc|state|cnt)$/,
+           /\.(entry)$/
+        puts "rb_raise(rb_eRuntimeError, \"Cannot load #{$1}\");"
+      end
+    end
+  end
+  nil
+END
+  }
+  rb_raise(rb_eRuntimeError, "Internal error: invalid Node_Elem_Name %d", nen);
+}
+

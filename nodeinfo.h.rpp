@@ -1,0 +1,26 @@
+#ifndef nodeinfo_h
+#define nodeinfo_h
+
+#include "ruby.h"
+#include "node.h"
+#include "nodewrap.h"
+
+enum Node_Elem_Name
+{
+  NEN_NONE,
+#ruby <<END
+  require 'read_node_h.rb'
+
+  NODEINFO.sort.each do |node_elem_name, node_elem_ref|
+    puts "  NEN_#{node_elem_name.upcase},"
+  end
+  nil
+END
+  NEN_COUNT_
+};
+
+VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash);
+void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash, VALUE id_hash);
+
+#endif
+

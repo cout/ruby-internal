@@ -1,0 +1,26 @@
+#ifndef evalinfo__h_
+#define evalinfo__h_
+
+#ruby <<END
+  require 'rbconfig'
+  srcdir = Config::CONFIG['srcdir']
+  eval_c_location = "#{srcdir}/eval.c"
+  File.open(eval_c_location) do |eval_c|
+    write = false
+    stopwrite = false
+    while (line = eval_c.gets) != nil do
+      case line
+      when /^struct METHOD/
+        write = true
+        stopwrite = false
+      when /^}/
+        stopwrite = true
+      end
+      puts line if write
+      write = false if stopwrite
+    end
+  end
+END
+
+#endif
+
