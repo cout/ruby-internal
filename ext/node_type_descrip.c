@@ -17,9 +17,9 @@ static Node_Type_Descrip node_type_descrips_unsorted[] = {
   { NODE_IF          , NEN_BODY  , NEN_ELSE  , NEN_COND  , "IF"          }, 
   { NODE_WHEN        , NEN_HEAD  , NEN_BODY  , NEN_NEXT  , "WHEN"        }, 
   { NODE_CASE        , NEN_HEAD  , NEN_BODY  , NEN_NEXT  , "CASE"        }, 
-  { NODE_WHILE       , NEN_COND  , NEN_BODY  , NEN_NONE  , "WHILE"       }, 
-  { NODE_UNTIL       , NEN_STATE , NEN_COND  , NEN_BODY  , "UNTIL"       }, 
-  { NODE_BLOCK_PASS  , NEN_NONE  , NEN_NONE  , NEN_NONE  , "BLOCK_PASS"  }, 
+  { NODE_WHILE       , NEN_COND  , NEN_BODY  , NEN_STATE , "WHILE"       }, 
+  { NODE_UNTIL       , NEN_COND  , NEN_BODY  , NEN_STATE , "UNTIL"       }, 
+  { NODE_BLOCK_PASS  , NEN_BODY  , NEN_ITER  , NEN_NONE  , "BLOCK_PASS"  }, 
   { NODE_ITER        , NEN_VAR   , NEN_BODY  , NEN_ITER  , "ITER"        }, 
   { NODE_FOR         , NEN_VAR   , NEN_BODY  , NEN_ITER  , "FOR"         }, 
   { NODE_BREAK       , NEN_STTS  , NEN_NONE  , NEN_NONE  , "BREAK"       }, 
@@ -53,6 +53,7 @@ static Node_Type_Descrip node_type_descrips_unsorted[] = {
   { NODE_VCALL       , NEN_MID   , NEN_NONE  , NEN_NONE  , "VCALL"       }, 
   { NODE_SUPER       , NEN_ARGS  , NEN_NONE  , NEN_NONE  , "SUPER"       }, 
   { NODE_ZSUPER      , NEN_ARGS  , NEN_NONE  , NEN_NONE  , "ZSUPER"      }, 
+  /* rval holds an object, not a node */
   { NODE_SCOPE       , NEN_RVAL  , NEN_TBL   , NEN_NEXT  , "SCOPE"       }, 
   { NODE_OP_ASGN1    , NEN_RECV  , NEN_ARGS  , NEN_MID   , "OP_ASGN1"    }, 
   { NODE_OP_ASGN2    , NEN_VID   , NEN_RECV  , NEN_VALUE , "OP_ASGN2"    }, 
@@ -112,13 +113,13 @@ static Node_Type_Descrip node_type_descrips_unsorted[] = {
   { NODE_IFUNC       , NEN_CFNC  , NEN_TVAL  , NEN_ARGC  , "IFUNC"       }, 
   { NODE_CFUNC       , NEN_CFNC  , NEN_TVAL  , NEN_ARGC  , "CFUNC"       }, 
   { NODE_FBODY       , NEN_ORIG  , NEN_MID   , NEN_HEAD  , "FBODY"       }, 
-  { NODE_CREF        , NEN_CLSS  , NEN_NEXT  , NEN_NONE  , "CREF"        }, 
+  { NODE_CREF        , NEN_HEAD  , NEN_NEXT  , NEN_BODY  , "CREF"        }, 
 #ifdef C_ALLOCA
   { NODE_ALLOCA      , NEN_LIT   , NEN_VALUE , NEN_CNT   , "ALLOCA"      }, 
 #endif
   { NODE_DMETHOD     , NEN_CVAL  , NEN_NONE  , NEN_NONE  , "DMETHOD"     }, 
   { NODE_BMETHOD     , NEN_CVAL  , NEN_NONE  , NEN_NONE  , "BMETHOD"     }, 
-  { NODE_MEMO        , NEN_LIT   , NEN_RVAL  , NEN_NONE  , "MEMO"        }, 
+  { NODE_MEMO        , NEN_LIT   , NEN_TVAL  , NEN_NONE  , "MEMO"        }, 
   { NODE_LAST        , NEN_NONE  , NEN_NONE  , NEN_NONE  , "LAST"        }, 
 };
 

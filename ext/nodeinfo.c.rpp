@@ -52,71 +52,77 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     puts <<-END
     case NEN_#{node_elem_name.upcase}:
     END
-    case node_elem_name
-    when "rval"
-      # TODO: I'm sure I had a reason for writing this, but I don't know
-      # what it was.  My code segfaults if I keep this.
-      # puts "return dump_node_elem(NEN_HEAD, n, node_hash);"
+
+    if node_elem_name == "noex" then
+      # noex points to an id but is really a long
+      node_elem_ref.sub('id', 'cnt')
+    end
+
+    case node_elem_ref
+    when /\.node$/, /\.value/
       puts <<-END
-      return Qnil;
-      END
-    when "noex"
-      puts <<-END
-      return LONG2NUM(n->nd_noex);
-      END
-    else
-      case node_elem_ref
-      when /\.node$/
-        puts <<-END
+      if(TYPE(n->nd_#{node_elem_name}) == T_NODE)
+      {
+        /* node */
         if(n->nd_#{node_elem_name})
         {
-          dump_node_to_hash(n->nd_#{node_elem_name}, node_hash);
-          return node_id(n->nd_#{node_elem_name});
+          dump_node_to_hash((NODE *)n->nd_#{node_elem_name}, node_hash);
+          return rb_assoc_new(Qtrue, node_id((NODE *)n->nd_#{node_elem_name}));
         }
         else
         {
-          return Qnil;
+          return rb_assoc_new(Qtrue, Qnil);
         }
-        END
-      when /\.id$/
-        puts <<-END
-        if(n->nd_#{node_elem_name} == 0)
-        {
-          rb_raise(
-              rb_eRuntimeError,
-              "Invalid ID for #{node_elem_name} (node type=%d)",
-              nd_type(n));
-        }
-        return ID2SYM(n->nd_#{node_elem_name});
-        END
-      when /\.value$/
-        puts <<-END
-        return n->nd_#{node_elem_name};
-        END
-      when /\.(argc|state|cnt)$/
-        puts <<-END
-        return LONG2NUM(n->nd_#{node_elem_name});
-        END
-      when /\.(tbl)$/
-        puts <<-END
-        return variable_names(n->nd_#{node_elem_name});
-        END
-      when /\.(entry)$/
-        puts <<-END
-        if(n->nd_#{node_elem_name}->id == 0)
-        {
-          rb_raise(
-              rb_eRuntimeError,
-              "Invalid ID for #{node_elem_name} (node type %d)",
-              nd_type(n));
-        }
-        return ID2SYM(n->nd_#{node_elem_name}->id);
-        END
-      when /\.(cfunc)$/
-        puts <<-END
-        rb_raise(rb_eArgError, "Cannot dump #{$1}");
-        END
-      end
+      }
+      if(   TYPE(n->nd_#{node_elem_name}) == T_CLASS
+         || TYPE(n->nd_#{node_elem_name}) == T_MODULE)
+      {
+        /* TODO */
+        return rb_assoc_new(Qfalse, Qnil);
+      }
+      else
+      {
+        /* object */
+        return rb_assoc_new(Qfalse, (VALUE)n->nd_#{node_elem_name});
+      }
+      END
+    when /\.id$/
+      puts <<-END
+      if(n->nd_#{node_elem_name} == 0)
+      {
+        rb_raise(
+            rb_eRuntimeError,
+            "Invalid ID for #{node_elem_name} (node type=%d)",
+            nd_type(n));
+      }
+      return ID2SYM(n->nd_#{node_elem_name});
+      END
+    when /\.(argc|state|cnt)$/
+      puts <<-END
+      {
+      VALUE retval = LONG2NUM(n->#{node_elem_ref});
+      return retval;
+      }
+      END
+    when /\.(tbl)$/
+      puts <<-END
+      return variable_names(n->nd_#{node_elem_name});
+      END
+    when /\.(entry)$/
+      puts <<-END
+      if(n->nd_#{node_elem_name}->id == 0)
+      {
+        rb_raise(
+            rb_eRuntimeError,
+            "Invalid ID for #{node_elem_name} (node type %d)",
+            nd_type(n));
+      }
+      return ID2SYM(n->nd_#{node_elem_name}->id);
+      END
+    when /\.(cfunc)$/
+      puts <<-END
+      rb_raise(rb_eArgError, "Cannot dump #{$1}");
+      END
     end
   end
   nil
@@ -136,98 +142,98 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
     puts <<-END
     case NEN_#{node_elem_name.upcase}:
     END
-    case node_elem_name
-    when "rval"
+
+    if node_elem_name == "noex" then
+      # noex points to an id but is really a long
+      node_elem_ref.sub('id', 'cnt')
+    end
+
+    case node_elem_ref
+    when /\.node$/, /\.value$/
       puts <<-END
-      load_node_elem(NEN_HEAD, v, n, node_hash, id_hash);
-      return;
-      END
-    when "noex"
-      puts <<-END
-      n->nd_noex = NUM2LONG(v);
-      return;
-      END
-    else
-      case node_elem_ref
-      when /\.node$/
-        puts <<-END
-        {
-          VALUE nid = rb_hash_aref(id_hash, v);
-          if(RTEST(nid))
-          {
-            n->nd_#{node_elem_name} = id_to_node(nid);
-          }
-          else if(v == Qnil)
-          {
-            n->nd_#{node_elem_name} = 0;
-          }
-          else
-          {
-            NODE * new_node = NEW_NIL();
-            load_node_from_hash(new_node, v, node_hash, id_hash);
-            n->nd_#{node_elem_name} = new_node;
-          }
-          return;
-        }
-        END
-      when /\.id$/
-        puts <<-END
-        n->nd_#{node_elem_name} = SYM2ID(v);
-        return;
-        END
-      when /\.value$/
-        puts <<-END
-        n->nd_#{node_elem_name} = v;
-        return;
-        END
-      when /\.(argc|state|cnt)$/
-        puts <<-END
-        n->nd_#{node_elem_name} = NUM2LONG(v);
-        return;
-        END
-      when /\.(tbl)$/
-        puts <<-END
+      Check_Type(v, T_ARRAY);
+      if(RTEST(RARRAY(v)->ptr[0]))
+      {
+        /* node */
+        v = RARRAY(v)->ptr[1];
         if(v == Qnil)
         {
           n->nd_#{node_elem_name} = 0;
         }
         else
         {
-          Check_Type(v, T_ARRAY);
-          size_t len = RARRAY(v)->len;
-          ID * tmp_tbl = ALLOCA_N(ID, len + 3);
-          size_t j;
-          tmp_tbl[0] = (ID)(len + 2);
-          tmp_tbl[1] = (ID)('_');
-          tmp_tbl[2] = (ID)('~');
-          for(j = 0; j < len; ++j)
+          VALUE nid = rb_hash_aref(id_hash, v);
+          if(RTEST(nid))
           {
-            VALUE e = RARRAY(v)->ptr[j];
-            if(e == Qnil)
-            {
-              /* flip state */
-              tmp_tbl[j + 3] = 0;
-            }
-            else
-            {
-              tmp_tbl[j + 3] = SYM2ID(e);
-            }
+            *(NODE **)(&n->nd_#{node_elem_name}) = id_to_node(nid);
           }
-          n->nd_#{node_elem_name} = ALLOC_N(ID, len + 3);
-          memcpy(n->nd_#{node_elem_name}, tmp_tbl, len + 3);
+          else
+          {
+            NODE * new_node = NEW_NIL();
+            load_node_from_hash(new_node, v, node_hash, id_hash);
+            *(NODE **)(&n->#{node_elem_ref}) = new_node;
+          }
         }
-        return;
-        END
-      when /\.(entry)$/
-        puts <<-END
-        n->nd_#{node_elem_name} = rb_global_entry(SYM2ID(v));
-        return;
-        END
-      when /\.(cfunc)$/
-        puts <<-END
-        rb_raise(rb_eRuntimeError, "Cannot load #{$1}");
-        END
-      end
+      }
+      else
+      {
+        /* object */
+        *(VALUE *)(&n->nd_#{node_elem_name}) = RARRAY(v)->ptr[1];
+      }
+      return;
+      END
+    when /\.id$/
+      puts <<-END
+      n->nd_#{node_elem_name} = SYM2ID(v);
+      return;
+      END
+    when /\.(argc|state|cnt)$/
+      puts <<-END
+      n->nd_#{node_elem_name} = NUM2LONG(v);
+      return;
+      END
+    when /\.(tbl)$/
+      puts <<-END
+      if(v == Qnil)
+      {
+        n->nd_#{node_elem_name} = 0;
+      }
+      else
+      {
+        Check_Type(v, T_ARRAY);
+        size_t len = RARRAY(v)->len;
+        ID * tmp_tbl = ALLOCA_N(ID, len + 3);
+        size_t j;
+        tmp_tbl[0] = (ID)(len + 2);
+        tmp_tbl[1] = (ID)('_');
+        tmp_tbl[2] = (ID)('~');
+        for(j = 0; j < len; ++j)
+        {
+          VALUE e = RARRAY(v)->ptr[j];
+          if(e == Qnil)
+          {
+            /* flip state */
+            tmp_tbl[j + 3] = 0;
+          }
+          else
+          {
+            tmp_tbl[j + 3] = SYM2ID(e);
+          }
+        }
+        n->nd_#{node_elem_name} = ALLOC_N(ID, len + 3);
+        memcpy(n->nd_#{node_elem_name}, tmp_tbl, len + 3);
+      }
+      return;
+      END
+    when /\.(entry)$/
+      puts <<-END
+      n->nd_#{node_elem_name} = rb_global_entry(SYM2ID(v));
+      return;
+      END
+    when /\.(cfunc)$/
+      puts <<-END
+      rb_raise(rb_eRuntimeError, "Cannot load #{$1}");
+      END
     end
   end
   nil
@@ -236,46 +242,33 @@ END
   rb_raise(rb_eRuntimeError, "Internal error: invalid Node_Elem_Name %d", nen);
 }
 
-static VALUE node_rval(VALUE self)
-{
-  NODE * n;
-  Data_Get_Struct(self, NODE, n);
-  /* TODO */
-  return Qnil;
-}
-
-static VALUE node_noex(VALUE self)
-{
-  NODE * n;
-  Data_Get_Struct(self, NODE, n);
-  return LONG2NUM(n->nd_noex);
-}
-
 #ruby <<END
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
-    case node_elem_name
-    when "rval"
-    when "noex"
-    else
-      case node_elem_ref
-      when /\.node$/
-        puts <<-END
+    if node_elem_name == "noex" then
+      # noex points to an id but is really a long
+      node_elem_ref.sub('id', 'cnt')
+    end
+
+    case node_elem_ref
+    when /\.node$/, /\.value$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
-  if(n->nd_#{node_elem_name})
+
+  if(TYPE(n->nd_#{node_elem_name}) == T_NODE)
   {
-    return wrap_node(n->nd_#{node_elem_name});
+    return wrap_node((NODE *)n->nd_#{node_elem_name});
   }
   else
   {
-    return Qnil;
+    return (VALUE)n->nd_#{node_elem_name};
   }
 }
-        END
-      when /\.id$/
-        puts <<-END
+      END
+    when /\.id$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
@@ -289,36 +282,27 @@ static VALUE node_#{node_elem_name}(VALUE self)
   }
   return ID2SYM(n->nd_#{node_elem_name});
 }
-        END
-      when /\.value$/
-        puts <<-END
-static VALUE node_#{node_elem_name}(VALUE self)
-{
-  NODE * n;
-  Data_Get_Struct(self, NODE, n);
-  return n->nd_#{node_elem_name};
-}
-        END
-      when /\.(argc|state|cnt)$/
-        puts <<-END
+      END
+    when /\.(argc|state|cnt)$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
   return LONG2NUM(n->nd_#{node_elem_name});
 }
-        END
-      when /\.(tbl)$/
-        puts <<-END
+      END
+    when /\.(tbl)$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
   return variable_names(n->nd_#{node_elem_name});
 }
-        END
-      when /\.(entry)$/
-        puts <<-END
+      END
+    when /\.(entry)$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
@@ -332,21 +316,21 @@ static VALUE node_#{node_elem_name}(VALUE self)
   }
   return ID2SYM(n->nd_#{node_elem_name}->id);
 }
-        END
-      when /\.(cfunc)$/
-        puts <<-END
+      END
+    when /\.(cfunc)$/
+      puts <<-END
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
   return LONG2NUM((long)(n->nd_#{node_elem_name}));
 }
-        END
-      end
+      END
     end
   end
   nil
 END
+
 void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass)
 {
   VALUE members = rb_iv_get(klass, "__member__");
@@ -358,10 +342,10 @@ void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass)
 #ruby <<END
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts <<-END
-    case NEN_#{node_elem_name.upcase}:
-    rb_define_method(klass, "#{node_elem_name}", node_#{node_elem_name}, 0);
-    rb_ary_push(members, rb_str_new2("#{node_elem_name}"));
-    return;
+      case NEN_#{node_elem_name.upcase}:
+      rb_define_method(klass, "#{node_elem_name}", node_#{node_elem_name}, 0);
+      rb_ary_push(members, rb_str_new2("#{node_elem_name}"));
+      return;
     END
   end
   nil

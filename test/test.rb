@@ -1,9 +1,13 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
 require 'nodewrap'
+require 'nodepp'
 
 dir = File.dirname(__FILE__)
 require "#{dir}/node_samples"
+
+$stdout.sync = true
+$stderr.sync = true
 
 class TC_Nodewrap < Test::Unit::TestCase
   module Foo
@@ -178,8 +182,9 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   extend Test::Unit::Assertions
 
-  Node_Samples.each do |node_name, sample_code|
+  Method_Node_Samples.each do |node_name, sample_code|
     p = proc {
+      begin
       c = TestClass.dup
       c.class_eval <<-END_DEF
         def foo
@@ -217,8 +222,46 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       assert_equal orig_result, dup_result
       assert_equal orig_exc, dup_exc
+    rescue Exception
+      p $!
+      puts $!.backtrace
+    end
     }
-    define_method "test_#{node_name}", p
+    define_method "test_dump_method_#{node_name}", p
+  end
+
+  Proc_Node_Samples.each do |node_name, sample_code|
+    p = proc {
+      p_orig = eval <<-END_DEF
+        proc {
+          #{sample_code}
+        }
+      END_DEF
+
+      d = Marshal.dump(p_orig)
+      u = Marshal.load(d)
+      p_new = u.bind(binding)
+
+      orig_result = nil
+      orig_exc = nil
+      begin
+        orig_result = p_orig.call
+      rescue Exception => exc
+        orig_exc = exc
+      end
+
+      dup_result = nil
+      dup_exc = nil
+      begin
+        dup_result = p_new.call
+      rescue Exception => exc
+        dup_exc = exc
+      end
+
+      assert_equal orig_result, dup_result
+      assert_equal orig_exc, dup_exc
+    }
+    define_method "test_dump_proc_#{node_name}", p
   end
 end
 

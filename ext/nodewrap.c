@@ -12,6 +12,7 @@
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 static VALUE rb_cNodeSubclass[NODE_LAST];
+static VALUE rb_cProc;
 static VALUE rb_cUnboundProc;
 static VALUE rb_cMethod;
 static VALUE rb_cUnboundMethod;
@@ -48,6 +49,9 @@ static void free_node(
 {
   VALUE key = LONG2FIX((long)data / 4);
   VALUE node_info = rb_hash_aref(wrapped_nodes, key);
+
+  VALUE node_id = (VALUE)(node_id ^ FIXNUM_FLAG);
+
   if(NIL_P(node_info))
   {
     rb_bug("tried to free a node twice!");
@@ -67,7 +71,15 @@ static void free_node(
 
 VALUE wrap_node(NODE * n)
 {
-  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
+  VALUE node_info;
+ 
+  if(!n)
+  {
+    return Qnil;
+  }
+
+  node_info = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
+
   if(!NIL_P(node_info))
   {
     VALUE node_id = RARRAY(node_info)->ptr[0];
@@ -81,10 +93,28 @@ VALUE wrap_node(NODE * n)
     VALUE node = Data_Wrap_Struct(
         rb_cNodeSubclass[nd_type(n)], mark_node, free_node, n);
     VALUE node_id = rb_obj_id(node);
-    VALUE ref_count = LONG2FIX(0);
+    VALUE ref_count = LONG2FIX(1);
     VALUE node_info = rb_assoc_new(node_id, ref_count);
     rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_info);
     return node;
+  }
+}
+
+NODE * unwrap_node(VALUE r)
+{
+  if(r == Qnil)
+  {
+    return 0;
+  }
+  else
+  {
+    NODE * n;
+    if(!rb_obj_is_kind_of(r, rb_cNode))
+    {
+      rb_raise(rb_eTypeError, "Expected Node");
+    }
+    Data_Get_Struct(r, NODE, n);
+    return n;
   }
 }
 
@@ -151,7 +181,24 @@ static VALUE node_nd_file(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
-  return rb_str_new2(n->nd_file);
+  if(n->nd_file)
+  {
+    return rb_str_new2(n->nd_file);
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
+/*
+ * Returns the line number the node is associated with
+ */
+static VALUE node_nd_line(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return LONG2NUM(nd_line(n));
 }
 
 /*
@@ -233,7 +280,7 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
   NODE * n;
   if(!rb_obj_is_kind_of(node, rb_cNode))
   {
-    rb_raise(rb_eTypeError, "Expected Node for 3rd parameter");
+    rb_raise(rb_eTypeError, "Expected Node for 2nd parameter");
   }
   Data_Get_Struct(node, NODE, n);
   rb_add_method(klass, SYM2ID(method), n, NUM2INT(noex));
@@ -259,6 +306,9 @@ static VALUE method_node(VALUE method)
 /*
  * Dump a Method and the object to which it is bound to a String.  The
  * Method's class will not be dumped, only the name of the class.
+ *
+ * Unfortunately, this means that methods for anonymous classes can be
+ * dumped but cannot be loaded.
  */
 static VALUE method_dump(VALUE self, VALUE limit)
 {
@@ -348,13 +398,25 @@ static VALUE proc_node(VALUE proc)
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
 {
-  return marshal_dump(proc_node(self), limit);
+  struct BLOCK * b;
+  VALUE body, var, arr;
+  Data_Get_Struct(self, struct BLOCK, b);
+  body = wrap_node(b->body);
+  var = wrap_node(b->var);
+  arr = rb_assoc_new(body, var);
+  return marshal_dump(arr, limit);
 }
 
-static void mark_unbound_proc(void * d)
+static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 {
-  /* The unbound proc's data is a node */
-  rb_gc_mark((VALUE)d);
+  VALUE new_proc = rb_funcall(
+      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+  struct BLOCK * b;
+  Data_Get_Struct(new_proc, struct BLOCK, b);
+  b->body = body;
+  b->var = var;
+  RBASIC(new_proc)->klass = klass;
+  return new_proc;
 }
 
 /*
@@ -363,16 +425,11 @@ static void mark_unbound_proc(void * d)
  */
 static VALUE proc_load(VALUE klass, VALUE str)
 {
-  VALUE node = marshal_load(str);
-  NODE * n;
-  if(!rb_obj_is_kind_of(node, rb_cNode))
-  {
-    rb_raise(rb_eTypeError, "Expected Node");
-  }
-  Data_Get_Struct(node, NODE, n);
-  VALUE proc = Data_Wrap_Struct(
-      rb_cUnboundProc, mark_unbound_proc, 0, n);
-  return proc;
+  VALUE arr = marshal_load(str);
+  Check_Type(arr, T_ARRAY);
+  NODE * body = unwrap_node(RARRAY(arr)->ptr[0]);
+  NODE * var = unwrap_node(RARRAY(arr)->ptr[1]);
+  return create_proc(rb_cUnboundProc, Qnil, body, var);
 }
 
 /*
@@ -382,9 +439,7 @@ static VALUE proc_unbind(VALUE self)
 {
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
-  VALUE proc = Data_Wrap_Struct(
-      rb_cUnboundProc, mark_unbound_proc, 0, b->body);
-  return proc;
+  return create_proc(rb_cUnboundProc, Qnil, b->body, b->var);
 }
 
 /*
@@ -392,14 +447,9 @@ static VALUE proc_unbind(VALUE self)
  */
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
-  NODE * n;
   struct BLOCK * b;
-  VALUE new_proc = rb_funcall(
-      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
-  Data_Get_Struct(self, NODE, n);
-  Data_Get_Struct(new_proc, struct BLOCK, b);
-  b->body = n;
-  return new_proc;
+  Data_Get_Struct(self, struct BLOCK, b);
+  return create_proc(rb_cProc, binding, b->body, b->var);
 }
 
 /*
@@ -460,9 +510,15 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
   s2 = dump_node_elem(descrip->n2, n, node_hash);
   s3 = dump_node_elem(descrip->n3, n, node_hash);
 
+  VALUE nd_file = Qnil;
+  if(n->nd_file)
+  {
+    nd_file = rb_str_new2(n->nd_file);
+  }
+
   VALUE arr = rb_ary_new();
   rb_ary_push(arr, INT2NUM(n->flags));
-  rb_ary_push(arr, rb_str_new2(n->nd_file));
+  rb_ary_push(arr, nd_file);
   rb_ary_push(arr, s1);
   rb_ary_push(arr, s2);
   rb_ary_push(arr, s3);
@@ -475,8 +531,7 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   VALUE arr = rb_hash_aref(node_hash, orig_node_id);
   VALUE s3, s2, s1, rb_nd_file, rb_flags;
   unsigned long flags;
-  char *nd_file, *nd_file_buf;
-  size_t nd_file_len;
+  char *nd_file = 0;
   Node_Type_Descrip const *descrip;
   NODE tmp_node;
 
@@ -493,10 +548,7 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   s1 = rb_ary_pop(arr);
   rb_nd_file = rb_ary_pop(arr);
   rb_flags = rb_ary_pop(arr);
-
   flags = NUM2INT(rb_flags);
-  nd_file = STR2CSTR(rb_nd_file);
-  nd_file_len = RSTRING(rb_nd_file)->len; 
 
   /* The id_hash is a temporary, so it is invalidated if an exception is
    * raised.
@@ -511,7 +563,11 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   /* Note that the garbage collector CAN be invoked at this point, so
    * any node object the GC knowns about must be in a consistent state.
    */
-  nd_file_buf = rb_source_filename(nd_file);
+  if(rb_nd_file != Qnil)
+  {
+    Check_Type(rb_nd_file, T_STRING);
+    nd_file = rb_source_filename(RSTRING(rb_nd_file)->ptr);
+  }
 
   /* 1) We must NOT get an exception from here on out, since we are
    * modifying a live node, and so nd_file_buf won't be leaked.
@@ -520,8 +576,7 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
    */
   memcpy(n, &tmp_node, sizeof(NODE));
   n->flags = flags;
-  n->nd_file = nd_file_buf;
-  n->nd_file[nd_file_len] = '\0';
+  n->nd_file = nd_file;
 }
 
 static VALUE node_to_hash(VALUE self)
@@ -575,24 +630,6 @@ static VALUE module_instance_allocate(VALUE klass)
   return (VALUE)obj;
 }
 #endif
-
-static char const * insert_module_sorted_str = 
-  "proc { |modules, m|\n"
-  "  added = false\n"
-  "  a.each_with_index do |other, idx|\n"
-  "    if m[0] < other[0] and other[0] < m[0] then\n"
-  "      # no relation\n"
-  "    elsif other[0] < m[0] then\n"
-  "      modules[0..idx] = [m] + modules[0..idx]\n"
-  "      added = true\n"
-  "      break\n"
-  "    end\n"
-  "  end\n"
-  "  if not added then\n"
-  "    modules.push(m)\n"
-  "  end\n"
-  "}\n";
-static VALUE insert_module_sorted_proc = Qnil;
 
 static VALUE generate_method_hash(VALUE module, VALUE method_list)
 {
@@ -949,6 +986,7 @@ void Init_nodewrap(void)
 
   rb_define_method(rb_cNode, "flags", node_flags, 0);
   rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
+  rb_define_method(rb_cNode, "nd_line", node_nd_line, 0);
   rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
   rb_define_method(rb_cNode, "members", node_members, 0);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
@@ -978,7 +1016,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
-  VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
+  rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "node", proc_node, 0);
   rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
   rb_define_method(rb_cProc, "_dump", proc_dump, 1);
@@ -1004,8 +1042,8 @@ void Init_nodewrap(void)
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
 
-  insert_module_sorted_proc = rb_eval_string(insert_module_sorted_str);
   lookup_module_proc = rb_eval_string(lookup_module_str);
+  rb_global_variable(&lookup_module_proc);
 
 #if RUBY_VERSION_CODE >= 180
   rb_cClass_Restorer = rb_class_new(rb_cObject);
