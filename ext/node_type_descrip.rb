@@ -148,3 +148,11 @@ Node_Type_Descrip = Struct.new(:name, :node1, :node2, :node3)
 
 NODE_TYPE_DESCRIPS.map! { |x| Node_Type_Descrip.new(*x) }
 
+NEN_TO_NODE_TYPE = {}
+NODE_TYPE_DESCRIPS.each do |descrip|
+  [descrip.node1, descrip.node2, descrip.node3].each do |nen|
+    NEN_TO_NODE_TYPE[nen] ||= []
+    NEN_TO_NODE_TYPE[nen] << descrip.name
+  end
+end
+

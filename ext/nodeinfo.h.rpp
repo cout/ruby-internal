@@ -20,7 +20,8 @@ END
 
 VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash);
 void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash, VALUE id_hash);
-void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass);
+VALUE node_s_members(VALUE klass);
+void define_node_subclass_methods();
 
 #endif
 

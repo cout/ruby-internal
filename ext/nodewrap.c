@@ -11,7 +11,7 @@
 
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
-static VALUE rb_cNodeSubclass[NODE_LAST];
+VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_cProc;
 static VALUE rb_cUnboundProc;
 static VALUE rb_cMethod;
@@ -224,15 +224,6 @@ NODE * id_to_node(VALUE id)
 {
   unsigned long n = NUM2INT(id);
   return (NODE *)n;
-}
-
-/*
- * Return an array of strings containing the names of a node class's
- * members.
- */
-static VALUE node_s_members(VALUE klass)
-{
-  return rb_iv_get(klass, "__member__");
 }
 
 /*
@@ -1003,8 +994,6 @@ static void ruby_eval_tree_setter()
 
 void Init_nodewrap(void)
 {
-  int j;
-
   rb_cNode = rb_define_class("Node", rb_cObject);
 
 #if RUBY_VERSION_CODE >= 180
@@ -1017,21 +1006,10 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
   rb_define_method(rb_cNode, "members", node_members, 0);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
-
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
 
-  for(j = 0; j < NODE_LAST; ++j)
-  {
-    Node_Type_Descrip const * descrip = node_type_descrip(j);
-    rb_cNodeSubclass[j] = rb_define_class_under(
-        rb_cNode, descrip->name, rb_cNode);
-    rb_iv_set(rb_cNodeSubclass[j], "__member__", rb_ary_new());
-    rb_define_singleton_method(rb_cNodeSubclass[j], "members", node_s_members, 0);
-    define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
-    define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
-    define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
-  }
+  define_node_subclass_methods();
 
   /* For rdoc: rb_cNodeType = rb_define_class("NodeType", rb_cObject) */
   rb_cNodeType = rb_funcall(
