@@ -1110,9 +1110,13 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
  * ---------------------------------------------------------------------
  */
 
+/* TODO Not quite sure how to get BEGIN nodes on 1.9.x... */
+#if RUBY_VERSION_CODE < 190
 extern NODE *ruby_eval_tree_begin;
+#endif
 extern NODE *ruby_eval_tree;
 
+#if RUBY_VERSION_CODE < 190
 static VALUE ruby_eval_tree_begin_getter()
 {
   if(ruby_safe_level >= 4)
@@ -1130,6 +1134,7 @@ static VALUE ruby_eval_tree_begin_getter()
     return Qnil;
   }
 }
+#endif
 
 static void ruby_eval_tree_begin_setter()
 {
@@ -1268,6 +1273,7 @@ void Init_nodewrap(void)
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
   rb_define_method(rb_cMethod, "body", method_body, 0);
+  rb_define_method(rb_cUnboundMethod, "body", method_body, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
   rb_define_method(rb_cUnboundMethod, "_dump", method_dump, 1);
   rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
@@ -1330,10 +1336,12 @@ void Init_nodewrap(void)
   rb_define_const(rb_mNoex, "MASK",      INT2NUM(NOEX_MASK));
 #endif
 
+#if RUBY_VERSION_CODE < 190
   rb_define_virtual_variable(
       "$ruby_eval_tree_begin",
       ruby_eval_tree_begin_getter,
       ruby_eval_tree_begin_setter);
+#endif
 
   rb_define_virtual_variable(
       "$ruby_eval_tree",
