@@ -258,7 +258,7 @@ END
     when /\.node$/, /\.value$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return type is
+ * Return the Node's _#{node_elem_name}_ member.  The return type is
  * either a Node or an Object.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
@@ -279,7 +279,7 @@ static VALUE node_#{node_elem_name}(VALUE self)
     when /\.id$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return type is a
+ * Return the Node's _#{node_elem_name}_ member.  The return type is a
  * Symbol.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
@@ -299,7 +299,7 @@ static VALUE node_#{node_elem_name}(VALUE self)
     when /\.(argc|state|cnt)$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return type is an
+ * Return the Node's _#{node_elem_name}_ member.  The return type is an
  * Integer.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
@@ -312,7 +312,7 @@ static VALUE node_#{node_elem_name}(VALUE self)
     when /\.(tbl)$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return value is an
+ * Return the Node's _#{node_elem_name}_ member.  The return value is an
  * Array holding names of variables.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
@@ -325,7 +325,7 @@ static VALUE node_#{node_elem_name}(VALUE self)
     when /\.(entry)$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return type is
+ * Return the Node's _#{node_elem_name}_ member.  The return type is
  * either a Node or an Object.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
@@ -345,7 +345,7 @@ static VALUE node_#{node_elem_name}(VALUE self)
     when /\.(cfunc)$/
       puts <<-END
 /*
- * Return the Node's #{node_elem_name} member.  The return type is an
+ * Return the Node's _#{node_elem_name}_ member.  The return type is an
  * integer representation of the #{node_elem_name}'s pointer.
  */
 static VALUE node_#{node_elem_name}(VALUE self)
