@@ -3,6 +3,16 @@
 
 require 'nodewrap'
 
+module Noex
+  def stringify(noex)
+    Noex.constants.each do |constant|
+      return constant if const_get(constant) == noex
+    end
+    return noex.to_s
+  end
+  module_function :stringify
+end
+
 class Node
   # Return a string containing an ascii-art tree of the node's
   # structure.
@@ -13,9 +23,10 @@ class Node
       last = (idx == self.members.size-1)
       s << "#{prefix}#{(last ? '+-' : '|-')}#{member} = "
       value = self[member]
-      case value
-      when Node
+      if Node === value then
         value.pretty_print(s, prefix + (last ? '  ' : '| '))
+      elsif member == 'noex' then
+        s << Noex.stringify(value) + "\n"
       else
         s << value.inspect + "\n"
       end
