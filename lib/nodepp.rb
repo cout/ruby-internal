@@ -5,17 +5,17 @@ class Node
   # Return a string containing an ascii-art tree of the node's
   # structure.
   #
-  def pretty_print(prefix = '')
-    s = "NODE_#{self.nd_type.to_s} at #{self.nd_file}:#{self.nd_line}\n"
+  def pretty_print(s = '', prefix = '')
+    s << "NODE_#{self.nd_type.to_s} at #{self.nd_file}:#{self.nd_line}\n"
     self.members.each_with_index do |member, idx|
       last = (idx == self.members.size-1)
-      s += "#{prefix}#{(last ? '+-' : '|-')}#{member} = "
+      s << "#{prefix}#{(last ? '+-' : '|-')}#{member} = "
       value = self[member]
       case value
       when Node
-        s += value.pretty_print(prefix + (last ? '  ' : '| '))
+        value.pretty_print(s, prefix + (last ? '  ' : '| '))
       else
-        s += value.inspect + "\n"
+        s << value.inspect + "\n"
       end
     end
     return s
