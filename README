@@ -3,6 +3,19 @@ tree, among other things.
 
 See the file LICENSE for license and copyright information.
 
+To build and run the tests:
+  ruby install.rb config
+  ruby install.rb setup
+
+Or, if you are on ruby 1.9, you'll need to pass a special command-line
+option in the config step so the build scripts can find ruby's source
+code:
+  ruby install.rb config --ruby-source-path=/path/to/ruby
+  ruby install.rb setup
+
+To install:
+  ruby install.rb install
+
 See the generated documentation (in the doc/ directory) and the examples
 (in the directory example/) for usage.
 
