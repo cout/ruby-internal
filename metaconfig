@@ -1,0 +1,9 @@
+require 'rbconfig'
+
+ruby_source_path = Config::CONFIG['srcdir']
+
+add_path_config(
+  'ruby-source-path',
+  ruby_source_path,
+  'path to the ruby source code')
+

@@ -1,8 +1,9 @@
 require 'rbconfig'
+require 'ruby_version_code'
+require 'ruby_source_dir'
 
 C_ALLOCA = false
-srcdir = Config::CONFIG['srcdir']
-config_h_location = "#{srcdir}/config.h"
+config_h_location = "#{RUBY_SOURCE_DIR}/config.h"
 File.open(config_h_location) do |config_h|
   config_h.each_line do |line|
     if line =~ /#define\s+C_ALLOCA\s+1/ then
@@ -10,11 +11,6 @@ File.open(config_h_location) do |config_h|
     end
   end
 end
-
-major = Config::CONFIG['MAJOR'].to_i
-minor = Config::CONFIG['MINOR'].to_i
-teeny = Config::CONFIG['TEENY'].to_i
-RUBY_VERSION_CODE = major * 100 + minor * 10 + teeny
 
 NODE_TYPE_DESCRIPS = [
   [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'CNT'   ], 
@@ -82,7 +78,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'IVAR'        , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'CONST'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'CVAR'        , 'VID'   , 'NONE'  , 'NONE'  ], 
-  [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'BLOCK_ARG'   , 'CNT'   , 'NONE'  , 'NONE'  ], 
   [ 'COLON2'      , 'HEAD'  , 'MID'   , 'NONE'  ], 
   [ 'COLON3'      , 'MID'   , 'NONE'  , 'NONE'  ], 
@@ -112,10 +107,15 @@ NODE_TYPE_DESCRIPS = [
   [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
   [ 'CREF'        , 'HEAD'  , 'NEXT'  , 'BODY'  ], 
-  [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
 ]
+if RUBY_VERSION_CODE < 190 then
+NODE_TYPE_DESCRIPS.concat [
+  [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
+]
+end
 if RUBY_VERSION_CODE < 180 then
 NODE_TYPE_DESCRIPS.concat [
   [ 'RESTARGS'    , 'HEAD'  , 'NONE'  , 'NONE'  ], 

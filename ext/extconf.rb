@@ -1,6 +1,8 @@
 require 'mkmf'
 require 'rbconfig'
 
+rb_files = Dir['*.rb']
+
 rpp_files = Dir['*.rpp']
 generated_files = rpp_files.map { |f| f.sub(/\.rpp$/, '') }
 
@@ -18,7 +20,7 @@ create_makefile('nodewrap')
 append_to_makefile = ''
 rpp_files.each do |rpp_file|
 append_to_makefile << <<END
-#{rpp_file.sub(/\.rpp$/, '')}: #{rpp_file}
+#{rpp_file.sub(/\.rpp$/, '')}: #{rpp_file} #{rb_files.join(' ')}
 	#{Config::CONFIG['RUBY_INSTALL_NAME']} rubypp.rb $< $@
 END
 end

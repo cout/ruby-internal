@@ -20,10 +20,11 @@ class Preprocessor
         break if line.nil?
         case line
         when /(.*[^\\]|^)\#{(.*?)}(.*)/
-          puts "#{$1}#{evaluate($2)}#{$3}"
+          puts "#{$1}#{evaluate($2, @linenum)}#{$3}"
         when /^\#ruby\s+<<(.*)/
           marker = $1
           str = ''
+          evalstart = @linenum
           loop do
             line = getline
             if line.nil? then
@@ -32,10 +33,10 @@ class Preprocessor
             break if line.chomp == marker
             str << line
           end
-          result = evaluate(str)
+          result = evaluate(str, evalstart)
           puts result if not result.nil?
         when /^\#ruby\s+(.*)/
-          result = evaluate($1)
+          result = evaluate($1, @linenum)
           puts result if not result.nil?
         else
           puts line
@@ -49,8 +50,8 @@ class Preprocessor
     end
   end
 
-  def evaluate(str)
-    result = eval(str, TOPLEVEL_BINDING, @filename).to_s
+  def evaluate(str, linenum)
+    result = eval(str, TOPLEVEL_BINDING, @filename, linenum).to_s
     success = true
     return result
   end

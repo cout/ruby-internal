@@ -1106,16 +1106,27 @@ void Init_nodewrap(void)
    * 
    * [+PUBLIC+]     Method is public.
    * [+UNDEF+]      Method is undefined.
-   * [+CFUNC+]      Method is a C function.
    * [+PRIVATE+]    Method is private.
    * [+PROTECTED+]  Method is protected.
+   *
+   * The following are available in Ruby 1.8 and below:
+   * [+CFUNC+]      Method is a C function.
+   *
+   * And these are available in Ruby 1.9 and above:
+   * [+NOSUPER+]    ???
+   * [+MASK+]       ???
    */
   VALUE rb_mNoex = rb_define_module("Noex");
   rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));
   rb_define_const(rb_mNoex, "UNDEF",     INT2NUM(NOEX_UNDEF));
-  rb_define_const(rb_mNoex, "CFUNC",     INT2NUM(NOEX_CFUNC));
   rb_define_const(rb_mNoex, "PRIVATE",   INT2NUM(NOEX_PRIVATE));
   rb_define_const(rb_mNoex, "PROTECTED", INT2NUM(NOEX_PROTECTED));
+#if RUBY_VERSION_CODE < 190
+  rb_define_const(rb_mNoex, "CFUNC",     INT2NUM(NOEX_CFUNC));
+#else
+  rb_define_const(rb_mNoex, "NOSUPER",   INT2NUM(NOEX_NOSUPER));
+  rb_define_const(rb_mNoex, "MASK",      INT2NUM(NOEX_MASK));
+#endif
 
   rb_define_virtual_variable(
       "$ruby_eval_tree_begin",

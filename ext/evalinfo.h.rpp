@@ -5,8 +5,8 @@
 
 #ruby <<END
   require 'rbconfig'
-  srcdir = Config::CONFIG['srcdir']
-  eval_c_location = "#{srcdir}/eval.c"
+  require 'ruby_source_dir'
+  eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
   File.open(eval_c_location) do |eval_c|
     write = false
     stopwrite = false

@@ -3,8 +3,8 @@
 
 #ruby <<END
   require 'rbconfig'
-  srcdir = Config::CONFIG['srcdir']
-  variable_c_location = "#{srcdir}/variable.c"
+  require 'ruby_source_dir'
+  variable_c_location = "#{RUBY_SOURCE_DIR}/variable.c"
   File.open(variable_c_location) do |variable_c|
     write = false
     stopwrite = false

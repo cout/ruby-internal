@@ -1,7 +1,7 @@
 require 'rbconfig'
+require 'ruby_source_dir'
 
-SRCDIR = Config::CONFIG['srcdir']
-NODE_H_LOCATION = "#{SRCDIR}/node.h"
+NODE_H_LOCATION = "#{RUBY_SOURCE_DIR}/node.h"
 
 NODEINFO = Hash.new
 File.open(NODE_H_LOCATION) do |node_h|
@@ -10,6 +10,7 @@ File.open(NODE_H_LOCATION) do |node_h|
     break if line.nil?
     case line
     when /^#define\s+nd_(\w+)\s+(.*)/
+      puts line
       NODEINFO[$1] = $2
     end
   end
