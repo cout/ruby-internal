@@ -24,7 +24,7 @@ Node_Samples = {
   :and         => "true and false",
   :or          => "if 1 or 2 then 3; end",
   :not         => "not false",
-  :masgn       => "",
+  :masgn       => "a, b, c = 4, 5, 6",
   :lasgn       => "",
   :dasgn       => "",
   :dasgn_curr  => "",
@@ -50,7 +50,7 @@ Node_Samples = {
   :lvar        => "",
   :dvar        => "",
   :gvar        => "$a == 1",
-  :ivar        => "@a == 1",
+  :ivar        => "@a == 42", # must be diff from iasgn
   :const       => "",
   :cvar        => "",
   :cvar2       => "",

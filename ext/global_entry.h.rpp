@@ -1,0 +1,26 @@
+#ifndef evalinfo__h_
+#define evalinfo__h_
+
+#ruby <<END
+  require 'rbconfig'
+  srcdir = Config::CONFIG['srcdir']
+  variable_c_location = "#{srcdir}/variable.c"
+  File.open(variable_c_location) do |variable_c|
+    write = false
+    stopwrite = false
+    while (line = variable_c.gets) != nil do
+      case line
+      when /^struct global_entry/
+        write = true
+        stopwrite = false
+      when /^}/
+        stopwrite = true if write
+      end
+      puts line if write
+      break if stopwrite
+    end
+  end
+END
+
+#endif
+

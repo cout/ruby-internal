@@ -1,7 +1,8 @@
 class Preprocessor
-  def initialize(input, output)
+  def initialize(input, output, filename)
     @input = input
     @output = output
+    @filename = filename
     @linenum = 1
   end
 
@@ -49,7 +50,7 @@ class Preprocessor
   end
 
   def evaluate(str)
-    result = eval(str, TOPLEVEL_BINDING).to_s
+    result = eval(str, TOPLEVEL_BINDING, @filename).to_s
     success = true
     return result
   end
@@ -70,7 +71,7 @@ if __FILE__ == $0 then
     sucess = false
     begin
       File.open(output_file, 'w') do |output|
-        $preprocessor = Preprocessor.new(input, output)
+        $preprocessor = Preprocessor.new(input, output, input_file)
         $preprocessor.preprocess()
       end
       success = true

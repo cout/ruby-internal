@@ -150,7 +150,14 @@ class TC_Nodewrap < Test::Unit::TestCase
   end
 end
 
+verbose = nil
+begin
+  verbose = Test::Unit::UI.const_get(:VERBOSE)
+rescue NameError
+  verbose = Test::Unit::UI::Console::TestRunner.const_get(:VERBOSE)
+end
+
 Test::Unit::UI::Console::TestRunner.run(
     TC_Nodewrap,
-    Test::Unit::UI::VERBOSE)
+    verbose)
 

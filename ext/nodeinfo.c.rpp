@@ -1,5 +1,6 @@
 #include "nodeinfo.h"
 #include "version.h"
+#include "global_entry.h"
 
 /* Every node contains three elements.  This function takes any one of
  * those elements, converts it to a Ruby object that can be dumped
@@ -88,9 +89,16 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           return Qnil;
         }
         END
+      when /\.(entry)$/
+        puts <<-END
+        if(n->nd_#{node_elem_name}->id == 0)
+        {
+          rb_raise(rb_eRuntimeError, "Invalid ID");
+        }
+        return ID2SYM(n->nd_#{node_elem_name}->id);
+        END
       when /\.(cfunc)$/,
-           /\.(argc|state|cnt)$/,
-           /\.(entry)$/
+           /\.(argc|state|cnt)$/
         puts <<-END
         rb_raise(rb_eArgError, "Cannot dump #{$1}");
         END
@@ -187,9 +195,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         }
         return;
         END
+      when /\.(entry)$/
+        puts <<-END
+        n->nd_#{node_elem_name} = rb_global_entry(SYM2ID(v));
+        return;
+        END
       when /\.(cfunc)$/,
-           /\.(argc|state|cnt)$/,
-           /\.(entry)$/
+           /\.(argc|state|cnt)$/
         puts <<-END
         rb_raise(rb_eRuntimeError, "Cannot load #{$1}");
         END
