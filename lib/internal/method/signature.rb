@@ -15,7 +15,7 @@ module MethodSig
     end
 
     def optional?
-      return false
+      return rest? || block?
     end
 
     def rest?
