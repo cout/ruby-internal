@@ -2,6 +2,21 @@
 #include "version.h"
 #include "global_entry.h"
 
+static int is_flip_state(ID id)
+{
+  if(id == 0)
+  {
+    return 1;
+  }
+#if RUBY_VERSION_CODE >= 190
+  if(!rb_is_local_id(id))
+  {
+    return 1;
+  }
+#endif
+  return 0;
+}
+
 static VALUE variable_names(ID * tbl)
 {
   if(tbl)
@@ -15,8 +30,7 @@ static VALUE variable_names(ID * tbl)
      */
     for(j = 3; j <= tbl[0]; ++j)
     {
-      rb_id2name(tbl[j]);
-      if(tbl[j] == 0)
+      if(is_flip_state(tbl[j]))
       {
         /* flip state */
         rb_ary_push(arr, Qnil);
@@ -101,8 +115,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     when /\.(argc|state|cnt)$/
       puts <<-END
       {
-      VALUE retval = LONG2NUM((long)n->nd_#{node_elem_name});
-      return retval;
+      return LONG2NUM((long)n->nd_#{node_elem_name});
       }
       END
     when /\.(tbl)$/

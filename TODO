@@ -1,4 +1,16 @@
 * Clean up the code
+  - Refactor module_load; code to create a subclass and code to attach
+    an arbitrary class as a metaclass should be factored out
+  - Split up unrelated code into separate source files
 * Write more test cases
 * Write code to dump/load class and class instance variables
-
+* Code obfuscator should check ruby version before loading code
+* Shouldn't be able to dump classes with non-default allocation
+  functions; write a test for this
+* Test for dumping a metaclass that has a metaclass
+* Security checks
+* Webpage with examples of how to use nodepp and classtree with irb (and
+  put links to code on the net that use nodewrap).
+* Remove GC.start from the test's setup method.
+* Should real_superclass use rb_class_real() when including modules?
+*

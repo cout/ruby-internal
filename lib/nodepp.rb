@@ -19,14 +19,14 @@ class Node
   # Return a string containing an ascii-art tree of the node's
   # structure.
   #
-  def pretty_print(s = '', prefix = '')
+  def tree(s = '', prefix = '')
     s << "NODE_#{self.nd_type.to_s} at #{self.nd_file}:#{self.nd_line}\n"
     self.members.each_with_index do |member, idx|
       last = (idx == self.members.size-1)
       s << "#{prefix}#{(last ? '+-' : '|-')}#{member} = "
       value = self[member]
       if Node === value then
-        value.pretty_print(s, prefix + (last ? '  ' : '| '))
+        value.tree(s, prefix + (last ? '  ' : '| '))
       elsif member == 'noex' then
         s << Noex.stringify(value) + "\n"
       else
@@ -34,6 +34,13 @@ class Node
       end
     end
     return s
+  end
+
+  # Pretty-print node using Node#tree onto s, which can be a String or
+  # IO.
+  #
+  def pretty_print(s='')
+    return tree(s)
   end
 end
 

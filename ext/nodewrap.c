@@ -48,44 +48,29 @@ static void free_node(
     void * data)
 {
   VALUE key = LONG2FIX((long)data / 4);
-  VALUE node_info = rb_hash_aref(wrapped_nodes, key);
+  VALUE node_id = rb_hash_aref(wrapped_nodes, key);
 
-  VALUE node_id = (VALUE)(node_id ^ FIXNUM_FLAG);
-
-  if(NIL_P(node_info))
+  if(NIL_P(node_id))
   {
-    rb_bug("tried to free a node twice!");
+    rb_bug("tried to free a node that wasn't wrapped!");
     return;
   }
-  VALUE ref_count = FIX2LONG(RARRAY(node_info)->ptr[1]);
-  --ref_count;
-  if(ref_count == 0)
-  {
-    rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data / 4));
-  }
-  else
-  {
-    RARRAY(node_info)->ptr[1] = LONG2FIX(ref_count);
-  }
+  rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data / 4));
 }
 
 VALUE wrap_node(NODE * n)
 {
-  VALUE node_info;
+  VALUE node_id;
  
   if(!n)
   {
     return Qnil;
   }
 
-  node_info = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
+  node_id = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
 
-  if(!NIL_P(node_info))
+  if(!NIL_P(node_id))
   {
-    VALUE node_id = RARRAY(node_info)->ptr[0];
-    VALUE ref_count = FIX2LONG(RARRAY(node_info)->ptr[1]);
-    ++ref_count;
-    RARRAY(node_info)->ptr[1] = LONG2FIX(ref_count);
     return (VALUE)(node_id ^ FIXNUM_FLAG);
   }
   else
@@ -93,9 +78,7 @@ VALUE wrap_node(NODE * n)
     VALUE node = Data_Wrap_Struct(
         rb_cNodeSubclass[nd_type(n)], mark_node, free_node, n);
     VALUE node_id = rb_obj_id(node);
-    VALUE ref_count = LONG2FIX(1);
-    VALUE node_info = rb_assoc_new(node_id, ref_count);
-    rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_info);
+    rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_id);
     return node;
   }
 }
@@ -142,7 +125,11 @@ static char const * lookup_module_str =
   "proc { |name|\n"
   "  o = Object\n"
   "  name.split('::').each do |subname|\n"
-  "    o = o.const_get(subname)\n"
+  "    if subname == '<Singleton>' then\n"
+  "      o = o.singleton_class\n"
+  "    else\n"
+  "      o = o.const_get(subname)\n"
+  "    end\n"
   "  end\n"
   "  o\n"
   "}\n";
@@ -594,13 +581,14 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   rb_nd_file = rb_ary_pop(arr);
   rb_flags = rb_ary_pop(arr);
   flags = NUM2INT(rb_flags);
+  tmp_node.flags = flags;
 
   /* The id_hash is a temporary, so it is invalidated if an exception is
    * raised.
    */
   rb_hash_aset(id_hash, orig_node_id, node_id(n));
 
-  descrip = node_type_descrip((flags & FL_UMASK) >> FL_USHIFT);
+  descrip = node_type_descrip(nd_type(&tmp_node));
   load_node_elem(descrip->n1, s1, &tmp_node, node_hash, id_hash);
   load_node_elem(descrip->n2, s2, &tmp_node, node_hash, id_hash);
   load_node_elem(descrip->n3, s3, &tmp_node, node_hash, id_hash);
@@ -758,7 +746,17 @@ static VALUE superclass_name(VALUE module)
       return Qnil;
     }
 
-    return rb_mod_name(super);
+    if(FL_TEST(super, FL_SINGLETON))
+    {
+      VALUE v = rb_iv_get(super, "__attached__");
+      VALUE name = rb_mod_name(v);
+      rb_str_buf_cat2(name, "::<Singleton>");
+      return name;
+    }
+    else
+    {
+      return rb_mod_name(super);
+    }
   }
 }
 
@@ -819,12 +817,12 @@ static VALUE module_dump(VALUE self, VALUE limit)
    * object being dumped has no modifications to its singleton class
    * (e.g. no singleton instance variables, and no singleton methods
    * defined).  Since we need to dump the class's singleton class in
-   * order dump dump class methods, we need a way around this
-   * restriction.  The solution found here temporarily removes the
-   * singleton instance variables and singleton methods while the class
-   * is being dumped, and sets a special singleton instance variable
-   * that restores the tables when dumping is complete.  A hack for
-   * sure, but it seems to work.
+   * order to dump class methods, we need a way around this restriction.
+   * The solution found here temporarily removes the singleton instance
+   * variables and singleton methods while the class is being dumped,
+   * and sets a special singleton instance variable that restores the
+   * tables when dumping is complete.  A hack for sure, but it seems to
+   * work.
    */
   struct RClass * singleton_class = RCLASS(CLASS_OF(self));
   if(!singleton_class->iv_tbl)
@@ -906,27 +904,27 @@ static VALUE module_load(VALUE klass, VALUE str)
 {
   VALUE arr = marshal_load(str);
   VALUE metaclass = rb_ary_pop(arr);
-  VALUE superclass = rb_ary_pop(arr);
+  VALUE superclass_name = rb_ary_pop(arr);
   VALUE included_modules = rb_ary_pop(arr);
   VALUE class_variables = rb_ary_pop(arr);
   VALUE instance_methods = rb_ary_pop(arr);
   VALUE flags = rb_ary_pop(arr);
   VALUE module;
 
-  if(RTEST(superclass))
+  if(RTEST(superclass_name))
   {
-    rb_check_type(superclass, T_STRING);
-    VALUE v = rb_funcall(
+    rb_check_type(superclass_name, T_STRING);
+    VALUE superclass = rb_funcall(
         lookup_module_proc,
         rb_intern("call"),
         1,
-        superclass);
+        superclass_name);
 #if RUBY_VERSION_CODE >= 180
     /* Can't make subclass of Class on 1.8.x */
-    module = rb_class_boot(v);
+    module = rb_class_boot(superclass);
     rb_define_alloc_func(module, module_instance_allocate);
 #else
-    module = rb_class_new(v);
+    module = rb_class_new(superclass);
 #endif
   }
   else
@@ -1015,6 +1013,32 @@ static void ruby_eval_tree_setter()
 }
 
 /* ---------------------------------------------------------------------
+ * Methods for dumping class tree
+ * ---------------------------------------------------------------------
+ */
+
+VALUE real_superclass(VALUE self)
+{
+  rb_include_module(rb_class_of(RCLASS(self)->super), rb_mKernel);
+  return RCLASS(self)->super;
+}
+
+VALUE real_class(VALUE self)
+{
+  return RBASIC(self)->klass;
+}
+
+VALUE is_singleton(VALUE self)
+{
+  return FL_TEST(self, FL_SINGLETON) ? Qtrue : Qfalse;
+}
+
+VALUE singleton_class(VALUE self)
+{
+  return rb_singleton_class(self);
+}
+
+/* ---------------------------------------------------------------------
  * Initialization
  * ---------------------------------------------------------------------
  */
@@ -1067,11 +1091,14 @@ void Init_nodewrap(void)
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */
+  /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
   rb_define_method(rb_cMethod, "body", method_body, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
+  rb_define_method(rb_cUnboundMethod, "_dump", method_dump, 1);
   rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
+  rb_define_singleton_method(rb_cUnboundMethod, "_load", method_load, 1);
 
   /* For rdoc: rb_cBinding = rb_define_class("Binding", rb_cObject) */
   VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
@@ -1087,6 +1114,7 @@ void Init_nodewrap(void)
 #if RUBY_VERSION_CODE >= 180
   rb_cClass_Restorer = rb_class_new(rb_cObject);
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
+  rb_global_variable(&rb_cClass_Restorer);
   rb_define_method(rb_cModule, "_dump", module_dump, 1);
   rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
 #else
@@ -1137,5 +1165,10 @@ void Init_nodewrap(void)
       "$ruby_eval_tree",
       ruby_eval_tree_getter,
       ruby_eval_tree_setter);
+
+  rb_define_method(rb_cModule, "real_superclass", real_superclass, 0);
+  rb_define_method(rb_mKernel, "real_class", real_class, 0);
+  rb_define_method(rb_mKernel, "singleton?", is_singleton, 0);
+  rb_define_method(rb_mKernel, "singleton_class", singleton_class, 0);
 }
 

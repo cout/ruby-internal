@@ -102,7 +102,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'VALIAS'      , 'NEW'   , 'OLD'   , 'NONE'  ], 
   [ 'SCLASS'      , 'RECV'  , 'BODY'  , 'NONE'  ], 
   [ 'DEFINED'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
-  [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
   [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
@@ -114,6 +113,12 @@ if RUBY_VERSION_CODE < 190 then
 NODE_TYPE_DESCRIPS.concat [
   [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
+  [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
+]
+else # RUBY_VERSION_CODE >= 190
+NODE_TYPE_DESCRIPS.concat [
+  [ 'DSYM'        , 'LIT'   , 'NEXT'  , 'NONE'  ],
+  [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
 ]
 end
 if RUBY_VERSION_CODE < 180 then
