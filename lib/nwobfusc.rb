@@ -28,6 +28,10 @@ def obfusc(begin_nodes, n)
   #   2. Evaluate the main node.
   puts <<-END
 require 'nodewrap'
+if RUBY_VERSION != "#{RUBY_VERSION}" then
+  $stderr.puts "Wrong Ruby version; please use #{RUBY_VERSION}"
+  exit 1
+end
 begin_nodes = Marshal.load(#{Marshal.dump(begin_nodes).inspect})
 n = Marshal.load(#{Marshal.dump(n).inspect})
 begin_nodes.each do |node|
