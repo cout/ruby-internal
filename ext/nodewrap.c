@@ -10,6 +10,7 @@
 #include "st.h"
 
 static VALUE rb_cNode = Qnil;
+static VALUE rb_cNodeType = Qnil;
 static VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_mMarshal;
 
@@ -87,7 +88,11 @@ static VALUE node_nd_type(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
-  return INT2NUM(nd_type(n));
+  Node_Type_Descrip const * descrip = node_type_descrip(nd_type(n));
+  return rb_struct_new(
+      rb_cNodeType,
+      rb_str_new2(descrip->name),
+      INT2NUM(descrip->nt));
 }
 
 VALUE node_id(NODE * n)
@@ -130,6 +135,26 @@ static VALUE node_bracket(VALUE node, VALUE member)
   return rb_funcall(node, id, 0);
 }
 
+/* ---------------------------------------------------------------------
+ * NodeType methods
+ * ---------------------------------------------------------------------
+ */
+
+static VALUE node_type_to_s(VALUE node_type)
+{
+  return rb_struct_getmember(node_type, rb_intern("name"));
+}
+
+static VALUE node_type_to_i(VALUE node_type)
+{
+  return rb_struct_getmember(node_type, rb_intern("value"));
+}
+
+/* ---------------------------------------------------------------------
+ * Module methods
+ * ---------------------------------------------------------------------
+ */
+
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 {
   NODE * n;
@@ -141,6 +166,11 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
   rb_add_method(klass, SYM2ID(method), n, NUM2INT(noex));
   return Qnil;
 }
+
+/* ---------------------------------------------------------------------
+ * Method methods
+ * ---------------------------------------------------------------------
+ */
 
 /*
  * Given a Method, returns the Node for that Method.  This can be used
@@ -639,6 +669,28 @@ void Init_nodewrap(void)
   int j;
 
   rb_cNode = rb_define_class("Node", rb_cObject);
+
+#if RUBY_VERSION_CODE >= 180
+  rb_define_alloc_func(rb_cNode, node_allocate);
+#endif
+
+  rb_define_method(rb_cNode, "flags", node_flags, 0);
+  rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
+  rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
+
+  rb_define_method(rb_cNode, "_dump", node_dump, 1);
+  rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
+
+  rb_cNodeType = rb_funcall(
+      rb_cStruct,
+      rb_intern("new"),
+      2,
+      ID2SYM(rb_intern("name")),
+      ID2SYM(rb_intern("value")));
+  rb_const_set(rb_cNode, rb_intern("Type"), rb_cNodeType);
+  rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
+  rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
+
   for(j = 0; j < NODE_LAST; ++j)
   {
     Node_Type_Descrip const * descrip = node_type_descrip(j);
@@ -654,17 +706,6 @@ void Init_nodewrap(void)
   }
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
-
-#if RUBY_VERSION_CODE >= 180
-  rb_define_alloc_func(rb_cNode, node_allocate);
-#endif
-
-  rb_define_method(rb_cNode, "flags", node_flags, 0);
-  rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
-  rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
-
-  rb_define_method(rb_cNode, "_dump", node_dump, 1);
-  rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
 
   VALUE rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_define_method(rb_cMethod, "node", method_node, 0);

@@ -2,7 +2,8 @@ require 'nodewrap'
 
 class Node
   def pretty_print(indent = 0)
-    s = "node type #{self.nd_type}\n"
+    nd_type = self.nd_type
+    s = "NODE_#{nd_type.to_s} (#{nd_type.to_i})\n"
     indent += 2
     self.members.each do |member|
       s += "#{' ' * indent}#{member} = "
