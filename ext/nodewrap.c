@@ -26,6 +26,10 @@ static VALUE rb_cClass_Restorer;
 static void mark_class_restorer(struct Class_Restorer * class_restorer);
 #endif
 
+#if RUBY_VERSION_CODE < 170
+typedef void st_data_t;
+#endif
+
 /* ---------------------------------------------------------------------
  * Node methods
  * ---------------------------------------------------------------------
