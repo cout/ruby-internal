@@ -402,6 +402,22 @@ static VALUE unboundproc_bind(VALUE self, VALUE binding)
   return new_proc;
 }
 
+/*
+ * Raises a TypeError; UnboundProc objects cannot be called.
+ */
+static VALUE unboundproc_call(VALUE self, VALUE args)
+{
+  rb_raise(rb_eTypeError, "you cannot call unbound proc; bind first");
+}
+
+/*
+ * Raises a TypeError; UnboundProc objects have no binding.
+ */
+static VALUE unboundproc_binding(VALUE self)
+{
+  rb_raise(rb_eTypeError, "unbound proc has no binding");
+}
+
 /* ---------------------------------------------------------------------
  * Binding methods
  * ---------------------------------------------------------------------
@@ -920,8 +936,17 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
-  rb_cUnboundProc = rb_define_class("UnboundProc", rb_cObject);
+  VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
+  rb_define_method(rb_cProc, "node", proc_node, 0);
+  rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
+  rb_define_method(rb_cProc, "_dump", proc_dump, 1);
+  rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
+
+  rb_cUnboundProc = rb_define_class("UnboundProc", rb_cProc);
   rb_define_method(rb_cUnboundProc, "bind", unboundproc_bind, 1);
+  rb_define_method(rb_cUnboundProc, "call", unboundproc_call, -2);
+  rb_define_method(rb_cUnboundProc, "[]", unboundproc_call, -2);
+  rb_define_method(rb_cUnboundProc, "binding", unboundproc_binding, 0);
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
@@ -930,12 +955,6 @@ void Init_nodewrap(void)
   rb_define_method(rb_cMethod, "node", method_node, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
   rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
-
-  VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
-  rb_define_method(rb_cProc, "node", proc_node, 0);
-  rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
-  rb_define_method(rb_cProc, "_dump", proc_dump, 1);
-  rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
 
   VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
   rb_define_method(rb_cBinding, "node", binding_node, 0);
