@@ -74,7 +74,7 @@ if __FILE__ == $0 then
   end
 
   File.open(input_file, 'r') do |input|
-    sucess = false
+    success = false
     begin
       File.open(output_file, 'w') do |output|
         $preprocessor = Preprocessor.new(input, output, input_file)
