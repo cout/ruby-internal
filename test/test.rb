@@ -2,6 +2,9 @@ require 'test/unit'
 require 'test/unit/ui/console/testrunner'
 require 'nodewrap'
 
+dir = File.dirname(__FILE__)
+require "#{dir}/node_samples"
+
 class TC_Nodewrap < Test::Unit::TestCase
   module Foo
     def foo(n=1)
@@ -22,6 +25,13 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   Tmp_Foo = nil
 
+  def initialize(test_method_name)
+    # TODO: This seems to be the only way to get tests defined with #
+    # define_method to run.
+    @method_name = test_method_name
+    @test_passed = true
+  end
+
   def test_method_node
     m = method(:foo)
     n = Node.method_node(m)
@@ -31,7 +41,7 @@ class TC_Nodewrap < Test::Unit::TestCase
   def test_add_method
     m = method(:foo)
     n = Node.method_node(m)
-    klass = Class.new;
+    klass = Class.new
     klass.instance_eval do
       add_method(:foo, n, 0)
     end
@@ -113,7 +123,34 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal 42, f.foo()
     assert_equal 42*42, f.foo(42)
   end
+
+  extend Test::Unit::Assertions
+
+  Node_Samples.each do |node_name, sample_code|
+    p = proc {
+      eval <<-END_DEF
+        def self.foo
+          #{sample_code}
+        end
+      END_DEF
+
+      m = self.method(:foo)
+      n = Node.method_node(m)
+      d = Marshal.dump(n)
+      n2 = Marshal.load(d)
+
+      klass2 = Class.new
+      klass2.instance_eval do
+        add_method(:foo, n2, 0)
+      end
+      obj2 = klass2.new
+      assert_equal self.foo(), obj2.foo()
+    }
+    define_method "test_#{node_name}", p
+  end
 end
 
-Test::Unit::UI::Console::TestRunner.run(TC_Nodewrap)
+Test::Unit::UI::Console::TestRunner.run(
+    TC_Nodewrap,
+    Test::Unit::UI::Console::TestRunner::VERBOSE)
 
