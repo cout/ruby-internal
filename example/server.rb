@@ -5,7 +5,7 @@ def foo
 end
 
 m = Object.method(:foo)
-n = Node.method_node(m)
+n = m.body
 Marshal.dump(n, $stdout)
 $stdout.flush
 
