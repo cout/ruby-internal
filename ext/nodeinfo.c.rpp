@@ -146,7 +146,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
 
     if node_elem_name == "noex" then
       # noex points to an id but is really a long
-      node_elem_ref = '*(long*)(&u1.id)'
+      node_elem_ref.sub!('id', 'cnt')
     end
 
     case node_elem_ref
