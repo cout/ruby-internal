@@ -65,6 +65,14 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal 42, obj.foo
   end
 
+  def test_marshal_proc
+    p = proc { 1 + 1 }
+    d = Marshal.dump(p)
+    u = Marshal.load(d)
+    p2 = u.bind(binding)
+    assert_equal(p.call, p2.call)
+  end
+
   class TestClassBase
     # for testing super()
     def foo

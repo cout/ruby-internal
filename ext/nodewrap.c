@@ -12,6 +12,7 @@
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 static VALUE rb_cNodeSubclass[NODE_LAST];
+static VALUE rb_cUnboundProc;
 static VALUE rb_mMarshal;
 
 #if RUBY_VERSION_CODE >= 180
@@ -83,6 +84,21 @@ VALUE wrap_node(NODE * n)
     rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_info);
     return node;
   }
+}
+
+/* ---------------------------------------------------------------------
+ * Marshalling
+ * ---------------------------------------------------------------------
+ */
+
+VALUE marshal_dump(VALUE obj, VALUE limit)
+{
+  return rb_funcall(rb_mMarshal, rb_intern("dump"), 2, obj, limit);
+}
+
+VALUE marshal_load(VALUE obj)
+{
+  return rb_funcall(rb_mMarshal, rb_intern("load"), 1, obj);
 }
 
 /* ---------------------------------------------------------------------
@@ -238,6 +254,53 @@ static VALUE proc_node(VALUE proc)
   return wrap_node(b->body);
 }
 
+/*
+ * Dump a proc to a string.
+ */
+static VALUE proc_dump(VALUE self, VALUE limit)
+{
+  return marshal_dump(proc_node(self), limit);
+}
+
+static void mark_unbound_proc(void * d)
+{
+  /* The unbound proc's data is a node */
+  rb_gc_mark((VALUE)d);
+}
+
+/*
+ * Load a proc from a string.  When it is loaded, it will be an
+ * UnboundProc.
+ */
+static VALUE proc_load(VALUE klass, VALUE str)
+{
+  VALUE node = marshal_load(str);
+  NODE * n;
+  if(!rb_obj_is_kind_of(node, rb_cNode))
+  {
+    rb_raise(rb_eTypeError, "Expected Node");
+  }
+  Data_Get_Struct(node, NODE, n);
+  VALUE proc = Data_Wrap_Struct(
+      rb_cUnboundProc, mark_unbound_proc, 0, n);
+  return proc;
+}
+
+/*
+ * Bind an UnboundProc to a Binding.
+ */
+static VALUE unboundproc_bind(VALUE self, VALUE binding)
+{
+  NODE * n;
+  struct BLOCK * b;
+  VALUE new_proc = rb_funcall(
+      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+  Data_Get_Struct(self, NODE, n);
+  Data_Get_Struct(new_proc, struct BLOCK, b);
+  b->body = n;
+  return new_proc;
+}
+
 /* ---------------------------------------------------------------------
  * Binding methods
  * ---------------------------------------------------------------------
@@ -251,21 +314,6 @@ static VALUE binding_node(VALUE binding)
   struct BLOCK * b;
   Data_Get_Struct(binding, struct BLOCK, b);
   return wrap_node(b->body);
-}
-
-/* ---------------------------------------------------------------------
- * Marshalling
- * ---------------------------------------------------------------------
- */
-
-VALUE marshal_dump(VALUE obj, VALUE limit)
-{
-  return rb_funcall(rb_mMarshal, rb_intern("dump"), 2, obj, limit);
-}
-
-VALUE marshal_load(VALUE obj)
-{
-  return rb_funcall(rb_mMarshal, rb_intern("load"), 1, obj);
 }
 
 /* ---------------------------------------------------------------------
@@ -781,6 +829,9 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
+  rb_cUnboundProc = rb_define_class("UnboundProc", rb_cObject);
+  rb_define_method(rb_cUnboundProc, "bind", unboundproc_bind, 1);
+
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   VALUE rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
@@ -788,6 +839,8 @@ void Init_nodewrap(void)
 
   VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "node", proc_node, 0);
+  rb_define_method(rb_cProc, "_dump", proc_dump, 1);
+  rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
 
   VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
   rb_define_method(rb_cBinding, "node", binding_node, 0);
