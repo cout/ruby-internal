@@ -38,6 +38,11 @@ typedef void st_data_t;
 
 static VALUE wrapped_nodes = Qnil;
 
+static void wrapped_nodes_end_proc(VALUE data)
+{
+  wrapped_nodes = Qnil;
+}
+
 static void mark_node(
     void * data)
 {
@@ -47,8 +52,16 @@ static void mark_node(
 static void free_node(
     void * data)
 {
-  VALUE key = LONG2FIX((long)data / 4);
-  VALUE node_id = rb_hash_aref(wrapped_nodes, key);
+  VALUE key, node_id;
+
+  if(wrapped_nodes == Qnil);
+  {
+    /* We're finalizing at exit, so don't clean up */
+    return;
+  }
+
+  key = LONG2FIX((long)data / 4);
+  node_id = rb_hash_aref(wrapped_nodes, key);
 
   if(NIL_P(node_id))
   {
@@ -1261,6 +1274,7 @@ void Init_nodewrap(void)
 
   wrapped_nodes = rb_hash_new();
   rb_global_variable(&wrapped_nodes);
+  rb_set_end_proc(wrapped_nodes_end_proc, Qnil);
 
   /*
    * Document-module: Noex
