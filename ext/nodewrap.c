@@ -597,7 +597,6 @@ void Init_nodewrap(void)
   rb_cNode = rb_define_class("Node", rb_cObject);
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
-  /* TODO: should be a private class method */
 #if RUBY_VERSION_CODE >= 180
   rb_define_alloc_func(rb_cNode, node_allocate);
 #endif
