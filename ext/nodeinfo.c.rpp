@@ -233,8 +233,124 @@ END
   rb_raise(rb_eRuntimeError, "Internal error: invalid Node_Elem_Name %d", nen);
 }
 
+static VALUE node_rval(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  /* TODO */
+  return Qnil;
+}
+
+static VALUE node_noex(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return INT2NUM(n->nd_noex);
+}
+
+#ruby <<END
+  NODEINFO.sort.each do |node_elem_name, node_elem_ref|
+    case node_elem_name
+    when "rval"
+    when "noex"
+    else
+      case node_elem_ref
+      when /\.node$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.id$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.value$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.(argc|state|cnt)$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.(tbl)$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.(entry)$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      when /\.(cfunc)$/,
+           /\.(argc|state|cnt)$/
+        puts <<-END
+          static VALUE node_#{node_elem_name}(VALUE self)
+          {
+            NODE * n;
+            Data_Get_Struct(self, NODE, n);
+            /* TODO */
+            return Qnil;
+          }
+        END
+      end
+    end
+  end
+  nil
+END
 void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass)
 {
-  /* TODO */
+  VALUE members = rb_iv_get(klass, "__member__");
+
+  switch(nen)
+  {
+    case NEN_NONE:
+      return;
+#ruby <<END
+  NODEINFO.sort.each do |node_elem_name, node_elem_ref|
+    puts <<-END
+    case NEN_#{node_elem_name.upcase}:
+    rb_define_method(klass, "#{node_elem_name}", node_#{node_elem_name}, 0);
+    rb_ary_push(members, rb_str_new2("#{node_elem_name}"));
+    return;
+    END
+  end
+  nil
+END
+  }
+  rb_raise(rb_eRuntimeError, "Internal error: invalid Node_Elem_Name %d", nen);
 }
 

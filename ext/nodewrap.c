@@ -103,6 +103,24 @@ NODE * id_to_node(VALUE id)
   return (NODE *)n;
 }
 
+/*
+ * Given a node class, return an array of strings containing the names
+ * of its members.
+ */
+static VALUE node_s_members(VALUE klass)
+{
+  return rb_iv_get(klass, "__member__");
+}
+
+/*
+ * Given a node, return an array of strings containing the names of its
+ * members.
+ */
+static VALUE node_members(VALUE node)
+{
+  return node_s_members(rb_class_of(node));
+}
+
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 {
   NODE * n;
@@ -617,6 +635,9 @@ void Init_nodewrap(void)
     Node_Type_Descrip const * descrip = node_type_descrip(j);
     rb_cNodeSubclass[j] = rb_define_class_under(
         rb_cNode, descrip->name, rb_cNode);
+    rb_iv_set(rb_cNodeSubclass[j], "__member__", rb_ary_new());
+    rb_define_method(rb_cNodeSubclass[j], "members", node_members, 0);
+    rb_define_singleton_method(rb_cNodeSubclass[j], "members", node_s_members, 0);
     define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
     define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
     define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
