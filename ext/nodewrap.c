@@ -37,12 +37,11 @@ static void mark_node(
   rb_gc_mark((VALUE)data);
 }
 
-static VALUE wrap_node(
-    NODE * n,
-    RUBY_DATA_FUNC free)
+VALUE wrap_node(NODE * n)
 {
+  /* TODO: Need a free function? */
   return Data_Wrap_Struct(
-      rb_cNodeSubclass[nd_type(n)], mark_node, free, n);
+      rb_cNodeSubclass[nd_type(n)], mark_node, 0, n);
 }
 
 /* ---------------------------------------------------------------------
@@ -57,8 +56,7 @@ static VALUE wrap_node(
 static VALUE node_allocate(VALUE klass)
 {
   NODE * n = NEW_NIL();
-  /* TODO: Need a free function in this case */
-  return Data_Wrap_Struct(klass, rb_gc_mark, 0, n);
+  return wrap_node(n);
 }
 #endif
 
@@ -141,7 +139,7 @@ static VALUE method_node(VALUE self, VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-  return wrap_node(m->body, 0);
+  return wrap_node(m->body);
 }
 
 /* ---------------------------------------------------------------------
@@ -285,7 +283,7 @@ static VALUE node_load(VALUE klass, VALUE str)
   VALUE id_hash = rb_hash_new();
   load_node_from_hash(n, node_id, node_hash, id_hash);
   /* TODO: Need a free function in this case */
-  return wrap_node(n, 0);
+  return wrap_node(n);
 }
 
 /* ---------------------------------------------------------------------
@@ -351,7 +349,7 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
           "module has method %s but I couldn't find it!",
           s);
     }
-    v = wrap_node(body, 0);
+    v = wrap_node(body);
     rb_hash_aset(methods, ID2SYM(id), v);
   }
 

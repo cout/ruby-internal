@@ -2,6 +2,38 @@
 #include "version.h"
 #include "global_entry.h"
 
+static VALUE variable_names(ID * tbl)
+{
+  if(tbl)
+  {
+    size_t j;
+    VALUE arr = rb_ary_new();
+    /* A tbl contains the names of local variables.  The first
+     * element is the size of the table.  The next two elements
+     * are $_ and $~.  The rest of the elements are the names of
+     * the variables themselves.
+     */
+    for(j = 3; j <= tbl[0]; ++j)
+    {
+      rb_id2name(tbl[j]);
+      if(tbl[j] == 0)
+      {
+        /* flip state */
+        rb_ary_push(arr, Qnil);
+      }
+      else
+      {
+        rb_ary_push(arr, ID2SYM(tbl[j]));
+      }
+    }
+    return arr;
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
 /* Every node contains three elements.  This function takes any one of
  * those elements, converts it to a Ruby object that can be dumped
  * (since nodes can't be dumped), and puts the resulting object into
@@ -30,7 +62,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       END
     when "noex"
       puts <<-END
-      return INT2NUM(n->nd_noex);
+      return LONG2NUM(n->nd_noex);
       END
     else
       case node_elem_ref
@@ -63,38 +95,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
         END
       when /\.(argc|state|cnt)$/
         puts <<-END
-        return INT2NUM(n->nd_#{node_elem_name});
+        return LONG2NUM(n->nd_#{node_elem_name});
         END
       when /\.(tbl)$/
         puts <<-END
-        if(n->nd_#{node_elem_name})
-        {
-          size_t j;
-          VALUE arr = rb_ary_new();
-          /* A tbl contains the names of local variables.  The first
-           * element is the size of the table.  The next two elements
-           * are $_ and $~.  The rest of the elements are the names of
-           * the variables themselves.
-           */
-          for(j = 3; j <= n->nd_#{node_elem_name}[0]; ++j)
-          {
-            rb_id2name(n->nd_#{node_elem_name}[j]);
-            if(n->nd_#{node_elem_name}[j] == 0)
-            {
-              /* flip state */
-              rb_ary_push(arr, Qnil);
-            }
-            else
-            {
-              rb_ary_push(arr, ID2SYM(n->nd_#{node_elem_name}[j]));
-            }
-          }
-          return arr;
-        }
-        else
-        {
-          return Qnil;
-        }
+        return variable_names(n->nd_#{node_elem_name});
         END
       when /\.(entry)$/
         puts <<-END
@@ -107,8 +112,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
         }
         return ID2SYM(n->nd_#{node_elem_name}->id);
         END
-      when /\.(cfunc)$/,
-           /\.(argc|state|cnt)$/
+      when /\.(cfunc)$/
         puts <<-END
         rb_raise(rb_eArgError, "Cannot dump #{$1}");
         END
@@ -140,7 +144,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       END
     when "noex"
       puts <<-END
-      n->nd_noex = NUM2INT(v);
+      n->nd_noex = NUM2LONG(v);
       return;
       END
     else
@@ -178,7 +182,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         END
       when /\.(argc|state|cnt)$/
         puts <<-END
-        n->nd_#{node_elem_name} = NUM2INT(v);
+        n->nd_#{node_elem_name} = NUM2LONG(v);
         return;
         END
       when /\.(tbl)$/
@@ -219,8 +223,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         n->nd_#{node_elem_name} = rb_global_entry(SYM2ID(v));
         return;
         END
-      when /\.(cfunc)$/,
-           /\.(argc|state|cnt)$/
+      when /\.(cfunc)$/
         puts <<-END
         rb_raise(rb_eRuntimeError, "Cannot load #{$1}");
         END
@@ -245,7 +248,7 @@ static VALUE node_noex(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
-  return INT2NUM(n->nd_noex);
+  return LONG2NUM(n->nd_noex);
 }
 
 #ruby <<END
@@ -257,74 +260,87 @@ static VALUE node_noex(VALUE self)
       case node_elem_ref
       when /\.node$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  if(n->nd_#{node_elem_name})
+  {
+    return wrap_node(n->nd_#{node_elem_name});
+  }
+  else
+  {
+    return Qnil;
+  }
+}
         END
       when /\.id$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  if(n->nd_#{node_elem_name} == 0)
+  {
+    rb_raise(
+        rb_eRuntimeError,
+        "Invalid ID for #{node_elem_name} (node type=%d)",
+        nd_type(n));
+  }
+  return ID2SYM(n->nd_#{node_elem_name});
+}
         END
       when /\.value$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return n->nd_#{node_elem_name};
+}
         END
       when /\.(argc|state|cnt)$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return LONG2NUM(n->nd_#{node_elem_name});
+}
         END
       when /\.(tbl)$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return variable_names(n->nd_#{node_elem_name});
+}
         END
       when /\.(entry)$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  if(n->nd_#{node_elem_name}->id == 0)
+  {
+    rb_raise(
+        rb_eRuntimeError,
+        "Invalid ID for #{node_elem_name} (node type %d)",
+        nd_type(n));
+  }
+  return ID2SYM(n->nd_#{node_elem_name}->id);
+}
         END
-      when /\.(cfunc)$/,
-           /\.(argc|state|cnt)$/
+      when /\.(cfunc)$/
         puts <<-END
-          static VALUE node_#{node_elem_name}(VALUE self)
-          {
-            NODE * n;
-            Data_Get_Struct(self, NODE, n);
-            /* TODO */
-            return Qnil;
-          }
+static VALUE node_#{node_elem_name}(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return LONG2NUM((long)(n->nd_#{node_elem_name}));
+}
         END
       end
     end

@@ -1,6 +1,7 @@
 #ifndef nodewrap__h_
 #define nodewrap__h_
 
+VALUE wrap_node(NODE * n);
 VALUE node_id(NODE * n);
 NODE * id_to_node(VALUE id);
 void dump_node_to_hash(NODE * n, VALUE node_hash);
