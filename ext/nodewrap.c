@@ -214,18 +214,33 @@ static VALUE method_node(VALUE method)
 }
 
 /* ---------------------------------------------------------------------
- * Method methods
+ * Proc methods
  * ---------------------------------------------------------------------
  */
 
 /*
  * Given a Proc, returns the Node for that Proc.
  */
-static VALUE proc_node(VALUE method)
+static VALUE proc_node(VALUE proc)
 {
-  struct BLOCK * m;
-  Data_Get_Struct(method, struct BLOCK, m);
-  return wrap_node(m->body);
+  struct BLOCK * b;
+  Data_Get_Struct(proc, struct BLOCK, b);
+  return wrap_node(b->body);
+}
+
+/* ---------------------------------------------------------------------
+ * Binding methods
+ * ---------------------------------------------------------------------
+ */
+
+/*
+ * Given a Binding, returns the Node for that Binding.
+ */
+static VALUE binding_node(VALUE binding)
+{
+  struct BLOCK * b;
+  Data_Get_Struct(binding, struct BLOCK, b);
+  return wrap_node(b->body);
 }
 
 /* ---------------------------------------------------------------------
@@ -757,6 +772,9 @@ void Init_nodewrap(void)
 
   VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "node", proc_node, 0);
+
+  VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
+  rb_define_method(rb_cBinding, "node", binding_node, 0);
 
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
