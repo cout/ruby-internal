@@ -3,3 +3,7 @@ if not @config['ruby-source-path'] then
   exit 1
 end
 
+dive_into('ext') do
+  command('make clean')
+end
+

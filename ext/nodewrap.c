@@ -1017,22 +1017,46 @@ static void ruby_eval_tree_setter()
  * ---------------------------------------------------------------------
  */
 
+/*
+ * Return the immediate superclass of a class or module.  This may be a
+ * base class, a singleton class, or a module singleton.
+ */
 VALUE real_superclass(VALUE self)
 {
   rb_include_module(rb_class_of(RCLASS(self)->super), rb_mKernel);
   return RCLASS(self)->super;
 }
 
+/*
+ * Return the object's first immediate ancestor; this may be the
+ * object's class, its singleton class, or a module singleton.
+ */
 VALUE real_class(VALUE self)
 {
   return RBASIC(self)->klass;
 }
 
+/*
+ * Return true if this object is a singleton (that is, it has the
+ * FL_SINGLETON flag set).
+ */
 VALUE is_singleton(VALUE self)
 {
   return FL_TEST(self, FL_SINGLETON) ? Qtrue : Qfalse;
 }
 
+/*
+ * Return true if this object has a singleton class.
+ */
+VALUE has_singleton(VALUE self)
+{
+  return FL_TEST(RBASIC(self)->klass, FL_SINGLETON) ? Qtrue : Qfalse;
+}
+
+/*
+ * Return the object's singleton class.  Creats a new singleton class
+ * for the object if it does not have one.  See RCR#231.
+ */
 VALUE singleton_class(VALUE self)
 {
   return rb_singleton_class(self);
@@ -1169,6 +1193,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cModule, "real_superclass", real_superclass, 0);
   rb_define_method(rb_mKernel, "real_class", real_class, 0);
   rb_define_method(rb_mKernel, "singleton?", is_singleton, 0);
+  rb_define_method(rb_mKernel, "has_singleton?", has_singleton, 0);
   rb_define_method(rb_mKernel, "singleton_class", singleton_class, 0);
 }
 
