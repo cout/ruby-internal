@@ -47,6 +47,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       return Qnil;
 #ruby <<END
   require 'read_node_h.rb'
+  require 'node_type_descrip.rb'
 
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts <<-END

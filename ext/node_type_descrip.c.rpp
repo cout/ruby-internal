@@ -5,10 +5,10 @@ Node_Type_Descrip node_type_descrips_unsorted[] = {
 #ruby <<END
 require 'node_type_descrip'
 NODE_TYPE_DESCRIPS.each do |descrip|
-  name = descrip[0]
-  node1 = descrip[1]
-  node2 = descrip[2]
-  node3 = descrip[3]
+  name = descrip.name
+  node1 = descrip.node1
+  node2 = descrip.node2
+  node3 = descrip.node3
 
   puts <<-END
   { NODE_#{name}, NEN_#{node1}, NEN_#{node2}, NEN_#{node3}, "#{name}" },

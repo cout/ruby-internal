@@ -143,3 +143,8 @@ end
 NODE_TYPE_DESCRIPS.concat [
   [ 'LAST'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
 ]
+
+Node_Type_Descrip = Struct.new(:name, :node1, :node2, :node3)
+
+NODE_TYPE_DESCRIPS.map! { |x| Node_Type_Descrip.new(*x) }
+
