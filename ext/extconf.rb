@@ -19,9 +19,10 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 rpp_files.each do |rpp_file|
+dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
-#{rpp_file.sub(/\.rpp$/, '')}: #{rpp_file} #{rb_files.join(' ')}
-	#{Config::CONFIG['RUBY_INSTALL_NAME']} rubypp.rb $< $@
+#{dest_file}: #{rpp_file} #{rb_files.join(' ')}
+	#{Config::CONFIG['RUBY_INSTALL_NAME']} rubypp.rb #{rpp_file} #{dest_file}
 END
 end
 
