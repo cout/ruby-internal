@@ -1,7 +1,7 @@
 #include "node_type_descrip.h"
 #include "version.h"
 
-static Node_Type_Descrip node_type_descrips[] = {
+static Node_Type_Descrip node_type_descrips_unsorted[] = {
   { NODE_METHOD      , NEN_NOEX  , NEN_BODY  , NEN_CNT   , "METHOD"      }, 
   { NODE_BLOCK       , NEN_NEXT  , NEN_HEAD  , NEN_NONE  , "BLOCK"       }, 
   { NODE_POSTEXE     , NEN_NONE  , NEN_NONE  , NEN_NONE  , "POSTEXE"     }, 
@@ -83,7 +83,6 @@ static Node_Type_Descrip node_type_descrips[] = {
   { NODE_ZARRAY      , NEN_NONE  , NEN_NONE  , NEN_NONE  , "ZARRAY"      }, 
   { NODE_ARRAY       , NEN_ALEN  , NEN_HEAD  , NEN_NEXT  , "ARRAY"       }, 
   { NODE_STR         , NEN_LIT   , NEN_NONE  , NEN_NONE  , "STR"         }, 
-  { NODE_NEXT        , NEN_LIT   , NEN_CFLAG , NEN_NONE  , "NEXT"        }, 
 #if RUBY_VERSION_CODE >= 170 && RUBY_VERSION_CODE < 180
   { NODE_REGX        , NEN_CFLAG , NEN_NONE  , NEN_NONE  , "REGX"        }, 
 #endif
@@ -123,17 +122,43 @@ static Node_Type_Descrip node_type_descrips[] = {
   { NODE_LAST        , NEN_NONE  , NEN_NONE  , NEN_NONE  , "LAST"        }, 
 };
 
+static Node_Type_Descrip * node_type_descrips[NODE_LAST];
+static int node_type_descrips_initialized = 0;
+
+static void init_node_type_descrips()
+{
+  if(!node_type_descrips_initialized)
+  {
+    Node_Type_Descrip * descrip;
+    memset(node_type_descrips, 0, sizeof(node_type_descrips));
+    for(descrip = node_type_descrips_unsorted;
+        descrip->nt != NODE_LAST;
+        ++descrip)
+    {
+      if(node_type_descrips[descrip->nt])
+      {
+        rb_raise(rb_eRuntimeError, "duplicate entry for %d\n", descrip->nt);
+      }
+      else
+      {
+        node_type_descrips[descrip->nt] = descrip;
+      }
+    }
+    node_type_descrips_initialized = 1;
+  }
+}
+
 /* Given a node, find out the types of the three elements it contains */
 Node_Type_Descrip const * node_type_descrip(enum node_type nt)
 {
-  Node_Type_Descrip *descrip;
-  for(descrip = node_type_descrips; descrip->nt != NODE_LAST; ++descrip)
+  init_node_type_descrips();
+  if(node_type_descrips[nt])
   {
-    if(descrip->nt == nt)
-    {
-      return descrip;
-    }
+    return node_type_descrips[nt];
   }
-  rb_raise(rb_eArgError, "Unknown node type %d", nt);
+  else
+  {
+    rb_raise(rb_eArgError, "Unknown node type %d", nt);
+  }
 }
 
