@@ -6,7 +6,7 @@ class Node
     indent += 2
     self.members.each do |member|
       s += ' ' * indent + "#{member}: "
-      value = self.send(member) # TODO
+      value = self[member]
       case value
       when Node
         s += "\n" + value.pretty_print(indent + 2)

@@ -102,8 +102,8 @@ NODE * id_to_node(VALUE id)
 }
 
 /*
- * Given a node class, return an array of strings containing the names
- * of its members.
+ * Return an array of strings containing the names of a node class's
+ * members.
  */
 static VALUE node_s_members(VALUE klass)
 {
@@ -111,12 +111,23 @@ static VALUE node_s_members(VALUE klass)
 }
 
 /*
- * Given a node, return an array of strings containing the names of its
+ * Return an array of strings containing the names of a node's
  * members.
  */
 static VALUE node_members(VALUE node)
 {
   return node_s_members(rb_class_of(node));
+}
+
+/*
+ * Return the given member of a node
+ */
+static VALUE node_bracket(VALUE node, VALUE member)
+{
+  ID id = SYMBOL_P(member)
+    ? SYM2ID(member)
+    : rb_intern(STR2CSTR(member));
+  return rb_funcall(node, id, 0);
 }
 
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
@@ -636,6 +647,7 @@ void Init_nodewrap(void)
     rb_iv_set(rb_cNodeSubclass[j], "__member__", rb_ary_new());
     rb_define_method(rb_cNodeSubclass[j], "members", node_members, 0);
     rb_define_singleton_method(rb_cNodeSubclass[j], "members", node_s_members, 0);
+    rb_define_method(rb_cNodeSubclass[j], "[]", node_bracket, 1);
     define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
     define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
     define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
