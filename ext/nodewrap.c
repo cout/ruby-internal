@@ -54,7 +54,7 @@ static void free_node(
 {
   VALUE key, node_id;
 
-  if(wrapped_nodes == Qnil);
+  if(wrapped_nodes == Qnil)
   {
     /* We're finalizing at exit, so don't clean up */
     return;
@@ -98,13 +98,17 @@ VALUE wrap_node(NODE * n)
 
 NODE * unwrap_node(VALUE r)
 {
-  if(r == Qnil)
+  if(!RTEST(r))
   {
     return 0;
   }
   else
   {
     NODE * n;
+    if(TYPE(r) == 0)
+    {
+      rb_bug("Tried to unwrap recycled node");
+    }
     if(!rb_obj_is_kind_of(r, rb_cNode))
     {
       rb_raise(rb_eTypeError, "Expected Node");
@@ -847,7 +851,7 @@ static VALUE superclass_name(VALUE module)
     {
       VALUE v = rb_iv_get(super, "__attached__");
       VALUE name = rb_mod_name(v);
-      rb_str_buf_cat2(name, "::<Singleton>");
+      rb_str_cat2(name, "::<Singleton>");
       return name;
     }
     else
