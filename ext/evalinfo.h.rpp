@@ -1,6 +1,8 @@
 #ifndef evalinfo__h_
 #define evalinfo__h_
 
+#include "env.h"
+
 #ruby <<END
   require 'rbconfig'
   srcdir = Config::CONFIG['srcdir']
@@ -10,11 +12,12 @@
     stopwrite = false
     while (line = eval_c.gets) != nil do
       case line
-      when /^struct METHOD/
+      when /^struct (METHOD|BLOCK)/
         write = true
         stopwrite = false
       when /^}/
         stopwrite = true
+        puts ''
       end
       puts line if write
       write = false if stopwrite

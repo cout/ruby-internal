@@ -214,6 +214,21 @@ static VALUE method_node(VALUE method)
 }
 
 /* ---------------------------------------------------------------------
+ * Method methods
+ * ---------------------------------------------------------------------
+ */
+
+/*
+ * Given a Proc, returns the Node for that Proc.
+ */
+static VALUE proc_node(VALUE method)
+{
+  struct BLOCK * m;
+  Data_Get_Struct(method, struct BLOCK, m);
+  return wrap_node(m->body);
+}
+
+/* ---------------------------------------------------------------------
  * Marshalling
  * ---------------------------------------------------------------------
  */
@@ -739,6 +754,9 @@ void Init_nodewrap(void)
 
   VALUE rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_define_method(rb_cMethod, "node", method_node, 0);
+
+  VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
+  rb_define_method(rb_cProc, "node", proc_node, 0);
 
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
