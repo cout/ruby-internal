@@ -1,0 +1,208 @@
+#include "node_type_descrip.h"
+#include "version.h"
+
+#ruby <<END
+require 'rbconfig'
+
+C_ALLOCA = false
+srcdir = Config::CONFIG['srcdir']
+config_h_location = "#{srcdir}/config.h"
+File.open(config_h_location) do |config_h|
+  config_h.each_line do |line|
+    if line =~ /#define\s+C_ALLOCA\s+1/ then
+      C_ALLOCA = true
+    end
+  end
+end
+
+major = Config::CONFIG['MAJOR'].to_i
+minor = Config::CONFIG['MINOR'].to_i
+teeny = Config::CONFIG['TEENY'].to_i
+RUBY_VERSION_CODE = major * 100 + minor * 10 + teeny
+
+node_type_descrips = [
+  [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'CNT'   ], 
+  [ 'BLOCK'       , 'NEXT'  , 'HEAD'  , 'NONE'  ], 
+  [ 'POSTEXE'     , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'BEGIN'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
+  [ 'MATCH'       , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'MATCH2'      , 'RECV'  , 'VALUE' , 'NONE'  ], 
+  [ 'MATCH3'      , 'RECV'  , 'VALUE' , 'NONE'  ], 
+  [ 'OPT_N'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
+  [ 'SELF'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'NIL'         , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'TRUE'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'FALSE'       , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'IF'          , 'BODY'  , 'ELSE'  , 'COND'  ], 
+  [ 'WHEN'        , 'HEAD'  , 'BODY'  , 'NEXT'  ], 
+  [ 'CASE'        , 'HEAD'  , 'BODY'  , 'NEXT'  ], 
+  [ 'WHILE'       , 'COND'  , 'BODY'  , 'STATE' ], 
+  [ 'UNTIL'       , 'COND'  , 'BODY'  , 'STATE' ], 
+  [ 'BLOCK_PASS'  , 'BODY'  , 'ITER'  , 'NONE'  ], 
+  [ 'ITER'        , 'VAR'   , 'BODY'  , 'ITER'  ], 
+  [ 'FOR'         , 'VAR'   , 'BODY'  , 'ITER'  ], 
+  [ 'BREAK'       , 'STTS'  , 'NONE'  , 'NONE'  ], 
+  [ 'NEXT'        , 'STTS'  , 'NONE'  , 'NONE'  ], 
+  [ 'REDO'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'RETRY'       , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'YIELD'       , 'STTS'  , 'NONE'  , 'NONE'  ], 
+  [ 'RESCUE'      , 'HEAD'  , 'RESQ'  , 'ELSE'  ], 
+  [ 'RESBODY'     , 'HEAD'  , 'RESQ'  , 'ENSR'  ], 
+  [ 'ENSURE'      , 'HEAD'  , 'ENSR'  , 'NONE'  ], 
+  [ 'AND'         , '1ST'   , '2ND'   , 'NONE'  ], 
+  [ 'OR'          , '1ST'   , '2ND'   , 'NONE'  ], 
+  [ 'NOT'         , 'BODY'  , 'NONE'  , 'NONE'  ], 
+  [ 'DOT2'        , 'BEG'   , 'END'   , 'STATE' ], 
+  [ 'DOT3'        , 'BEG'   , 'END'   , 'STATE' ], 
+  [ 'FLIP2'       , 'CNT'   , 'BEG'   , 'END'   ], 
+  [ 'FLIP3'       , 'CNT'   , 'BEG'   , 'END'   ], 
+  [ 'RETURN'      , 'STTS'  , 'NONE'  , 'NONE'  ], 
+  [ 'ARGS'        , 'CNT'   , 'REST'  , 'OPT'   ], 
+  [ 'ARGSCAT'     , 'HEAD'  , 'BODY'  , 'NONE'  ], 
+  [ 'ARGSPUSH'    , 'HEAD'  , 'BODY'  , 'NONE'  ], 
+  [ 'CALL'        , 'RECV'  , 'ARGS'  , 'MID'   ], 
+  [ 'FCALL'       , 'ARGS'  , 'MID'   , 'NONE'  ], 
+  [ 'VCALL'       , 'MID'   , 'NONE'  , 'NONE'  ], 
+  [ 'SUPER'       , 'ARGS'  , 'NONE'  , 'NONE'  ], 
+  [ 'ZSUPER'      , 'ARGS'  , 'NONE'  , 'NONE'  ], 
+  # rval holds an object, not a node
+  [ 'SCOPE'       , 'RVAL'  , 'TBL'   , 'NEXT'  ], 
+  [ 'OP_ASGN1'    , 'RECV'  , 'ARGS'  , 'MID'   ], 
+  [ 'OP_ASGN2'    , 'VID'   , 'RECV'  , 'VALUE' ], 
+  [ 'OP_ASGN_AND' , 'HEAD'  , 'VALUE' , 'NONE'  ], 
+  [ 'OP_ASGN_OR'  , 'HEAD'  , 'VALUE' , 'NONE'  ], 
+  [ 'MASGN'       , 'VALUE' , 'HEAD'  , 'ARGS'  ], 
+  [ 'LASGN'       , 'VID'   , 'VALUE' , 'CNT'   ], 
+  [ 'DASGN'       , 'VALUE' , 'VID'   , 'NONE'  ], 
+  [ 'DASGN_CURR'  , 'VALUE' , 'VID'   , 'NONE'  ], 
+  [ 'GASGN'       , 'VID'   , 'VALUE' , 'ENTRY' ], 
+  [ 'IASGN'       , 'VID'   , 'VALUE' , 'NONE'  ], 
+  [ 'CDECL'       , 'VID'   , 'VALUE' , 'NONE'  ], 
+  [ 'CVDECL'      , 'VALUE' , 'VID'   , 'NONE'  ], 
+  [ 'CVASGN'      , 'VALUE' , 'VID'   , 'NONE'  ], 
+  [ 'LVAR'        , 'CNT'   , 'VID'   , 'NONE'  ], 
+  [ 'DVAR'        , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'GVAR'        , 'VID'   , 'ENTRY' , 'NONE'  ], 
+  [ 'IVAR'        , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'CONST'       , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'CVAR'        , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'BLOCK_ARG'   , 'CNT'   , 'NONE'  , 'NONE'  ], 
+  [ 'COLON2'      , 'HEAD'  , 'MID'   , 'NONE'  ], 
+  [ 'COLON3'      , 'MID'   , 'NONE'  , 'NONE'  ], 
+  [ 'NTH_REF'     , 'NTH'   , 'NONE'  , 'NONE'  ], 
+  [ 'BACK_REF'    , 'NTH'   , 'NONE'  , 'NONE'  ], 
+  [ 'HASH'        , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'ZARRAY'      , 'NONE'  , 'NONE'  , 'NONE'  ], 
+  [ 'ARRAY'       , 'ALEN'  , 'HEAD'  , 'NEXT'  ], 
+  [ 'STR'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
+  [ 'DREGX'       , 'LIT'   , 'NEXT'  , 'CFLAG' ], 
+  [ 'DREGX_ONCE'  , 'LIT'   , 'NEXT'  , 'CFLAG' ], 
+  [ 'DSTR'        , 'LIT'   , 'NEXT'  , 'NONE'  ], 
+  [ 'DXSTR'       , 'LIT'   , 'NEXT'  , 'NONE'  ], 
+  [ 'XSTR'        , 'LIT'   , 'NONE'  , 'NONE'  ], 
+  [ 'EVSTR'       , 'LIT'   , 'HEAD'  , 'NEXT'  ], 
+  [ 'LIT'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
+  [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'DEFN'        , 'DEFN'  , 'MID'   , 'NOEX'  ], 
+  [ 'DEFS'        , 'DEFN'  , 'RECV'  , 'MID'   ], 
+  [ 'UNDEF'       , 'MID'   , 'NONE'  , 'NONE'  ], 
+  [ 'ALIAS'       , 'NEW'   , 'OLD'   , 'NONE'  ], 
+  [ 'VALIAS'      , 'NEW'   , 'OLD'   , 'NONE'  ], 
+  [ 'SCLASS'      , 'RECV'  , 'BODY'  , 'NONE'  ], 
+  [ 'DEFINED'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
+  [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
+  [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
+  [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
+  [ 'CREF'        , 'HEAD'  , 'NEXT'  , 'BODY'  ], 
+  [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
+  [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
+  [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
+]
+if RUBY_VERSION_CODE < 180 then
+node_type_descrips.concat [
+  [ 'RESTARGS'    , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'CLASS'       , 'SUPER' , 'CNAME' , 'BODY'  ], 
+  [ 'MODULE'      , 'CNAME' , 'BODY'  , 'NONE'  ], 
+]
+if RUBY_VERSION_CODE >= 170 then
+node_type_descrips.concat [
+  [ 'RESTARY'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'REXPAND'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'REGX'        , 'CFLAG' , 'NONE'  , 'NONE'  ], 
+]
+end
+else # RUBY_VERSION_CODE >= 180
+node_type_descrips.concat [
+  [ 'CLASS'       , 'SUPER' , 'CPATH' , 'BODY'  ], 
+  [ 'MODULE'      , 'CPATH' , 'BODY'  , 'NONE'  ], 
+]
+end
+if C_ALLOCA then
+node_type_descrips.concat [
+  [ 'ALLOCA'      , 'LIT'   , 'VALUE' , 'CNT'   ], 
+]
+end
+node_type_descrips.concat [
+  [ 'LAST'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
+]
+nil
+END
+
+Node_Type_Descrip node_type_descrips_unsorted[] = {
+#ruby <<END
+node_type_descrips.each do |descrip|
+  name = descrip[0]
+  node1 = descrip[1]
+  node2 = descrip[2]
+  node3 = descrip[3]
+
+  puts <<-END
+  { NODE_#{name}, NEN_#{node1}, NEN_#{node2}, NEN_#{node3}, "#{name}" },
+  END
+end
+nil
+END
+};
+
+static Node_Type_Descrip * node_type_descrips[NODE_LAST];
+static int node_type_descrips_initialized = 0;
+
+static void init_node_type_descrips()
+{
+  if(!node_type_descrips_initialized)
+  {
+    Node_Type_Descrip * descrip;
+    memset(node_type_descrips, 0, sizeof(node_type_descrips));
+    for(descrip = node_type_descrips_unsorted;
+        descrip->nt != NODE_LAST;
+        ++descrip)
+    {
+      if(node_type_descrips[descrip->nt])
+      {
+        rb_raise(rb_eRuntimeError, "duplicate entry for %d\n", descrip->nt);
+      }
+      else
+      {
+        node_type_descrips[descrip->nt] = descrip;
+      }
+    }
+    node_type_descrips_initialized = 1;
+  }
+}
+
+/* Given a node, find out the types of the three elements it contains */
+Node_Type_Descrip const * node_type_descrip(enum node_type nt)
+{
+  init_node_type_descrips();
+  if(node_type_descrips[nt])
+  {
+    return node_type_descrips[nt];
+  }
+  else
+  {
+    rb_raise(rb_eArgError, "Unknown node type %d", nt);
+  }
+}
+
