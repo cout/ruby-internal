@@ -1,0 +1,17 @@
+This is nodewrap, a library that provides access to ruby's internal node
+tree, among other things.
+
+See the file LICENSE for license and copyright information.
+
+See the generated documentation (in the doc/ directory) and the examples
+(in the directory example/) for usage.
+
+Some notes about security:
+
+- Data can always be inspected.
+- Methods that could potentially cause a crash if used incorrectly are
+  disallowed with $SAFE >= 2.
+- Methods that could allow access to potentially sensitive data are
+  disallowed with $SAFE >= 4.
+- Methods that load marshalled data do taint checks with $SAFE >= 1.
+

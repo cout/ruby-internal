@@ -279,6 +279,11 @@ static VALUE node_type_to_i(VALUE node_type)
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 {
   NODE * n;
+  if(ruby_safe_level >= 2)
+  {
+    /* adding a method with the wrong node type can cause a crash */
+    rb_raise(rb_eSecurityError, "Insecure: can't add method");
+  }
   if(!rb_obj_is_kind_of(node, rb_cNode))
   {
     rb_raise(rb_eTypeError, "Expected Node for 2nd parameter");
@@ -301,6 +306,11 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 static VALUE method_body(VALUE method)
 {
   struct METHOD * m;
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get method body");
+  }
   Data_Get_Struct(method, struct METHOD, m);
   return wrap_node(m->body);
 }
@@ -315,6 +325,13 @@ static VALUE method_body(VALUE method)
 static VALUE method_dump(VALUE self, VALUE limit)
 {
   struct METHOD * method;
+
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't dump method");
+  }
+
   VALUE arr = rb_ary_new();
   Data_Get_Struct(self, struct METHOD, method);
   rb_ary_push(arr, rb_mod_name(method->klass));
@@ -334,6 +351,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
   rb_ary_push(arr, ID2SYM(method->id));
   rb_ary_push(arr, ID2SYM(method->oid));
   rb_ary_push(arr, method_body(self));
+
   return marshal_dump(arr, limit);
 }
 
@@ -346,6 +364,13 @@ static VALUE method_load(VALUE klass, VALUE str)
   VALUE rarr = marshal_load(str);
   VALUE * arr;
   NODE * n;
+
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't load method");
+  }
 
   Check_Type(rarr, T_ARRAY);
   if(RARRAY(rarr)->len != 6)
@@ -391,6 +416,11 @@ static VALUE method_load(VALUE klass, VALUE str)
 static VALUE proc_body(VALUE proc)
 {
   struct BLOCK * b;
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get proc body");
+  }
   Data_Get_Struct(proc, struct BLOCK, b);
   return wrap_node(b->body);
 }
@@ -401,6 +431,11 @@ static VALUE proc_body(VALUE proc)
 static VALUE proc_var(VALUE proc)
 {
   struct BLOCK * b;
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get proc var");
+  }
   Data_Get_Struct(proc, struct BLOCK, b);
   return wrap_node(b->var);
 }
@@ -412,6 +447,13 @@ static VALUE proc_dump(VALUE self, VALUE limit)
 {
   struct BLOCK * b;
   VALUE body, var, arr;
+
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't dump proc");
+  }
+
   Data_Get_Struct(self, struct BLOCK, b);
   body = wrap_node(b->body);
   var = wrap_node(b->var);
@@ -421,6 +463,7 @@ static VALUE proc_dump(VALUE self, VALUE limit)
 
 static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 {
+  /* Calling eval will do a security check */
   VALUE new_proc = rb_funcall(
       rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
   struct BLOCK * b;
@@ -438,6 +481,14 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 static VALUE proc_load(VALUE klass, VALUE str)
 {
   VALUE arr = marshal_load(str);
+
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't load proc");
+  }
+
   Check_Type(arr, T_ARRAY);
   NODE * body = unwrap_node(RARRAY(arr)->ptr[0]);
   NODE * var = unwrap_node(RARRAY(arr)->ptr[1]);
@@ -451,6 +502,9 @@ static VALUE proc_unbind(VALUE self)
 {
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
+  /* no need for a security check to unbind a proc -- though without the
+   * ability to bind, this doesn't seem very useful.
+   */
   return create_proc(rb_cUnboundProc, Qnil, b->body, b->var);
 }
 
@@ -462,6 +516,7 @@ static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
+  /* create_proc will do a security check */
   return create_proc(rb_cProc, binding, b->body, b->var);
 }
 
@@ -492,6 +547,11 @@ static VALUE unboundproc_binding(VALUE self)
 static VALUE binding_body(VALUE binding)
 {
   struct BLOCK * b;
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get binding body");
+  }
   Data_Get_Struct(binding, struct BLOCK, b);
   return wrap_node(b->body);
 }
@@ -509,6 +569,13 @@ static VALUE node_eval(VALUE node, VALUE self)
   /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
   NODE * n = unwrap_node(node);
   struct BLOCK * b;
+
+  if(ruby_safe_level >= 2)
+  {
+    /* evaluating a node can cause a crash */
+    rb_raise(rb_eSecurityError, "Insecure: can't add method");
+  }
+
   VALUE proc = create_proc(rb_cProc, Qnil, n, 0);
   Data_Get_Struct(proc, struct BLOCK, b);
   b->self = self;
@@ -627,8 +694,16 @@ static VALUE node_to_hash(VALUE self)
 static VALUE node_dump(VALUE self, VALUE limit)
 {
   NODE * n;
-  VALUE node_hash = node_to_hash(self);
-  VALUE arr = rb_ary_new();
+  VALUE node_hash, arr;
+
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't dump node");
+  }
+
+  node_hash = node_to_hash(self);
+  arr = rb_ary_new();
   Data_Get_Struct(self, NODE, n);
   rb_ary_push(arr, node_id(n));
   rb_ary_push(arr, node_hash);
@@ -641,10 +716,19 @@ static VALUE node_dump(VALUE self, VALUE limit)
 static VALUE node_load(VALUE klass, VALUE str)
 {
   NODE * n = NEW_NIL();
-  VALUE arr = marshal_load(str);
-  VALUE node_hash = rb_ary_pop(arr);
-  VALUE node_id = rb_ary_pop(arr);
-  VALUE id_hash = rb_hash_new();
+  VALUE arr, node_hash, node_id, id_hash;
+
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't load node");
+  }
+
+  arr = marshal_load(str);
+  node_hash = rb_ary_pop(arr);
+  node_id = rb_ary_pop(arr);
+  id_hash = rb_hash_new();
   load_node_from_hash(n, node_id, node_hash, id_hash);
   /* TODO: Need a free function in this case */
   return wrap_node(n);
@@ -786,13 +870,21 @@ static VALUE class_variable_hash(VALUE module)
  */
 static VALUE module_dump(VALUE self, VALUE limit)
 {
-  VALUE flags = INT2NUM(RBASIC(self)->flags);
-  VALUE instance_methods = instance_method_hash(self);
-  VALUE class_variables = class_variable_hash(self);
-  VALUE included_modules = included_modules_list(self);
-  VALUE superclass = superclass_name(self);
-  VALUE metaclass;
-  VALUE arr = rb_ary_new();
+  VALUE flags, instance_methods, class_variables;
+  VALUE included_modules, superclass, metaclass, arr;
+
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't dump module");
+  }
+
+  flags = INT2NUM(RBASIC(self)->flags);
+  instance_methods = instance_method_hash(self);
+  class_variables = class_variable_hash(self);
+  included_modules = included_modules_list(self);
+  superclass = superclass_name(self);
+  arr = rb_ary_new();
 
   if(FL_TEST(self, FL_SINGLETON))
   {
@@ -902,14 +994,23 @@ static void add_class_variables(VALUE module, VALUE class_variables)
  */
 static VALUE module_load(VALUE klass, VALUE str)
 {
-  VALUE arr = marshal_load(str);
-  VALUE metaclass = rb_ary_pop(arr);
-  VALUE superclass_name = rb_ary_pop(arr);
-  VALUE included_modules = rb_ary_pop(arr);
-  VALUE class_variables = rb_ary_pop(arr);
-  VALUE instance_methods = rb_ary_pop(arr);
-  VALUE flags = rb_ary_pop(arr);
-  VALUE module;
+  VALUE arr, metaclass, superclass_name, included_modules;
+  VALUE class_variables, instance_methods, flags, module;
+
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't load module");
+  }
+
+  arr = marshal_load(str);
+  metaclass = rb_ary_pop(arr);
+  superclass_name = rb_ary_pop(arr);
+  included_modules = rb_ary_pop(arr);
+  class_variables = rb_ary_pop(arr);
+  instance_methods = rb_ary_pop(arr);
+  flags = rb_ary_pop(arr);
 
   if(RTEST(superclass_name))
   {
@@ -980,6 +1081,12 @@ extern NODE *ruby_eval_tree;
 
 static VALUE ruby_eval_tree_begin_getter()
 {
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get eval tree");
+  }
+
   if(ruby_eval_tree_begin)
   {
     return wrap_node(ruby_eval_tree_begin);
@@ -997,6 +1104,12 @@ static void ruby_eval_tree_begin_setter()
 
 static VALUE ruby_eval_tree_getter()
 {
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get eval tree");
+  }
+
   if(ruby_eval_tree)
   {
     return wrap_node(ruby_eval_tree);
