@@ -1096,14 +1096,11 @@ void Init_nodewrap(void)
    * constants can be passed to Module#add_method as modifiers to the
    * method being added.
    * 
-   * [+PUBLIC+]     Method is public.  Cannot be combined with private
-   *                or protected.
+   * [+PUBLIC+]     Method is public.
    * [+UNDEF+]      Method is undefined.
    * [+CFUNC+]      Method is a C function.
-   * [+PRIVATE+]    Method is private.  Cannot be combined with public
-   *                or protected.
-   * [+PROTECTED+]  Method is protected.  Cannot be combined with public
-   *                or private.
+   * [+PRIVATE+]    Method is private.
+   * [+PROTECTED+]  Method is protected.
    */
   VALUE rb_mNoex = rb_define_module("Noex");
   rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));

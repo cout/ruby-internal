@@ -32,7 +32,7 @@
 #     |     |-rest = -1
 #     |     +-opt = false
 #     |-mid = :foo
-#     +-noex = 2
+#     +-noex = PRIVATE
 
 require 'nodepp'
 
@@ -43,7 +43,7 @@ set_trace_func proc {
   end
   if n then
     n.pretty_print($stderr)
+    exit
   end
-  exit if n
 }
 
