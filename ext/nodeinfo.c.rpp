@@ -214,10 +214,12 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
       else
       {
+        size_t len, j;
+        ID * tmp_tbl;
+
         Check_Type(v, T_ARRAY);
-        size_t len = RARRAY(v)->len;
-        ID * tmp_tbl = ALLOCA_N(ID, len + 3);
-        size_t j;
+        len = RARRAY(v)->len;
+        tmp_tbl = ALLOCA_N(ID, len + 3);
         tmp_tbl[0] = (ID)(len + 2);
         tmp_tbl[1] = (ID)('_');
         tmp_tbl[2] = (ID)('~');
@@ -400,21 +402,24 @@ void define_node_subclass_methods()
     end
     node_type = "rb_c#{name}"
     puts <<-END
-  VALUE #{node_type} = rb_define_class_under(rb_cNode, "#{name}", rb_cNode);
-  members = rb_ary_new();
-  rb_cNodeSubclass[NODE_#{descrip.name}] = #{node_type};
-  rb_iv_set(#{node_type}, "__member__", members);
-  rb_define_singleton_method(#{node_type}, "members", node_s_members, 0);
+  {
+    VALUE #{node_type} = rb_define_class_under(rb_cNode, "#{name}", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_#{descrip.name}] = #{node_type};
+    rb_iv_set(#{node_type}, "__member__", members);
+    rb_define_singleton_method(#{node_type}, "members", node_s_members, 0);
     END
     [descrip.node1, descrip.node2, descrip.node3].each do |nen|
       next if nen == 'NONE'
       nen = nen.downcase
       puts <<-END
-  rb_define_method(#{node_type}, "#{nen}", node_#{nen}, 0);
-  rb_ary_push(members, rb_str_new2("#{nen}"));
+    rb_define_method(#{node_type}, "#{nen}", node_#{nen}, 0);
+    rb_ary_push(members, rb_str_new2("#{nen}"));
       END
     end
-    puts ''
+    puts <<-END
+  }
+    END
   end
   nil
 END

@@ -219,8 +219,10 @@ static VALUE node_nd_line(VALUE self)
 static VALUE node_nd_type(VALUE self)
 {
   NODE * n;
+  const Node_Type_Descrip * descrip;
   Data_Get_Struct(self, NODE, n);
-  Node_Type_Descrip const * descrip = node_type_descrip(nd_type(n));
+  rb_check_type((VALUE)(self),0x22);
+  descrip = node_type_descrip(nd_type(n));
   return rb_struct_new(
       rb_cNodeType,
       rb_str_new2(descrip->name),
@@ -342,6 +344,7 @@ static VALUE method_body(VALUE method)
 static VALUE method_dump(VALUE self, VALUE limit)
 {
   struct METHOD * method;
+  VALUE arr;
 
   if(ruby_safe_level >= 4)
   {
@@ -349,7 +352,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
     rb_raise(rb_eSecurityError, "Insecure: can't dump method");
   }
 
-  VALUE arr = rb_ary_new();
+  arr = rb_ary_new();
   Data_Get_Struct(self, struct METHOD, method);
   rb_ary_push(arr, rb_mod_name(method->klass));
 #if RUBY_VERSION_CODE >= 180
@@ -381,6 +384,7 @@ static VALUE method_load(VALUE klass, VALUE str)
   VALUE rarr = marshal_load(str);
   VALUE * arr;
   NODE * n;
+  VALUE retval;
 
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
@@ -395,7 +399,7 @@ static VALUE method_load(VALUE klass, VALUE str)
     rb_raise(rb_eArgError, "corrupt data");
   }
 
-  VALUE retval = rb_funcall(
+  retval = rb_funcall(
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("id")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY(rarr)->ptr;
@@ -498,6 +502,7 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 static VALUE proc_load(VALUE klass, VALUE str)
 {
   VALUE arr = marshal_load(str);
+  NODE * body, * var;
 
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
@@ -507,8 +512,8 @@ static VALUE proc_load(VALUE klass, VALUE str)
   }
 
   Check_Type(arr, T_ARRAY);
-  NODE * body = unwrap_node(RARRAY(arr)->ptr[0]);
-  NODE * var = unwrap_node(RARRAY(arr)->ptr[1]);
+  body = unwrap_node(RARRAY(arr)->ptr[0]);
+  var = unwrap_node(RARRAY(arr)->ptr[1]);
   return create_proc(rb_cUnboundProc, Qnil, body, var);
 }
 
@@ -586,6 +591,7 @@ static VALUE node_eval(VALUE node, VALUE self)
   /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
   NODE * n = unwrap_node(node);
   struct BLOCK * b;
+  VALUE proc;
 
   if(ruby_safe_level >= 2)
   {
@@ -593,7 +599,7 @@ static VALUE node_eval(VALUE node, VALUE self)
     rb_raise(rb_eSecurityError, "Insecure: can't add method");
   }
 
-  VALUE proc = create_proc(rb_cProc, Qnil, n, 0);
+  proc = create_proc(rb_cProc, Qnil, n, 0);
   Data_Get_Struct(proc, struct BLOCK, b);
   b->self = self;
   return rb_funcall(proc, rb_intern("call"), 0);
@@ -608,6 +614,8 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
 {
   VALUE s1 = Qnil, s2 = Qnil, s3 = Qnil;
   Node_Type_Descrip const *descrip = node_type_descrip(nd_type(n));
+  VALUE nd_file;
+  VALUE arr;
 
   if(RTEST(rb_hash_aref(node_hash, node_id(n))))
   {
@@ -626,13 +634,13 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
   s2 = dump_node_elem(descrip->n2, n, node_hash);
   s3 = dump_node_elem(descrip->n3, n, node_hash);
 
-  VALUE nd_file = Qnil;
+  nd_file = Qnil;
   if(n->nd_file)
   {
     nd_file = rb_str_new2(n->nd_file);
   }
 
-  VALUE arr = rb_ary_new();
+  arr = rb_ary_new();
   rb_ary_push(arr, INT2NUM(n->flags));
   rb_ary_push(arr, nd_file);
   rb_ary_push(arr, s1);
@@ -699,8 +707,9 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
 static VALUE node_to_hash(VALUE self)
 {
   NODE * n;
+  VALUE node_hash;
   Data_Get_Struct(self, NODE, n);
-  VALUE node_hash = rb_hash_new();
+  node_hash = rb_hash_new();
   dump_node_to_hash(n, node_hash);
   return node_hash;
 }
@@ -888,7 +897,7 @@ static VALUE class_variable_hash(VALUE module)
 static VALUE module_dump(VALUE self, VALUE limit)
 {
   VALUE flags, instance_methods, class_variables;
-  VALUE included_modules, superclass, metaclass, arr;
+  VALUE included_modules, superclass, metaclass, arr, str;
 
   if(ruby_safe_level >= 4)
   {
@@ -919,41 +928,46 @@ static VALUE module_dump(VALUE self, VALUE limit)
   rb_ary_push(arr, superclass);
   rb_ary_push(arr, metaclass);
 
-  VALUE str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
+  str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
 
 #if RUBY_VERSION_CODE >= 180
-  /* On Ruby 1.8, there is a check in marshal_dump() to ensure that the
-   * object being dumped has no modifications to its singleton class
-   * (e.g. no singleton instance variables, and no singleton methods
-   * defined).  Since we need to dump the class's singleton class in
-   * order to dump class methods, we need a way around this restriction.
-   * The solution found here temporarily removes the singleton instance
-   * variables and singleton methods while the class is being dumped,
-   * and sets a special singleton instance variable that restores the
-   * tables when dumping is complete.  A hack for sure, but it seems to
-   * work.
-   */
-  struct RClass * singleton_class = RCLASS(CLASS_OF(self));
-  if(!singleton_class->iv_tbl)
   {
-    rb_raise(
-        rb_eTypeError,
-        "can't dump singleton class on Ruby 1.8 without iv_tbl");
+    /* On Ruby 1.8, there is a check in marshal_dump() to ensure that
+     * the object being dumped has no modifications to its singleton
+     * class (e.g. no singleton instance variables, and no singleton
+     * methods defined).  Since we need to dump the class's singleton
+     * class in order to dump class methods, we need a way around this
+     * restriction.  The solution found here temporarily removes the
+     * singleton instance variables and singleton methods while the
+     * class is being dumped, and sets a special singleton instance
+     * variable that restores the tables when dumping is complete.  A
+     * hack for sure, but it seems to work.
+     */
+    struct RClass * singleton_class = RCLASS(CLASS_OF(self));
+    struct Class_Restorer * class_restorer;
+    VALUE obj;
+
+    if(!singleton_class->iv_tbl)
+    {
+      rb_raise(
+          rb_eTypeError,
+          "can't dump singleton class on Ruby 1.8 without iv_tbl");
+    }
+
+    class_restorer = ALLOC(struct Class_Restorer);
+    class_restorer->klass = self;
+    class_restorer->m_tbl = *singleton_class->m_tbl;
+    class_restorer->iv_tbl = *singleton_class->iv_tbl;
+    class_restorer->thread_critical = rb_thread_critical;
+    obj = Data_Wrap_Struct(
+        rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
+        class_restorer);
+    rb_iv_set(self, "__class_restorer__", obj);
+
+    singleton_class->iv_tbl->num_entries = 1;
+    singleton_class->m_tbl->num_entries = 0;
+    rb_thread_critical = 1;
   }
-
-  struct Class_Restorer * class_restorer = ALLOC(struct Class_Restorer);
-  class_restorer->klass = self;
-  class_restorer->m_tbl = *singleton_class->m_tbl;
-  class_restorer->iv_tbl = *singleton_class->iv_tbl;
-  class_restorer->thread_critical = rb_thread_critical;
-  VALUE obj = Data_Wrap_Struct(
-      rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
-      class_restorer);
-  rb_iv_set(self, "__class_restorer__", obj);
-
-  singleton_class->iv_tbl->num_entries = 1;
-  singleton_class->m_tbl->num_entries = 0;
-  rb_thread_critical = 1;
 #endif
 
   return str;
@@ -1031,8 +1045,9 @@ static VALUE module_load(VALUE klass, VALUE str)
 
   if(RTEST(superclass_name))
   {
+    VALUE superclass;
     rb_check_type(superclass_name, T_STRING);
-    VALUE superclass = rb_funcall(
+    superclass = rb_funcall(
         lookup_module_proc,
         rb_intern("call"),
         1,
@@ -1069,11 +1084,13 @@ static VALUE module_load(VALUE klass, VALUE str)
 static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
 {
   struct Class_Restorer * class_restorer;
+  struct RClass * klass;
+
   Data_Get_Struct(
       ruby_class_restorer,
       struct Class_Restorer,
       class_restorer);
-  struct RClass * klass = RCLASS(class_restorer->klass);
+  klass = RCLASS(class_restorer->klass);
   *klass->m_tbl = class_restorer->m_tbl;
   *klass->iv_tbl = class_restorer->iv_tbl;
   rb_thread_critical = class_restorer->thread_critical;
@@ -1199,6 +1216,8 @@ VALUE singleton_class(VALUE self)
 
 void Init_nodewrap(void)
 {
+  VALUE rb_cBinding, rb_cModule, rb_mNoex;
+
   rb_cNode = rb_define_class("Node", rb_cObject);
 
 #if RUBY_VERSION_CODE >= 180
@@ -1255,11 +1274,11 @@ void Init_nodewrap(void)
   rb_define_singleton_method(rb_cUnboundMethod, "_load", method_load, 1);
 
   /* For rdoc: rb_cBinding = rb_define_class("Binding", rb_cObject) */
-  VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
+  rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
   rb_define_method(rb_cBinding, "body", binding_body, 0);
 
   /* For rdoc: rb_cModule = rb_define_class("Module", rb_cObject) */
-  VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
+  rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
 
   lookup_module_proc = rb_eval_string(lookup_module_str);
@@ -1299,7 +1318,7 @@ void Init_nodewrap(void)
    * [+NOSUPER+]    ???
    * [+MASK+]       ???
    */
-  VALUE rb_mNoex = rb_define_module("Noex");
+  rb_mNoex = rb_define_module("Noex");
   rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));
   rb_define_const(rb_mNoex, "UNDEF",     INT2NUM(NOEX_UNDEF));
   rb_define_const(rb_mNoex, "PRIVATE",   INT2NUM(NOEX_PRIVATE));
