@@ -1,5 +1,6 @@
 #include "ruby.h"
 #include "node.h"
+#include "st.h"
 #include "nodeinfo.h"
 #include "evalinfo.h"
 #include "nodewrap.h"
@@ -8,6 +9,9 @@
 static VALUE rb_cNode = Qnil;
 static VALUE rb_mMarshal;
 static VALUE node_dump_fmt = Qnil;
+
+// ---------------------------------------------------------------------
+// Node methods
 
 static VALUE node_allocate(VALUE klass)
 {
@@ -67,15 +71,21 @@ static VALUE method_node(VALUE self, VALUE method)
   return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, m->body);
 }
 
-VALUE marshal_dump(VALUE obj)
+// ---------------------------------------------------------------------
+// Marshalling
+
+VALUE marshal_dump(VALUE obj, VALUE limit)
 {
-  return rb_funcall(rb_mMarshal, rb_intern("dump"), 1, obj);
+  return rb_funcall(rb_mMarshal, rb_intern("dump"), 2, obj, limit);
 }
 
 VALUE marshal_load(VALUE obj)
 {
   return rb_funcall(rb_mMarshal, rb_intern("load"), 1, obj);
 }
+
+// ---------------------------------------------------------------------
+// Node marshalling
 
 void dump_node_to_hash(NODE * n, VALUE node_hash)
 {
@@ -180,7 +190,7 @@ static VALUE node_dump(VALUE self, VALUE limit)
   Data_Get_Struct(self, NODE, n);
   rb_ary_push(arr, node_id(n));
   rb_ary_push(arr, node_hash);
-  return marshal_dump(arr);
+  return marshal_dump(arr, limit);
 }
 
 static VALUE node_load(VALUE klass, VALUE str)
@@ -194,6 +204,231 @@ static VALUE node_load(VALUE klass, VALUE str)
   // TODO: Need a free function in this case
   return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
 }
+
+// ---------------------------------------------------------------------
+// Class marshalling
+
+static VALUE constants_hash(VALUE module)
+{
+  VALUE constants = rb_hash_new();
+#if RUBY_VERSION_CODE > 170
+  VALUE constants_list = rb_const_list(rb_mod_const_at(mod, 0));
+#else
+  VALUE constants_list = rb_mod_const_at(module, rb_ary_new());
+#endif
+  size_t j;
+  VALUE v;
+  ID id;
+
+  for(j = 0; j < RARRAY(constants_list)->len; ++j)
+  {
+    id = rb_intern(STR2CSTR(RARRAY(constants_list)->ptr[j]));
+    v = rb_const_get(module, id);
+    rb_hash_aset(constants, ID2SYM(id), v);
+  }
+
+  return constants;
+}
+
+static VALUE generate_method_hash(VALUE module, VALUE method_list)
+{
+  VALUE methods = rb_hash_new();
+  size_t j;
+  ID id;
+  NODE * body;
+  char const * s;
+  VALUE v;
+
+  for(j = 0; j < RARRAY(method_list)->len; ++j)
+  {
+    s = STR2CSTR(RARRAY(method_list)->ptr[j]);
+    id = rb_intern(s);
+    if(!st_lookup(RCLASS(module)->m_tbl, id, &body))
+    {
+      rb_raise(
+          rb_eArgError,
+          "module has method %s but I couldn't find it!",
+          s);
+    }
+    v = Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, body);
+    rb_hash_aset(methods, ID2SYM(id), v);
+  }
+
+  return methods;
+}
+
+static VALUE instance_method_hash(VALUE module)
+{
+  VALUE instance_method_list =
+    rb_class_instance_methods(0, NULL, module);
+  return generate_method_hash(module, instance_method_list);
+}
+
+static VALUE included_modules_list(VALUE module)
+{
+  VALUE included_modules = rb_mod_included_modules(module);
+  VALUE included_module_list = rb_ary_new();
+  size_t j;
+
+  for(j = 0; j < RARRAY(included_modules)->len; ++j)
+  {
+    rb_ary_push(
+        included_module_list,
+        rb_mod_name(RARRAY(included_modules)->ptr[j]));
+  }
+
+  return included_module_list;
+}
+
+static VALUE superclass_name(VALUE module)
+{
+  if(TYPE(module) == T_MODULE)
+  {
+    return Qnil;
+  }
+  else
+  {
+    VALUE super = RCLASS(module)->super;
+
+    while(TYPE(super) == T_ICLASS)
+    {
+      super = RCLASS(super)->super;
+    }
+
+    if(!super)
+    {
+      return Qnil;
+    }
+
+    return rb_mod_name(super);
+  }
+}
+
+static VALUE class_variable_hash(VALUE module)
+{
+  return rb_hash_new(); // TODO
+}
+
+static VALUE module_dump(VALUE self, VALUE limit)
+{
+  VALUE flags = INT2NUM(RBASIC(self)->flags);
+  VALUE constants = constants_hash(self);
+  VALUE instance_methods = instance_method_hash(self);
+  VALUE class_variables = class_variable_hash(self);
+  VALUE included_modules = included_modules_list(self);
+  VALUE superclass = superclass_name(self);
+  VALUE metaclass;
+  VALUE arr = rb_ary_new();
+
+  if(FL_TEST(self, FL_SINGLETON))
+  {
+    metaclass = Qnil;
+  }
+  else
+  {
+    metaclass = rb_singleton_class(self);
+  }
+
+  rb_ary_push(arr, flags);
+  rb_ary_push(arr, constants);
+  rb_ary_push(arr, instance_methods);
+  rb_ary_push(arr, class_variables);
+  rb_ary_push(arr, included_modules);
+  rb_ary_push(arr, superclass);
+  rb_ary_push(arr, metaclass);
+  return marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
+}
+
+static void include_modules(module, included_modules)
+{
+  size_t j;
+  VALUE v;
+  ID id;
+
+  rb_check_type(included_modules, T_ARRAY);
+  for(j = 0; j < RARRAY(included_modules)->len; ++j)
+  {
+    id = rb_intern(STR2CSTR(RARRAY(included_modules)->ptr[j]));
+    v = rb_const_get(rb_cObject, id);
+    rb_funcall(module, rb_intern("include"), 1, v);
+  }
+}
+
+static void add_method_iter(VALUE name, VALUE value, VALUE module)
+{
+  NODE * n;
+  rb_check_type(name, T_SYMBOL);
+  // TODO: Check that this is a node
+  Data_Get_Struct(value, NODE, n);
+  rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
+}
+
+static void add_methods(VALUE module, VALUE methods)
+{
+  rb_check_type(methods, T_HASH);
+  st_foreach(RHASH(methods)->tbl, add_method_iter, module);
+}
+
+static int add_constant_iter(VALUE name, VALUE value, VALUE module)
+{
+  rb_check_type(name, T_SYMBOL);
+  rb_const_set(module, SYM2ID(name), value);
+  return ST_CONTINUE;
+}
+
+static void add_constants(VALUE module, VALUE constants)
+{
+  rb_check_type(constants, T_HASH);
+  st_foreach(RHASH(constants)->tbl, add_constant_iter, module);
+}
+
+static void add_class_variables(VALUE module, VALUE class_variables)
+{
+  rb_check_type(class_variables, T_HASH);
+  // TODO
+}
+
+static VALUE module_load(VALUE klass, VALUE str)
+{
+  VALUE arr = marshal_load(str);
+  VALUE metaclass = rb_ary_pop(arr);
+  VALUE superclass = rb_ary_pop(arr);
+  VALUE included_modules = rb_ary_pop(arr);
+  VALUE class_variables = rb_ary_pop(arr);
+  VALUE instance_methods = rb_ary_pop(arr);
+  VALUE constants = rb_ary_pop(arr);
+  VALUE flags = rb_ary_pop(arr);
+  VALUE module;
+
+  if(RTEST(superclass))
+  {
+    rb_check_type(superclass, T_STRING);
+    module = rb_class_new(rb_const_get(
+            rb_cObject,
+            rb_intern(STR2CSTR(superclass))));
+  }
+  else
+  {
+    module = rb_module_new();
+  }
+
+  RBASIC(module)->flags = NUM2INT(flags);
+  include_modules(module, included_modules);
+  add_class_variables(module, class_variables);
+  add_methods(module, instance_methods);
+  add_constants(module, constants);
+
+  if(RTEST(metaclass))
+  {
+    rb_singleton_class_attached(metaclass, module);
+    RBASIC(module)->klass = metaclass;
+  }
+
+  return module;
+}
+
+// ---------------------------------------------------------------------
+// Initialization
 
 void Init_nodewrap(void)
 {
@@ -215,6 +450,9 @@ void Init_nodewrap(void)
 
   rb_define_singleton_method(rb_cNode, "method_node", method_node, 1);
   rb_define_method(rb_cModule, "add_method", add_method, 3);
+
+  rb_define_method(rb_cModule, "_dump", module_dump, 1);
+  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
 
   node_dump_fmt =
     rb_str_new2("@flags=%d @nd_file=%s @s1=%s @s2=%s @s3=%s");

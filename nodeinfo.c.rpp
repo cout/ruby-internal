@@ -14,6 +14,8 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case node_elem_name
     when "rval"
       puts "return dump_node_elem(NEN_HEAD, n, node_hash);"
+    when "noex"
+      puts "return INT2NUM(n->nd_noex);"
     else
       case node_elem_ref
       when /\.node$/
@@ -71,7 +73,11 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
     puts "case NEN_#{node_elem_name.upcase}:"
     case node_elem_name
     when "rval"
-      puts "return load_node_elem(NEN_HEAD, v, n, node_hash, id_hash);"
+      puts "load_node_elem(NEN_HEAD, v, n, node_hash, id_hash);"
+      puts "return;"
+    when "noex"
+      puts "n->nd_noex = NUM2INT(v);"
+      puts "return;"
     else
       case node_elem_ref
       when /\.node$/

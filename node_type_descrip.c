@@ -1,6 +1,7 @@
 #include "node_type_descrip.h"
 
 static Node_Type_Descrip node_type_descrips[] = {
+  { NODE_METHOD, NEN_NOEX, NEN_BODY, NEN_CNT },
   { NODE_BLOCK, NEN_NEXT, NEN_HEAD, NEN_NONE },
   { NODE_POSTEXE, NEN_NONE, NEN_NONE, NEN_NONE },
   { NODE_BEGIN, NEN_BODY, NEN_NONE, NEN_NONE },
