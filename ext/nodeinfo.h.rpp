@@ -16,7 +16,6 @@ enum Node_Elem_Name
   end
   nil
 END
-  NEN_COUNT_
 };
 
 VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash);

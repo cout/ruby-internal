@@ -19,8 +19,8 @@ static Node_Type_Descrip node_type_descrips[] = {
   { NODE_WHILE, NEN_COND, NEN_BODY, NEN_NEXT },
   { NODE_UNTIL, NEN_STATE, NEN_COND, NEN_BODY },
   { NODE_BLOCK_PASS, NEN_NONE, NEN_NONE, NEN_NONE },
-  { NODE_ITER, NEN_VAR, NEN_BODY, NEN_NONE },
-  { NODE_FOR, NEN_VAR, NEN_BODY, NEN_NONE },
+  { NODE_ITER, NEN_VAR, NEN_BODY, NEN_ITER },
+  { NODE_FOR, NEN_VAR, NEN_BODY, NEN_ITER },
   { NODE_BREAK, NEN_STTS, NEN_NONE, NEN_NONE },
   { NODE_NEXT, NEN_STTS, NEN_NONE, NEN_NONE },
   { NODE_REDO, NEN_NONE, NEN_NONE, NEN_NONE },
@@ -102,6 +102,7 @@ static Node_Type_Descrip node_type_descrips[] = {
   { NODE_LAST, NEN_NONE, NEN_NONE, NEN_NONE },
 };
 
+/* Given a node, find out the types of the three elements it contains */
 Node_Type_Descrip const * node_type_descrip(enum node_type nt)
 {
   Node_Type_Descrip *descrip;

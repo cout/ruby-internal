@@ -119,7 +119,14 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
     return;
   }
 
-  Check_Type(n, T_NODE);
+  if(TYPE(n) != T_NODE)
+  {
+    rb_raise(
+        rb_eTypeError,
+        "wrong argument type %s (expected Node)",
+        rb_class2name(CLASS_OF(n)));
+  }
+  /* Check_Type(n, T_NODE); */
 
   s1 = dump_node_elem(descrip->n1, n, node_hash);
   s2 = dump_node_elem(descrip->n2, n, node_hash);
@@ -162,7 +169,6 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   nd_file = STR2CSTR(rb_nd_file);
   nd_file_len = RSTRING(rb_nd_file)->len; 
 
-
   /* The id_hash is a temporary, so it is invalidated if an exception is
    * raised.
    */
@@ -197,15 +203,6 @@ static VALUE node_to_hash(VALUE self)
   VALUE node_hash = rb_hash_new();
   dump_node_to_hash(n, node_hash);
   return node_hash;
-}
-
-static VALUE node_from_hash(VALUE klass, VALUE node_id, VALUE node_hash)
-{
-  NODE * n = NEW_NIL();
-  VALUE id_hash = rb_hash_new();
-  load_node_from_hash(n, node_id, node_hash, id_hash);
-  /* TODO: Need a free function in this case */
-  return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
 }
 
 /*
@@ -258,7 +255,7 @@ static char const * insert_module_sorted_str =
   "    modules.push(m)\n"
   "  end\n"
   "}\n";
-static VALUE insert_module_sorted_proc;
+static VALUE insert_module_sorted_proc = Qnil;
 
 static VALUE constants_hash(VALUE module)
 {
@@ -402,17 +399,27 @@ static VALUE module_dump(VALUE self, VALUE limit)
   return marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
 }
 
+static char const * lookup_module_str = 
+  "proc { |name|\n"
+  "  o = Object\n"
+  "  name.split('::').each do |subname|\n"
+  "    o = o.const_get(subname)\n"
+  "  end\n"
+  "  o\n"
+  "}\n";
+static VALUE lookup_module_proc = Qnil;
+
 static void include_modules(module, included_modules)
 {
   size_t j;
   VALUE v;
-  ID id;
+  VALUE name;
 
   rb_check_type(included_modules, T_ARRAY);
   for(j = 0; j < RARRAY(included_modules)->len; ++j)
   {
-    id = rb_intern(STR2CSTR(RARRAY(included_modules)->ptr[j]));
-    v = rb_const_get(rb_cObject, id);
+    name = RARRAY(included_modules)->ptr[j];
+    v = rb_funcall(lookup_module_proc, rb_intern("call"), 1, name);
     rb_funcall(module, rb_intern("include"), 1, v);
   }
 }
@@ -533,5 +540,6 @@ void Init_nodewrap(void)
     rb_str_new2("@flags=%d @nd_file=%s @s1=%s @s2=%s @s3=%s");
 
   insert_module_sorted_proc = rb_eval_string(insert_module_sorted_str);
+  lookup_module_proc = rb_eval_string(lookup_module_str);
 }
 
