@@ -4,6 +4,8 @@
 require 'nodewrap'
 
 module Noex
+  # Return a string representing the given integer as a noex value.
+  #
   def stringify(noex)
     Noex.constants.each do |constant|
       return constant if const_get(constant) == noex

@@ -153,6 +153,14 @@ static VALUE lookup_module_proc = Qnil;
  * ---------------------------------------------------------------------
  */
 
+/*
+ * Document-class: Node
+ *
+ * Node is a wrapper for Ruby's Nodes, which are not objects.  Nodes
+ * can be obtained from many of the other methods in the nodewrap
+ * library (see Method#body and Proc#body, for example).
+ */
+
 #if RUBY_VERSION_CODE >= 180
 /*
  * Allocate a new node.
