@@ -14,7 +14,7 @@ end
 
 NODE_TYPE_DESCRIPS = [
   [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'CNT'   ], 
-  [ 'BLOCK'       , 'NEXT'  , 'HEAD'  , 'NONE'  ], 
+  [ 'BLOCK'       , 'HEAD'  , 'NEXT'  , 'NONE'  ], 
   [ 'POSTEXE'     , 'NONE'  , 'NONE'  , 'NONE'  ], 
   [ 'BEGIN'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
   [ 'MATCH'       , 'HEAD'  , 'NONE'  , 'NONE'  ], 
