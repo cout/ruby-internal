@@ -526,6 +526,9 @@ static VALUE class_variable_hash(VALUE module)
   return class_variables;
 }
 
+/*
+ * Dump a module to a string.
+ */
 static VALUE module_dump(VALUE self, VALUE limit)
 {
   VALUE flags = INT2NUM(RBASIC(self)->flags);
@@ -649,6 +652,9 @@ static void add_class_variables(VALUE module, VALUE class_variables)
   st_foreach(RHASH(class_variables)->tbl, set_cvar_from_hash, module);
 }
 
+/*
+ * Load a module from a string.
+ */
 static VALUE module_load(VALUE klass, VALUE str)
 {
   VALUE arr = marshal_load(str);
