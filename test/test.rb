@@ -153,7 +153,25 @@ class TC_Nodewrap < Test::Unit::TestCase
         add_method(:foo, n2, 0)
       end
       obj2 = klass2.new
-      assert_equal o.foo(), obj2.foo()
+
+      orig_result = nil
+      orig_exc = nil
+      begin
+        orig_result = o.foo() { 17 }
+      rescue Exception => exc
+        orig_exc = exc
+      end
+
+      dup_result = nil
+      dup_exc = nil
+      begin
+        dup_result = o.foo() { 17 }
+      rescue Exception => exc
+        dup_exc = exc
+      end
+
+      assert_equal orig_result, dup_result
+      assert_equal orig_exc, dup_exc
     }
     define_method "test_#{node_name}", p
   end

@@ -204,7 +204,7 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   /* Note that the garbage collector CAN be invoked at this point, so
    * any node object the GC knowns about must be in a consistent state.
    */
-  nd_file_buf = ALLOC_N(char, nd_file_len + 1);
+  nd_file_buf = rb_source_filename(nd_file);
 
   /* 1) We must NOT get an exception from here on out, since we are
    * modifying a live node, and so nd_file_buf won't be leaked.
@@ -214,7 +214,6 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   memcpy(n, &tmp_node, sizeof(NODE));
   n->flags = flags;
   n->nd_file = nd_file_buf;
-  memcpy(n->nd_file, nd_file, nd_file_len);
   n->nd_file[nd_file_len] = '\0';
 }
 
