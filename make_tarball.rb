@@ -22,6 +22,7 @@ Find.find('.') do |filename|
     end
   end
 end
+files << File.join(package, 'doc') if File.exist?('doc')
 
 File.mkpath('packages')
 Dir.chdir('packages')
