@@ -50,7 +50,10 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
         puts <<-END
         if(n->nd_#{node_elem_name} == 0)
         {
-          rb_raise(rb_eRuntimeError, "Invalid ID");
+          rb_raise(
+              rb_eRuntimeError,
+              "Invalid ID for #{node_elem_name} (node type=%d)",
+              nd_type(n));
         }
         return ID2SYM(n->nd_#{node_elem_name});
         END
@@ -68,7 +71,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
         {
           size_t j;
           VALUE arr = rb_ary_new();
-          /* A tbl contains the name of local variables.  The first
+          /* A tbl contains the names of local variables.  The first
            * element is the size of the table.  The next two elements
            * are $_ and $~.  The rest of the elements are the names of
            * the variables themselves.
@@ -78,9 +81,13 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
             rb_id2name(n->nd_#{node_elem_name}[j]);
             if(n->nd_#{node_elem_name}[j] == 0)
             {
-              rb_raise(rb_eRuntimeError, "Invalid ID");
+              /* flip state */
+              rb_ary_push(arr, Qnil);
             }
-            rb_ary_push(arr, ID2SYM(n->nd_#{node_elem_name}[j]));
+            else
+            {
+              rb_ary_push(arr, ID2SYM(n->nd_#{node_elem_name}[j]));
+            }
           }
           return arr;
         }
@@ -93,7 +100,10 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
         puts <<-END
         if(n->nd_#{node_elem_name}->id == 0)
         {
-          rb_raise(rb_eRuntimeError, "Invalid ID");
+          rb_raise(
+              rb_eRuntimeError,
+              "Invalid ID for #{node_elem_name} (node type %d)",
+              nd_type(n));
         }
         return ID2SYM(n->nd_#{node_elem_name}->id);
         END
@@ -181,14 +191,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         {
           Check_Type(v, T_ARRAY);
           size_t len = RARRAY(v)->len;
-          ID * tmp_tbl = ALLOCA_N(ID, len);
+          ID * tmp_tbl = ALLOCA_N(ID, len + 3);
           size_t j;
           tmp_tbl[0] = (ID)(len + 2);
           tmp_tbl[1] = (ID)('_');
           tmp_tbl[2] = (ID)('~');
           for(j = 0; j < len; ++j)
           {
-            tmp_tbl[j + 3] = SYM2ID(RARRAY(v)->ptr[j]);
+            VALUE e = RARRAY(v)->ptr[j];
+            if(e == Qnil)
+            {
+              /* flip state */
+              tmp_tbl[j + 3] = 0;
+            }
+            else
+            {
+              tmp_tbl[j + 3] = SYM2ID(e);
+            }
           }
           n->nd_#{node_elem_name} = ALLOC_N(ID, len + 3);
           memcpy(n->nd_#{node_elem_name}, tmp_tbl, len + 3);

@@ -81,13 +81,13 @@ Node_Samples = {
   :class       => "",
   :module      => "",
   :sclass      => "class << self; end",
-  :colon2      => "",
-  :colon3      => "",
+  :colon2      => "Kernel::Object",
+  :colon3      => "::Object",
   :cref        => "",
   :dot2        => "1..2",
   :dot3        => "2...3",
-  :flip2       => "",
-  :flip3       => "",
+  :flip2       => "if 'foo' =~ /foo/ .. /bar/; end", # TODO
+  :flip3       => "if 'foo' =~ /foo/ ... /bar/; end", # TODO
   :attrset     => "",
   :self        => "self.nil?",
   :nil         => "nil",

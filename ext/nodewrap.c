@@ -148,7 +148,6 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
         "wrong argument type %s (expected Node)",
         rb_class2name(CLASS_OF(n)));
   }
-  /* Check_Type(n, T_NODE); */
 
   s1 = dump_node_elem(descrip->n1, n, node_hash);
   s2 = dump_node_elem(descrip->n2, n, node_hash);
@@ -160,6 +159,7 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
   rb_ary_push(arr, s1);
   rb_ary_push(arr, s2);
   rb_ary_push(arr, s3);
+
   rb_hash_aset(node_hash, node_id(n), arr);
 }
 
