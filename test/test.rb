@@ -95,6 +95,14 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal m.call, m2.call
   end
 
+  def test_ruby_eval_tree
+    assert Node === $ruby_eval_tree
+  end
+
+  def test_ruby_eval_tree_begin
+    assert_equal nil, $ruby_eval_tree_begin
+  end
+
   def test_proc_unbind
     p = proc { 1 + 1 }
     u = p.unbind

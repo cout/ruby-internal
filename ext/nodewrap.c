@@ -891,6 +891,48 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 #endif
 
 /* ---------------------------------------------------------------------
+ * Eval tree
+ * ---------------------------------------------------------------------
+ */
+
+extern NODE *ruby_eval_tree_begin;
+extern NODE *ruby_eval_tree;
+
+static VALUE ruby_eval_tree_begin_getter()
+{
+  if(ruby_eval_tree_begin)
+  {
+    return wrap_node(ruby_eval_tree_begin);
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
+static void ruby_eval_tree_begin_setter()
+{
+  rb_raise(rb_eNotImpError, "ruby_eval_tree_begin_setter() not implemented");
+}
+
+static VALUE ruby_eval_tree_getter()
+{
+  if(ruby_eval_tree)
+  {
+    return wrap_node(ruby_eval_tree);
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
+static void ruby_eval_tree_setter()
+{
+  rb_raise(rb_eNotImpError, "ruby_eval_tree_setter() not implemented");
+}
+
+/* ---------------------------------------------------------------------
  * Initialization
  * ---------------------------------------------------------------------
  */
@@ -984,5 +1026,15 @@ void Init_nodewrap(void)
   rb_define_const(rb_mNoex, "CFUNC",     INT2NUM(NOEX_CFUNC));
   rb_define_const(rb_mNoex, "PRIVATE",   INT2NUM(NOEX_PRIVATE));
   rb_define_const(rb_mNoex, "PROTECTED", INT2NUM(NOEX_PROTECTED));
+
+  rb_define_virtual_variable(
+      "$ruby_eval_tree_begin",
+      ruby_eval_tree_begin_getter,
+      ruby_eval_tree_begin_setter);
+
+  rb_define_virtual_variable(
+      "$ruby_eval_tree",
+      ruby_eval_tree_getter,
+      ruby_eval_tree_setter);
 }
 
