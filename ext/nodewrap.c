@@ -502,6 +502,25 @@ static VALUE binding_body(VALUE binding)
 }
 
 /* ---------------------------------------------------------------------
+ * Node evaluation
+ * ---------------------------------------------------------------------
+ */
+
+/*
+ * Evaluate a node.
+ */
+static VALUE node_eval(VALUE node, VALUE self)
+{
+  /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
+  NODE * n = unwrap_node(node);
+  struct BLOCK * b;
+  VALUE proc = create_proc(rb_cProc, Qnil, n, 0);
+  Data_Get_Struct(proc, struct BLOCK, b);
+  b->self = self;
+  return rb_funcall(proc, rb_intern("call"), 0);
+}
+
+/* ---------------------------------------------------------------------
  * Node marshalling
  * ---------------------------------------------------------------------
  */
@@ -1005,6 +1024,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "nd_line", node_nd_line, 0);
   rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
   rb_define_method(rb_cNode, "members", node_members, 0);
+  rb_define_method(rb_cNode, "eval", node_eval, 1);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);

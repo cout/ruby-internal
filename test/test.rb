@@ -35,6 +35,11 @@ class TC_Nodewrap < Test::Unit::TestCase
     @test_passed = true
   end
 
+  def test_node_eval
+    p = proc { 1 + 1 }
+    assert_equal p.call, p.body.eval(self)
+  end
+
   def test_method_node
     m = method(:foo)
     n = m.body
