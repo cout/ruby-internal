@@ -73,6 +73,13 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal(p.call, p2.call)
   end
 
+  def test_proc_unbind
+    p = proc { 1 + 1 }
+    u = p.unbind
+    p2 = u.bind(binding)
+    assert_equal(p.call, p2.call)
+  end
+
   class TestClassBase
     # for testing super()
     def foo

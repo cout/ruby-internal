@@ -287,6 +287,18 @@ static VALUE proc_load(VALUE klass, VALUE str)
 }
 
 /*
+ * Create an UnboundProc from a Proc.
+ */
+static VALUE proc_unbind(VALUE self)
+{
+  struct BLOCK * b;
+  Data_Get_Struct(self, struct BLOCK, b);
+  VALUE proc = Data_Wrap_Struct(
+      rb_cUnboundProc, mark_unbound_proc, 0, b->body);
+  return proc;
+}
+
+/*
  * Bind an UnboundProc to a Binding.
  */
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
@@ -839,6 +851,7 @@ void Init_nodewrap(void)
 
   VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "node", proc_node, 0);
+  rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
   rb_define_method(rb_cProc, "_dump", proc_dump, 1);
   rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
 
