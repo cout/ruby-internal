@@ -16,11 +16,14 @@
         write = true
         stopwrite = false
       when /^}/
-        stopwrite = true
-        puts ''
+        stopwrite = true if write
       end
       puts line if write
-      write = false if stopwrite
+      if stopwrite then
+        stopwrite = false
+        write = false
+        puts ''
+      end
     end
   end
 END
