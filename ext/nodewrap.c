@@ -43,24 +43,38 @@ static void mark_node(
 static void free_node(
     void * data)
 {
-  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2NUM((long)data));
-  VALUE *ref_count = &RARRAY(node_info)->ptr[1];
-  --(*ref_count);
-  if(*ref_count == 0)
+  // TODO: When I use LONG2NUM here, a Bignum might get created in the
+  // middle of while the GC is sweeping... I think that might be the
+  // cause of the segfault, but I'm not sure.  At any rate, using
+  // LONG2FIX seems to solve the problem.
+  VALUE key = LONG2FIX((long)data / 4);
+  VALUE node_info = rb_hash_aref(wrapped_nodes, key);
+  if(NIL_P(node_info))
+  {
+    rb_bug("tried to free a node twice!");
+    return;
+  }
+  VALUE ref_count = NUM2LONG(RARRAY(node_info)->ptr[1]);
+  --ref_count;
+  if(ref_count == 0)
   {
     rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data));
-    /* TODO: Do I need to free data? */
+  }
+  else
+  {
+    RARRAY(node_info)->ptr[1] = LONG2NUM(ref_count);
   }
 }
 
 VALUE wrap_node(NODE * n)
 {
-  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2NUM((long)n));
+  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
   if(!NIL_P(node_info))
   {
     VALUE node_id = RARRAY(node_info)->ptr[0];
-    VALUE *ref_count = &RARRAY(node_info)->ptr[1];
-    ++(*ref_count);
+    VALUE ref_count = NUM2LONG(RARRAY(node_info)->ptr[1]);
+    ++ref_count;
+    RARRAY(node_info)->ptr[1] = LONG2NUM(ref_count);
     return (VALUE)(node_id ^ FIXNUM_FLAG);
   }
   else
@@ -70,7 +84,7 @@ VALUE wrap_node(NODE * n)
     VALUE node_id = rb_obj_id(node);
     VALUE ref_count = LONG2NUM(0);
     VALUE node_info = rb_assoc_new(node_id, ref_count);
-    rb_hash_aset(wrapped_nodes, LONG2NUM((long)n), node_info);
+    rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_info);
     return node;
   }
 }
@@ -112,7 +126,7 @@ static VALUE node_nd_file(VALUE self)
 }
 
 /*
- * Returns an integer representing the type of the node
+ * Returns a NodeType structure representing the type of the node.
  */
 static VALUE node_nd_type(VALUE self)
 {
@@ -743,9 +757,23 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "flags", node_flags, 0);
   rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
   rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
+  rb_define_method(rb_cNode, "members", node_members, 0);
+  rb_define_method(rb_cNode, "[]", node_bracket, 1);
 
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
+
+  for(j = 0; j < NODE_LAST; ++j)
+  {
+    Node_Type_Descrip const * descrip = node_type_descrip(j);
+    rb_cNodeSubclass[j] = rb_define_class_under(
+        rb_cNode, descrip->name, rb_cNode);
+    rb_iv_set(rb_cNodeSubclass[j], "__member__", rb_ary_new());
+    rb_define_singleton_method(rb_cNodeSubclass[j], "members", node_s_members, 0);
+    define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
+    define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
+    define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
+  }
 
   rb_cNodeType = rb_funcall(
       rb_cStruct,
@@ -756,20 +784,6 @@ void Init_nodewrap(void)
   rb_const_set(rb_cNode, rb_intern("Type"), rb_cNodeType);
   rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
-
-  for(j = 0; j < NODE_LAST; ++j)
-  {
-    Node_Type_Descrip const * descrip = node_type_descrip(j);
-    rb_cNodeSubclass[j] = rb_define_class_under(
-        rb_cNode, descrip->name, rb_cNode);
-    rb_iv_set(rb_cNodeSubclass[j], "__member__", rb_ary_new());
-    rb_define_method(rb_cNodeSubclass[j], "members", node_members, 0);
-    rb_define_singleton_method(rb_cNodeSubclass[j], "members", node_s_members, 0);
-    rb_define_method(rb_cNodeSubclass[j], "[]", node_bracket, 1);
-    define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
-    define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
-    define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
-  }
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
@@ -799,5 +813,12 @@ void Init_nodewrap(void)
 #endif
 
   wrapped_nodes = rb_hash_new();
+
+  VALUE rb_mNoex = rb_define_module("Noex");
+  rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));
+  rb_define_const(rb_mNoex, "UNDEF",     INT2NUM(NOEX_UNDEF));
+  rb_define_const(rb_mNoex, "CFUNC",     INT2NUM(NOEX_CFUNC));
+  rb_define_const(rb_mNoex, "PRIVATE",   INT2NUM(NOEX_PRIVATE));
+  rb_define_const(rb_mNoex, "PROTECTED", INT2NUM(NOEX_PROTECTED));
 }
 

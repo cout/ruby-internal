@@ -2,6 +2,8 @@ require 'test/unit'
 require 'test/unit/ui/console/testrunner'
 require 'nodewrap'
 
+puts
+
 dir = File.dirname(__FILE__)
 require "#{dir}/node_samples"
 
@@ -43,7 +45,7 @@ class TC_Nodewrap < Test::Unit::TestCase
     n = m.node
     klass = Class.new
     klass.instance_eval do
-      add_method(:foo, n, 0)
+      add_method(:foo, n, Noex::PUBLIC)
     end
     obj = klass.new
     assert_equal 42, obj.foo
@@ -59,7 +61,7 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal n.flags,   n2.flags
     klass = Class.new;
     klass.instance_eval do
-      add_method(:foo, n2, 0)
+      add_method(:foo, n2, Noex::PUBLIC)
     end
     obj = klass.new
     assert_equal 42, obj.foo
@@ -150,7 +152,7 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       klass2 = Class.new(TestClassBase)
       klass2.class_eval do
-        add_method(:foo, n2, 0)
+        add_method(:foo, n2, Noex::PUBLIC)
       end
       obj2 = klass2.new
 
