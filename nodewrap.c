@@ -208,9 +208,28 @@ static VALUE node_load(VALUE klass, VALUE str)
 // ---------------------------------------------------------------------
 // Class marshalling
 
+static char const * insert_module_sorted_str = 
+  "proc { |modules, m|\n"
+  "  added = false\n"
+  "  a.each_with_index do |other, idx|\n"
+  "    if m[0] < other[0] and other[0] < m[0] then\n"
+  "      # no relation\n"
+  "    elsif other[0] < m[0] then\n"
+  "      modules[0..idx] = [m] + modules[0..idx]\n"
+  "      added = true\n"
+  "      break\n"
+  "    end\n"
+  "  end\n"
+  "  if not added then\n"
+  "    modules.push(m)\n"
+  "  end\n"
+  "}\n";
+static VALUE insert_module_sorted_proc;
+
 static VALUE constants_hash(VALUE module)
 {
-  VALUE constants = rb_hash_new();
+  VALUE constants = rb_ary_new();
+  VALUE modules = rb_ary_new();
 #if RUBY_VERSION_CODE > 170
   VALUE constants_list = rb_const_list(rb_mod_const_at(mod, 0));
 #else
@@ -223,9 +242,19 @@ static VALUE constants_hash(VALUE module)
   for(j = 0; j < RARRAY(constants_list)->len; ++j)
   {
     id = rb_intern(STR2CSTR(RARRAY(constants_list)->ptr[j]));
-    v = rb_const_get(module, id);
-    rb_hash_aset(constants, ID2SYM(id), v);
+    v = rb_assoc_new(ID2SYM(id), rb_const_get(module, id));
+    if(rb_obj_is_kind_of(v, rb_cModule))
+    {
+      rb_funcall(
+          insert_module_sorted_proc, rb_intern("call"),
+          2, modules, v);
+    }
+    else
+    {
+      rb_ary_push(constants, v);
+    }
   }
+  rb_ary_concat(constants, modules);
 
   return constants;
 }
@@ -369,17 +398,27 @@ static void add_methods(VALUE module, VALUE methods)
   st_foreach(RHASH(methods)->tbl, add_method_iter, module);
 }
 
-static int add_constant_iter(VALUE name, VALUE value, VALUE module)
-{
-  rb_check_type(name, T_SYMBOL);
-  rb_const_set(module, SYM2ID(name), value);
-  return ST_CONTINUE;
-}
-
 static void add_constants(VALUE module, VALUE constants)
 {
-  rb_check_type(constants, T_HASH);
-  st_foreach(RHASH(constants)->tbl, add_constant_iter, module);
+  rb_check_type(constants, T_ARRAY);
+  size_t j;
+  VALUE assoc;
+  VALUE name;
+  VALUE value;
+
+  for(j = 0; j < RARRAY(constants)->len; ++j)
+  {
+    assoc = RARRAY(constants)->ptr[j];
+    rb_check_type(assoc, T_ARRAY);
+    if(RARRAY(assoc)->len != 2)
+    {
+      rb_raise(rb_eArgError, "Expecting assoc with length 2");
+    }
+    name = RARRAY(assoc)->ptr[0];
+    value = RARRAY(assoc)->ptr[1];
+    rb_check_type(name, T_SYMBOL);
+    rb_const_set(module, SYM2ID(name), value);
+  }
 }
 
 static void add_class_variables(VALUE module, VALUE class_variables)
@@ -456,5 +495,7 @@ void Init_nodewrap(void)
 
   node_dump_fmt =
     rb_str_new2("@flags=%d @nd_file=%s @s1=%s @s2=%s @s3=%s");
+
+  insert_module_sorted_proc = rb_eval_string(insert_module_sorted_str);
 }
 
