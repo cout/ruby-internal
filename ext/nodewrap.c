@@ -155,7 +155,7 @@ static VALUE lookup_module_proc = Qnil;
 
 #if RUBY_VERSION_CODE >= 180
 /*
- * Allocate a new node
+ * Allocate a new node.
  */
 static VALUE node_allocate(VALUE klass)
 {
@@ -165,7 +165,7 @@ static VALUE node_allocate(VALUE klass)
 #endif
 
 /*
- * Returns a node's flags
+ * Returns a node's flags.
  */
 static VALUE node_flags(VALUE self)
 {
@@ -192,7 +192,7 @@ static VALUE node_nd_file(VALUE self)
 }
 
 /*
- * Returns the line number the node is associated with
+ * Returns the line number the node is associated with.
  */
 static VALUE node_nd_line(VALUE self)
 {
@@ -245,7 +245,7 @@ static VALUE node_members(VALUE node)
 }
 
 /*
- * Return the given member of a node
+ * Return the given member of a node.
  */
 static VALUE node_bracket(VALUE node, VALUE member)
 {
@@ -260,11 +260,26 @@ static VALUE node_bracket(VALUE node, VALUE member)
  * ---------------------------------------------------------------------
  */
 
+/*
+ * Document-class: NodeType
+ *
+ * NodeType is an abstraction for the C type of a node.  It is a Struct
+ * which has two members, +name+ and +value+.
+ */
+
+/*
+ * Returns the name of the node.
+ */
 static VALUE node_type_to_s(VALUE node_type)
 {
   return rb_struct_getmember(node_type, rb_intern("name"));
 }
 
+/*
+ * Returns an integer representing integer type of a node.  This is the
+ * value you would see for the type of the node if you were examining it
+ * in gdb.
+ */
 static VALUE node_type_to_i(VALUE node_type)
 {
   return rb_struct_getmember(node_type, rb_intern("value"));
@@ -385,7 +400,7 @@ static VALUE method_load(VALUE klass, VALUE str)
  */
 
 /*
- * Given a Proc, returns the Node for that Proc's body.
+ * Returns the Proc's body Node.
  */
 static VALUE proc_body(VALUE proc)
 {
@@ -395,7 +410,7 @@ static VALUE proc_body(VALUE proc)
 }
 
 /*
- * Given a Proc, returns the Node for that Proc's arguments.
+ * Returns the Proc's argument Node.
  */
 static VALUE proc_var(VALUE proc)
 {
@@ -454,7 +469,8 @@ static VALUE proc_unbind(VALUE self)
 }
 
 /*
- * Bind an UnboundProc to a Binding.
+ * Bind an UnboundProc to a Binding.  Returns a Proc that has been bound
+ * to the given binding.
  */
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
@@ -600,7 +616,7 @@ static VALUE node_to_hash(VALUE self)
 }
 
 /*
- * Dump a node
+ * Dump a node.
  */
 static VALUE node_dump(VALUE self, VALUE limit)
 {
@@ -614,7 +630,7 @@ static VALUE node_dump(VALUE self, VALUE limit)
 }
 
 /*
- * Load a dumped node
+ * Load a dumped node.
  */
 static VALUE node_load(VALUE klass, VALUE str)
 {
@@ -1017,6 +1033,7 @@ void Init_nodewrap(void)
     define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
   }
 
+  /* For rdoc: rb_cNodeType = rb_define_class("NodeType", rb_cObject) */
   rb_cNodeType = rb_funcall(
       rb_cStruct,
       rb_intern("new"),
@@ -1027,6 +1044,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_s", node_type_to_s, 0);
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
+  /* For rdoc: rb_cProc = rb_define_class("Proc", rb_cObject) */
   rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "body", proc_body, 0);
   rb_define_method(rb_cProc, "var", proc_var, 0);
@@ -1042,15 +1060,18 @@ void Init_nodewrap(void)
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
+  /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
   rb_define_method(rb_cMethod, "body", method_body, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
   rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
 
+  /* For rdoc: rb_cBinding = rb_define_class("Binding", rb_cObject) */
   VALUE rb_cBinding = rb_const_get(rb_cObject, rb_intern("Binding"));
   rb_define_method(rb_cBinding, "body", binding_body, 0);
 
+  /* For rdoc: rb_cModule = rb_define_class("Module", rb_cObject) */
   VALUE rb_cModule = rb_const_get(rb_cObject, rb_intern("Module"));
   rb_define_method(rb_cModule, "add_method", add_method, 3);
 
@@ -1070,6 +1091,22 @@ void Init_nodewrap(void)
   wrapped_nodes = rb_hash_new();
   rb_global_variable(&wrapped_nodes);
 
+  /*
+   * Document-module: Noex
+   *
+   * The Noex module contains all the Noex constants from node.h.  These
+   * constants can be passed to Module#add_method as modifiers to the
+   * method being added.
+   * 
+   * [+PUBLIC+]     Method is public.  Cannot be combined with private
+   *                or protected.
+   * [+UNDEF+]      Method is undefined.
+   * [+CFUNC+]      Method is a C function.
+   * [+PRIVATE+]    Method is private.  Cannot be combined with public
+   *                or protected.
+   * [+PROTECTED+]  Method is protected.  Cannot be combined with public
+   *                or private.
+   */
   VALUE rb_mNoex = rb_define_module("Noex");
   rb_define_const(rb_mNoex, "PUBLIC",    INT2NUM(NOEX_PUBLIC));
   rb_define_const(rb_mNoex, "UNDEF",     INT2NUM(NOEX_UNDEF));
