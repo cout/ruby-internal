@@ -32,17 +32,47 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer);
 typedef void st_data_t;
 #endif
 
+static VALUE wrapped_nodes = Qnil;
+
 static void mark_node(
     void * data)
 {
   rb_gc_mark((VALUE)data);
 }
 
+static void free_node(
+    void * data)
+{
+  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2NUM((long)data));
+  VALUE *ref_count = &RARRAY(node_info)->ptr[1];
+  --(*ref_count);
+  if(*ref_count == 0)
+  {
+    rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data));
+    /* TODO: Do I need to free data? */
+  }
+}
+
 VALUE wrap_node(NODE * n)
 {
-  /* TODO: Need a free function? */
-  return Data_Wrap_Struct(
-      rb_cNodeSubclass[nd_type(n)], mark_node, 0, n);
+  VALUE node_info = rb_hash_aref(wrapped_nodes, LONG2NUM((long)n));
+  if(!NIL_P(node_info))
+  {
+    VALUE node_id = RARRAY(node_info)->ptr[0];
+    VALUE *ref_count = &RARRAY(node_info)->ptr[1];
+    ++(*ref_count);
+    return (VALUE)(node_id ^ FIXNUM_FLAG);
+  }
+  else
+  {
+    VALUE node = Data_Wrap_Struct(
+        rb_cNodeSubclass[nd_type(n)], mark_node, free_node, n);
+    VALUE node_id = rb_obj_id(node);
+    VALUE ref_count = LONG2NUM(0);
+    VALUE node_info = rb_assoc_new(node_id, ref_count);
+    rb_hash_aset(wrapped_nodes, LONG2NUM((long)n), node_info);
+    return node;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -725,5 +755,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cModule, "_dump", module_dump, 1);
   rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
 #endif
+
+  wrapped_nodes = rb_hash_new();
 }
 
