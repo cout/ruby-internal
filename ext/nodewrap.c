@@ -13,6 +13,8 @@ static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 static VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_cUnboundProc;
+static VALUE rb_cMethod;
+static VALUE rb_cUnboundMethod;
 static VALUE rb_mMarshal;
 
 #if RUBY_VERSION_CODE >= 180
@@ -100,6 +102,21 @@ VALUE marshal_load(VALUE obj)
 {
   return rb_funcall(rb_mMarshal, rb_intern("load"), 1, obj);
 }
+
+/* ---------------------------------------------------------------------
+ * Constant lookup
+ * ---------------------------------------------------------------------
+ */
+
+static char const * lookup_module_str = 
+  "proc { |name|\n"
+  "  o = Object\n"
+  "  name.split('::').each do |subname|\n"
+  "    o = o.const_get(subname)\n"
+  "  end\n"
+  "  o\n"
+  "}\n";
+static VALUE lookup_module_proc = Qnil;
 
 /* ---------------------------------------------------------------------
  * Node methods
@@ -239,6 +256,78 @@ static VALUE method_node(VALUE method)
   return wrap_node(m->body);
 }
 
+/*
+ * Dump a Method and the object to which it is bound to a String.  The
+ * Method's class will not be dumped, only the name of the class.
+ */
+static VALUE method_dump(VALUE self, VALUE limit)
+{
+  struct METHOD * method;
+  VALUE arr = rb_ary_new();
+  Data_Get_Struct(self, struct METHOD, method);
+  rb_ary_push(arr, rb_mod_name(method->klass));
+#if RUBY_VERSION_CODE >= 180
+  rb_ary_push(arr, rb_mod_name(method->rklass));
+#else
+  rb_ary_push(arr, rb_mod_name(method->oklass));
+#endif
+  if(rb_class_of(self) == rb_cUnboundMethod)
+  {
+    rb_ary_push(arr, Qnil);
+  }
+  else
+  {
+    rb_ary_push(arr, method->recv);
+  }
+  rb_ary_push(arr, ID2SYM(method->id));
+  rb_ary_push(arr, ID2SYM(method->oid));
+  rb_ary_push(arr, method_node(self));
+  return marshal_dump(arr, limit);
+}
+
+/*
+ * Load a Method from a String.
+ */
+static VALUE method_load(VALUE klass, VALUE str)
+{
+  struct METHOD * method;
+  VALUE rarr = marshal_load(str);
+  VALUE * arr;
+  NODE * n;
+
+  Check_Type(rarr, T_ARRAY);
+  if(RARRAY(rarr)->len != 6)
+  {
+    rb_raise(rb_eArgError, "corrupt data");
+  }
+
+  VALUE retval = rb_funcall(
+      rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("id")));
+  Data_Get_Struct(retval, struct METHOD, method);
+  arr = RARRAY(rarr)->ptr;
+  method->klass =
+    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
+#if RUBY_VERSION_CODE >= 180
+  method->rklass =
+    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[1]);
+#else
+  method->oklass =
+    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[1]);
+#endif
+  method->recv = arr[2];
+  method->id = SYM2ID(arr[3]);
+  method->oid = SYM2ID(arr[4]);
+  Data_Get_Struct(arr[5], NODE, n);
+  method->body = n;
+
+  if(klass == rb_cUnboundMethod)
+  {
+    retval = rb_funcall(retval, rb_intern("unbind"), 0);
+  }
+
+  return retval;
+}
+
 /* ---------------------------------------------------------------------
  * Proc methods
  * ---------------------------------------------------------------------
@@ -255,7 +344,7 @@ static VALUE proc_node(VALUE proc)
 }
 
 /*
- * Dump a proc to a string.
+ * Dump a Proc to a String.
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
 {
@@ -269,7 +358,7 @@ static void mark_unbound_proc(void * d)
 }
 
 /*
- * Load a proc from a string.  When it is loaded, it will be an
+ * Load a Proc from a String.  When it is loaded, it will be an
  * UnboundProc.
  */
 static VALUE proc_load(VALUE klass, VALUE str)
@@ -665,16 +754,6 @@ static VALUE module_dump(VALUE self, VALUE limit)
   return str;
 }
 
-static char const * lookup_module_str = 
-  "proc { |name|\n"
-  "  o = Object\n"
-  "  name.split('::').each do |subname|\n"
-  "    o = o.const_get(subname)\n"
-  "  end\n"
-  "  o\n"
-  "}\n";
-static VALUE lookup_module_proc = Qnil;
-
 static void include_modules(module, included_modules)
 {
   size_t j;
@@ -846,8 +925,11 @@ void Init_nodewrap(void)
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
-  VALUE rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
+  rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
+  rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
   rb_define_method(rb_cMethod, "node", method_node, 0);
+  rb_define_method(rb_cMethod, "_dump", method_dump, 1);
+  rb_define_singleton_method(rb_cMethod, "_load", method_load, 1);
 
   VALUE rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "node", proc_node, 0);

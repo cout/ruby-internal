@@ -73,6 +73,28 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal(p.call, p2.call)
   end
 
+  class MarshalMethodHelper
+    include Foo
+  end
+
+  def test_marshal_method
+    o = MarshalMethodHelper.new
+    m = o.method(:foo)
+    d = Marshal.dump(m)
+    m2 = Marshal.load(d)
+    assert_equal m.call, m2.call
+  end
+
+  def test_marshal_unbound_method
+    o = MarshalMethodHelper.new
+    u = o.method(:foo).unbind
+    d = Marshal.dump(u)
+    u2 = Marshal.load(d)
+    m = u.bind(o)
+    m2 = u.bind(o)
+    assert_equal m.call, m2.call
+  end
+
   def test_proc_unbind
     p = proc { 1 + 1 }
     u = p.unbind
