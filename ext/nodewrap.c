@@ -614,9 +614,12 @@ void Init_nodewrap(void)
   rb_cNode = rb_define_class("Node", rb_cObject);
   for(j = 0; j < NODE_LAST; ++j)
   {
-    Node_Type_Descrip const * d = node_type_descrip(j);
+    Node_Type_Descrip const * descrip = node_type_descrip(j);
     rb_cNodeSubclass[j] = rb_define_class_under(
-        rb_cNode, d->name, rb_cNode);
+        rb_cNode, descrip->name, rb_cNode);
+    define_node_elem_methods(descrip->n1, rb_cNodeSubclass[j]);
+    define_node_elem_methods(descrip->n2, rb_cNodeSubclass[j]);
+    define_node_elem_methods(descrip->n3, rb_cNodeSubclass[j]);
   }
 
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));

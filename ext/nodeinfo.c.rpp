@@ -233,3 +233,8 @@ END
   rb_raise(rb_eRuntimeError, "Internal error: invalid Node_Elem_Name %d", nen);
 }
 
+void define_node_elem_methods(enum Node_Elem_Name nen, VALUE klass)
+{
+  /* TODO */
+}
+
