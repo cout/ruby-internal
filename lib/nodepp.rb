@@ -39,8 +39,8 @@ class Node
   # Pretty-print node using Node#tree onto s, which can be a String or
   # IO.
   #
-  def pretty_print(s='')
-    return tree(s)
+  def pretty_print(pp)
+    pp.text(tree())
   end
 end
 
