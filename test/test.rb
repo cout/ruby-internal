@@ -1,8 +1,8 @@
 require 'nodewrap'
 
 def foo
- puts 'foo!'
- p self
+  puts 'foo!'
+  p self
 end
 
 m = Object.method(:foo)
