@@ -35,7 +35,7 @@ class TC_Nodewrap < Test::Unit::TestCase
   def test_method_node
     m = method(:foo)
     n = Node.method_node(m)
-    assert_equal Node, n.class
+    assert_equal Node::SCOPE, n.class
   end
 
   def test_add_method

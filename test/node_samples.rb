@@ -95,12 +95,12 @@ Node_Samples = {
   :false       => "false",
   :defined     => "a = 1; defined?(a)",
   :newline     => "\n",
-  :postexe     => "",
+  :postexe     => "", # END { }
   :alloca      => "",
   :dmethod     => "",
   :bmethod     => "",
   :memo        => "",
-  :node_last   => "",
+  # last is just a placeholder
 
   # These cause a crash:
   # self.class.ancestors.include?(Object)

@@ -10,6 +10,7 @@
 #include "st.h"
 
 static VALUE rb_cNode = Qnil;
+static VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_mMarshal;
 
 #if RUBY_VERSION_CODE >= 180
@@ -30,6 +31,20 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer);
 typedef void st_data_t;
 #endif
 
+static void mark_node(
+    void * data)
+{
+  rb_gc_mark((VALUE)data);
+}
+
+static VALUE wrap_node(
+    NODE * n,
+    RUBY_DATA_FUNC free)
+{
+  return Data_Wrap_Struct(
+      rb_cNodeSubclass[nd_type(n)], mark_node, free, n);
+}
+
 /* ---------------------------------------------------------------------
  * Node methods
  * ---------------------------------------------------------------------
@@ -43,7 +58,7 @@ static VALUE node_allocate(VALUE klass)
 {
   NODE * n = NEW_NIL();
   /* TODO: Need a free function in this case */
-  return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
+  return Data_Wrap_Struct(klass, rb_gc_mark, 0, n);
 }
 #endif
 
@@ -91,7 +106,7 @@ NODE * id_to_node(VALUE id)
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 {
   NODE * n;
-  if(!rb_obj_is_kind_of(node, rb_cNode) || rb_obj_class(node) != rb_cNode)
+  if(!rb_obj_is_kind_of(node, rb_cNode))
   {
     rb_raise(rb_eTypeError, "Expected Node for 3rd parameter");
   }
@@ -108,7 +123,7 @@ static VALUE method_node(VALUE self, VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-  return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, m->body);
+  return wrap_node(m->body, 0);
 }
 
 /* ---------------------------------------------------------------------
@@ -252,7 +267,7 @@ static VALUE node_load(VALUE klass, VALUE str)
   VALUE id_hash = rb_hash_new();
   load_node_from_hash(n, node_id, node_hash, id_hash);
   /* TODO: Need a free function in this case */
-  return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
+  return wrap_node(n, 0);
 }
 
 /* ---------------------------------------------------------------------
@@ -318,7 +333,7 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
           "module has method %s but I couldn't find it!",
           s);
     }
-    v = Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, body);
+    v = wrap_node(body, 0);
     rb_hash_aset(methods, ID2SYM(id), v);
   }
 
@@ -594,7 +609,16 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 
 void Init_nodewrap(void)
 {
+  int j;
+
   rb_cNode = rb_define_class("Node", rb_cObject);
+  for(j = 0; j < NODE_LAST; ++j)
+  {
+    Node_Type_Descrip const * d = node_type_descrip(j);
+    rb_cNodeSubclass[j] = rb_define_class_under(
+        rb_cNode, d->name, rb_cNode);
+  }
+
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
 #if RUBY_VERSION_CODE >= 180
