@@ -4,4 +4,5 @@ global_entry.h
 mkmf.log
 nodeinfo.c
 nodeinfo.h
+node_type_descrip.c
 
