@@ -1,11 +1,12 @@
 require 'nodewrap'
 
 class Node
+  ##
+  # Return a string containing an ascii-art tree of the node's
+  # structure.
+  #
   def pretty_print(prefix = '')
-    nd_type = self.nd_type
-    nd_file = self.nd_file
-    nd_line = self.nd_line
-    s = "NODE_#{nd_type.to_s} (#{nd_type.to_i}) at #{nd_file}:#{nd_line}\n"
+    s = "NODE_#{self.nd_type.to_s} at #{self.nd_file}:#{self.nd_line}\n"
     self.members.each_with_index do |member, idx|
       last = (idx == self.members.size-1)
       s += "#{prefix}#{(last ? '+-' : '|-')}#{member} = "
