@@ -1,18 +1,24 @@
 require 'mkmf'
 
-$CFLAGS << '-Wall -g'
-create_makefile('nodewrap')
-
 rpp_files = Dir['*.rpp']
 generated_files = rpp_files.map { |f| f.sub(/\.rpp$/, '') }
 
-# TODO: I think this syntax is gmake-specific
-# TODO: Add some extra rules to "make clean"
+srcs = Dir['*.c']
+generated_files.each do |f|
+  if f =~ /\.c$/ then
+    srcs << f
+  end
+end
+srcs.uniq!
+$objs = srcs.map { |f| f.sub(/\.c$/, ".#{$OBJEXT}") }
+$CFLAGS << '-Wall -g'
+create_makefile('nodewrap')
+
 append_to_makefile = ''
 rpp_files.each do |rpp_file|
 append_to_makefile << <<END
 #{rpp_file.sub(/\.rpp$/, '')}: #{rpp_file}
-	ruby-1.7 rubypp.rb $< $@
+	ruby rubypp.rb $< $@
 END
 end
 

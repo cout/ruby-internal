@@ -172,7 +172,7 @@ static VALUE node_from_hash(VALUE klass, VALUE node_id, VALUE node_hash)
   return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
 }
 
-static VALUE node_dump(VALUE self)
+static VALUE node_dump(VALUE self, VALUE limit)
 {
   NODE * n;
   VALUE node_hash = node_to_hash(self);
@@ -183,16 +183,16 @@ static VALUE node_dump(VALUE self)
   return marshal_dump(arr);
 }
 
-static VALUE node_load(VALUE self, VALUE str)
+static VALUE node_load(VALUE klass, VALUE str)
 {
-  NODE * n;
+  NODE * n = NEW_NIL();
   VALUE arr = marshal_load(str);
-  Data_Get_Struct(self, NODE, n);
   VALUE node_hash = rb_ary_pop(arr);
   VALUE node_id = rb_ary_pop(arr);
   VALUE id_hash = rb_hash_new();
   load_node_from_hash(n, node_id, node_hash, id_hash);
-  return Qnil;
+  // TODO: Need a free function in this case
+  return Data_Wrap_Struct(rb_cNode, rb_gc_mark, 0, n);
 }
 
 void Init_nodewrap(void)
@@ -210,8 +210,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "to_hsh", node_to_hash, 0);
   rb_define_singleton_method(rb_cNode, "from_hsh", node_from_hash, 1);
 
-  rb_define_method(rb_cNode, "_dump_data", node_dump, 0);
-  rb_define_method(rb_cNode, "_load_data", node_load, 1);
+  rb_define_method(rb_cNode, "_dump", node_dump, 1);
+  rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
 
   rb_define_singleton_method(rb_cNode, "method_node", method_node, 1);
   rb_define_method(rb_cModule, "add_method", add_method, 3);
