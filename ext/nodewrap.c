@@ -177,6 +177,16 @@ static VALUE node_allocate(VALUE klass)
 #endif
 
 /*
+ * Returns a node's address.
+ */
+static VALUE node_address(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  return ULONG2NUM((unsigned long)(n));
+}
+
+/*
  * Returns a node's flags.
  */
 static VALUE node_flags(VALUE self)
@@ -316,6 +326,55 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
  * Method methods
  * ---------------------------------------------------------------------
  */
+
+/*
+ * Given a Method, returns the Object to which it is bound.
+ */
+static VALUE method_receiver(VALUE method)
+{
+  struct METHOD * m;
+  Data_Get_Struct(method, struct METHOD, m);
+  return m->recv;
+}
+
+/*
+ * Given a Method, returns the Symbol of the method it represents.  If
+ * the method is an alias for another method, returns the Symbol of the
+ * new method, not the original.  If the method changes name, returns
+ * the original name, not the new name.
+ */
+static VALUE method_id(VALUE method)
+{
+  struct METHOD * m;
+  Data_Get_Struct(method, struct METHOD, m);
+  return ID2SYM(m->id);
+}
+
+/*
+ * Given a Method, returns the Symbol of the method it represents.  If
+ * the method is an alias for another method, returns the Symbol of the
+ * original method, not the alias.  If the original method changes name,
+ * returns the original name.
+ */
+static VALUE method_oid(VALUE method)
+{
+  struct METHOD * m;
+  Data_Get_Struct(method, struct METHOD, m);
+  return ID2SYM(m->oid);
+}
+
+/*
+ * Given a Method, returns the Class in which the method it represents
+ * was defined.  If the method was defined in a base class and
+ * Object#method is called on a derived instance of that base class,
+ * this method returns the base class.
+ */
+static VALUE method_origin_class(VALUE method)
+{
+  struct METHOD * m;
+  Data_Get_Struct(method, struct METHOD, m);
+  return m->rklass;
+}
 
 /*
  * Given a Method, returns the Node for that Method's body.  This can be
@@ -779,7 +838,10 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
   VALUE methods = rb_hash_new();
   size_t j;
   ID id;
-  NODE * body;
+  union {
+    NODE * node;
+    st_data_t * data;
+  } body;
   char const * s;
   VALUE v;
 
@@ -798,14 +860,14 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
        */
       continue;
     }
-    if(!st_lookup(RCLASS(module)->m_tbl, id, (st_data_t *)&body))
+    if(!st_lookup(RCLASS(module)->m_tbl, id, body.data))
     {
       rb_raise(
           rb_eArgError,
           "module has method %s but I couldn't find it!",
           s);
     }
-    v = wrap_node(body);
+    v = wrap_node(body.node);
     rb_hash_aset(methods, ID2SYM(id), v);
   }
 
@@ -1229,6 +1291,7 @@ void Init_nodewrap(void)
   rb_define_alloc_func(rb_cNode, node_allocate);
 #endif
 
+  rb_define_method(rb_cNode, "address", node_address, 0);
   rb_define_method(rb_cNode, "flags", node_flags, 0);
   rb_define_method(rb_cNode, "nd_file", node_nd_file, 0);
   rb_define_method(rb_cNode, "nd_line", node_nd_line, 0);
@@ -1269,8 +1332,13 @@ void Init_nodewrap(void)
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */
-  /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
+  rb_define_method(rb_cMethod, "receiver", method_receiver, 0);
+  rb_define_method(rb_cMethod, "method_id", method_id, 0);
+  rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
+  rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
+
+  /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
   rb_define_method(rb_cMethod, "body", method_body, 0);
   rb_define_method(rb_cUnboundMethod, "body", method_body, 0);
