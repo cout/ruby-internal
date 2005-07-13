@@ -1,4 +1,5 @@
 require 'nodewrap'
+require 'as_expression'
 
 class Method
   # Return the names of the arguments this method takes, in the order in
@@ -38,8 +39,9 @@ class Method
     # Optional args
     opt = args.opt
     while opt do
-      if opt.head.class == Node::LASGN then
-        info[opt.head.vid] = "#{opt.head.vid}=<expression>"
+      head = opt.head
+      if head.class == Node::LASGN then
+        info[head.vid] = "#{head.vid}=#{head.value.as_expression}"
       else
         raise "Unexpected node type: #{opt.class}"
       end
@@ -130,5 +132,26 @@ if __FILE__ == $0 then
   def foo(foo, bar=42, *args, &block); end
   puts method(:foo).signature
   puts method(:foo).origin
+
+  def foo(foo, bar=obj.foo(1, 2, foo(10)), *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar=obj.foo(1 + 1), *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar=true ? false : 0, *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar=true, *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar=nil, *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar={1=>2}, *args, &block); end
+  puts method(:foo).signature
+
+  def foo(foo, bar=[1,2], *args, &block); end
+  puts method(:foo).signature
 end
 
