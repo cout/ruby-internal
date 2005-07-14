@@ -11,7 +11,7 @@ Method_Node_Samples = {
   :opt_n       => "",
   :while       => "a = 0; while a != 1; a += 1; end",
   :until       => "a = 0; until a == 1; a += 1; end",
-  :iter        => "",
+  :iter        => "", # foo { ... }
   :for         => "a = 0; for i in 1..42; a += 1; end; a",
   :break       => "a = 24; for i in 1..42; break if i == 24; a += 1; end; a",
   :next        => "[1].each { next }",
@@ -25,7 +25,7 @@ Method_Node_Samples = {
   :or          => "if 1 or 2 then 3; end",
   :not         => "not false",
   :masgn       => "a, b, c = 4, 5, 6",
-  :lasgn       => "",
+  :lasgn       => "x = 1",
   :dasgn       => "",
   :dasgn_curr  => "",
   :gasgn       => "$a = 1",
@@ -37,13 +37,13 @@ Method_Node_Samples = {
   :op_asgn2    => "{}.default = 1",
   :op_asgn_and => "",
   :op_asgn_or  => "",
-  :call        => "",
-  :fcall       => "",
+  :call        => "$stdout.sync",
+  :fcall       => "", # see iter
   :vcall       => "",
   :super       => "super()",
   :zsuper      => "super",
-  :array       => "",
-  :zarray      => "",
+  :array       => "[1, 2, 3]",
+  :zarray      => "[]",
   :hash        => "{ 1 => 2 }",
   :return      => "",
   :yield       => "yield",
@@ -52,9 +52,9 @@ Method_Node_Samples = {
   :gvar        => "$a == 1",
   :ivar        => "@a == 42", # must be diff from iasgn
   :const       => "",
-  :cvar        => "",
+  :cvar        => "@@a == 42",
   :cvar2       => "",
-  :nth_ref     => "",
+  :nth_ref     => "$1 == nil",
   :back_ref    => "",
   :match       => "",
   :match2      => "",
@@ -62,16 +62,17 @@ Method_Node_Samples = {
   :lit         => "17",
   :str         => "\"foo\"",
   :dstr        => "\"#{8}\"",
-  :xstr        => "",
-  :dxstr       => "",
+  :xstr        => "", # `ls`
+  :dxstr       => "", # `#{foo}`
   :evstr       => "",
-  :dregx       => "",
-  :dregx_once  => "",
+  :dregx       => "/#{42}/",
+  :dregx_i     => "/#{42}/i", # same node type as dregx
+  :dregx_once  => "/#{42}/o",
   :args        => "",
   :argscat     => "",
   :argspush    => "",
   :restargs    => "",
-  :block_arg   => "",
+  :block_arg   => "", # def foo(&block)
   :block_pass  => "",
   :defn        => "",
   :defs        => "",
@@ -100,6 +101,7 @@ Method_Node_Samples = {
   :dmethod     => "",
   :bmethod     => "",
   :memo        => "",
+  :attrasgn    => "{}.default = 42",
   # last is just a placeholder
 
   # These cause a crash:
@@ -134,7 +136,7 @@ Proc_Node_Samples = {
   :or          => "if 1 or 2 then 3; end",
   :not         => "not false",
   :masgn       => "a, b, c = 4, 5, 6",
-  :lasgn       => "",
+  :lasgn       => "x = 1",
   :dasgn       => "",
   :dasgn_curr  => "",
   :gasgn       => "$a = 1",
@@ -146,24 +148,24 @@ Proc_Node_Samples = {
   :op_asgn2    => "{}.default = 1",
   :op_asgn_and => "",
   :op_asgn_or  => "",
-  :call        => "",
+  :call        => "$stdout.sync",
   :fcall       => "",
   :vcall       => "",
-  :super       => "",
-  :zsuper      => "",
-  :array       => "",
-  :zarray      => "",
+  :super       => "", # can't call super from proc
+  :zsuper      => "", # can't call super from proc
+  :array       => "[1, 2, 3]",
+  :zarray      => "[]",
   :hash        => "{ 1 => 2 }",
-  :return      => "",
+  :return      => "", # can't return from proc
   :yield       => "",
   :lvar        => "",
   :dvar        => "",
   :gvar        => "$a == 1",
   :ivar        => "@a == 42", # must be diff from iasgn
   :const       => "",
-  :cvar        => "",
+  :cvar        => "@@a == 42",
   :cvar2       => "",
-  :nth_ref     => "",
+  :nth_ref     => "$1 == nil",
   :back_ref    => "",
   :match       => "",
   :match2      => "",
@@ -171,16 +173,17 @@ Proc_Node_Samples = {
   :lit         => "17",
   :str         => "\"foo\"",
   :dstr        => "\"#{8}\"",
-  :xstr        => "",
-  :dxstr       => "",
+  :xstr        => "", # `ls`
+  :dxstr       => "", # `#{foo}`
   :evstr       => "",
-  :dregx       => "",
-  :dregx_once  => "",
+  :dregx       => "/#{42}/",
+  :dregx_i     => "/#{42}/i", # same node type as dregx
+  :dregx_once  => "/#{42}/o",
   :args        => "",
   :argscat     => "",
   :argspush    => "",
   :restargs    => "",
-  :block_arg   => "",
+  :block_arg   => "", # def foo(&block)
   :block_pass  => "",
   :defn        => "",
   :defs        => "",
@@ -209,6 +212,7 @@ Proc_Node_Samples = {
   :dmethod     => "",
   :bmethod     => "",
   :memo        => "",
+  :attrasgn    => "{}.default = 42",
   # last is just a placeholder
   
   # These cause a crash:
