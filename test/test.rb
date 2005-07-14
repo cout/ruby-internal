@@ -28,6 +28,9 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   Tmp_Foo = nil
 
+  # For the cvar proc test
+  @@a = 42
+
   def initialize(test_method_name)
     # TODO: This seems to be the only way to get tests defined with #
     # define_method to run.
@@ -123,6 +126,9 @@ class TC_Nodewrap < Test::Unit::TestCase
     def foo
       return 42
     end
+
+    # for testing cvar
+    @@a = 42
   end
 
   class TestClass < TestClassBase
@@ -188,7 +194,6 @@ class TC_Nodewrap < Test::Unit::TestCase
 
   Method_Node_Samples.each do |node_name, sample_code|
     p = proc {
-      begin
       c = TestClass.dup
       c.class_eval <<-END_DEF
         def foo
@@ -226,10 +231,6 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       assert_equal orig_result, dup_result
       assert_equal orig_exc, dup_exc
-    rescue Exception
-      p $!
-      puts $!.backtrace
-    end
     }
     define_method "test_dump_method_#{node_name}", p
   end
@@ -276,7 +277,9 @@ rescue NameError
   verbose = Test::Unit::UI::Console::TestRunner.const_get(:VERBOSE)
 end
 
-Test::Unit::UI::Console::TestRunner.run(
+result = Test::Unit::UI::Console::TestRunner.run(
     TC_Nodewrap,
     verbose)
+
+exit result.error_count + result.failure_count
 
