@@ -2,9 +2,16 @@ class Node
   # Return an string describing this node as a single expression.  By
   # default, this just returns the name of the node's type, but some
   # node types override this method to produce more meaningful output.
-  def define_expression(klass, &block)
-    if defined(:klass) then
-      const_get(klass).define_method(:as_expression, &block)
+  def as_expression
+    # default
+    return "<#{self.nd_type.to_s}>"
+  end
+
+  class << self
+    def define_expression(klass, &block)
+      if const_defined?(klass) then
+        const_get(klass).__send__(:define_method, :as_expression, &block)
+      end
     end
   end
 
@@ -24,7 +31,7 @@ class Node
 
   @@arithmetic_expressions = [
     :+, :-, :*, :/, :<, :>, :<=, :>=, :==, :===, :<=>, :<<, :>>, :&, :|,
-    :!, :^, :%, '!='.intern, '~='.intern, ':!~'.intern
+    :^, :%, '!'.intern, '!='.intern, '~='.intern, ':!~'.intern
   ]
 
   define_expression(:CALL) do
@@ -152,13 +159,12 @@ class Node
     return "#{self.mid}::#{self.value.as_expression}"
   end
 
-  define_expression(:NODE_LVAR) do
+  define_expression(:LVAR) do
     return "#{self.vid}"
   end
 
-  def as_expression
-    # default
-    return "<#{self.nd_type.to_s}>"
+  define_expression(:NEWLINE) do
+    return "#{self.next.as_expression}\n"
   end
 end
 
