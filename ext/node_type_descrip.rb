@@ -92,7 +92,17 @@ NODE_TYPE_DESCRIPS = [
   [ 'DSTR'        , 'LIT'   , 'NEXT'  , 'NONE'  ], 
   [ 'DXSTR'       , 'LIT'   , 'NEXT'  , 'NONE'  ], 
   [ 'XSTR'        , 'LIT'   , 'NONE'  , 'NONE'  ], 
+]
+if RUBY_VERSION_CODE < 180 then
+NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'LIT'   , 'HEAD'  , 'NEXT'  ], 
+]
+else
+NODE_TYPE_DESCRIPS.concat [
+  [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
+]
+end
+NODE_TYPE_DESCRIPS.concat [
   [ 'LIT'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
   [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'DEFN'        , 'DEFN'  , 'MID'   , 'NOEX'  ], 
