@@ -1,3 +1,5 @@
+require 'rbconfig'
+
 class Node
   # Return an string describing this node as a single expression.  By
   # default, this just returns the name of the node's type, but some
@@ -31,7 +33,7 @@ class Node
 
   @@arithmetic_expressions = [
     :+, :-, :*, :/, :<, :>, :<=, :>=, :==, :===, :<=>, :<<, :>>, :&, :|,
-    :^, :%, '!'.intern, '!='.intern, '~='.intern, ':!~'.intern
+    :^, :%, '!'.intern, '!='.intern, '=~'.intern, ':!~'.intern
   ]
 
   define_expression(:CALL) do
@@ -39,6 +41,9 @@ class Node
     when *@@arithmetic_expressions
       args = self.args
       return "#{self.recv.as_expression} #{self.mid} #{args ? args.as_expression(false) : ''}"
+    when :[]
+      args = self.args
+      return "#{self.recv.as_expression}[#{args ? args.as_expression(false) : ''}]"
     else
       args = self.args
       return "#{self.recv.as_expression}.#{self.mid}(#{args ? args.as_expression(false) : ''})"
@@ -68,7 +73,7 @@ class Node
       return a
     end
 
-    def as_expression(brackets = false)
+    def as_expression(brackets = true)
       s = brackets ? '[' : ''
       s += self.to_a.map { |n| n.as_expression }.join(', ')
       s += brackets ? ']' : ''
@@ -81,8 +86,30 @@ class Node
       return []
     end
 
-    def as_expression(brackets = false)
+    def as_expression(brackets = true)
       return brackets ? '[]' : ''
+    end
+  end
+
+  class BLOCK < Node
+    def to_a
+      a = []
+      e = self
+      while e do
+        a << e.head
+        e = e.next
+      end
+      return a
+    end
+
+    def as_expression
+      a = self.to_a
+      if a[0].class == Node::DASGN_CURR then
+        # don't do anything for variable definitions
+        a.shift
+      end
+      s = a.map { |n| n.as_expression }.join
+      return a.size > 1 ? "(#{s})" : s
     end
   end
 
@@ -98,9 +125,11 @@ class Node
   end
 
   define_expression(:IF) do
+    bodynode = self.body.class == Node::NEWLINE ? self.body.next : self.body
+    elsenode = self.else.class == Node::NEWLINE ? self.else.next : self.else
     return "#{self.cond.as_expression} ? " +
-           "#{self.body.as_expression} : " +
-           "#{self.else.as_expression}"
+           "#{bodynode.as_expression} : " +
+           "#{elsenode.as_expression}"
   end
 
   define_expression(:TRUENODE) do
@@ -135,8 +164,16 @@ class Node
     return "#{self.vid}"
   end
 
+  define_expression(:DVAR) do
+    return "#{self.vid}"
+  end
+
   define_expression(:NODE_NTH_REF) do
     return "$#{self.nth}"
+  end
+
+  define_expression(:DASGN_CURR) do
+    return "#{self.vid} = #{self.value.as_expression}"
   end
 
   define_expression(:ATTR_ASGN) do
@@ -164,7 +201,117 @@ class Node
   end
 
   define_expression(:NEWLINE) do
-    return "#{self.next.as_expression}\n"
+    return "#{self.next.as_expression}; "
   end
+
+  define_expression(:STR) do
+    return "\"#{self.lit}\""
+  end
+
+  define_expression(:REGX) do
+    # TODO: cflag
+    return "/#{self.lit}/"
+  end
+
+  define_expression(:REGX_ONCE) do
+    # TODO: cflag
+    return "/#{self.lit}/o"
+  end
+
+  define_expression(:XSTR) do
+    return "`#{self.lit}`"
+  end
+
+  define_expression(:DSTR) do
+    a = self.next.to_a
+    s = "\"#{self.lit}"
+    a.each do |elem|
+      case elem
+      when Node::STR then s += elem.lit
+      else s += elem.as_expression
+      end
+    end
+    s += "\""
+    return s
+  end
+
+  define_expression(:DREGX) do
+    a = self.next.to_a
+    s = "/#{self.lit}"
+    a.each do |elem|
+      case elem
+      when Node::STR then s += elem.lit
+      else s += elem.as_expression
+      end
+    end
+    s += "/"
+    # TODO: cflag
+    return s
+  end
+
+  define_expression(:DREGX_ONCE) do
+    a = self.next.to_a
+    s = "/#{self.lit}"
+    a.each do |elem|
+      case elem
+      when Node::STR then s += elem.lit
+      else s += elem.as_expression
+      end
+    end
+    s += "/o"
+    # TODO: cflag
+    return s
+  end
+
+  define_expression(:DXSTR) do
+    a = self.next.to_a
+    s = "`#{self.lit}"
+    a.each do |elem|
+      case elem
+      when Node::STR then s += elem.lit
+      else s += elem.as_expression
+      end
+    end
+    s += "`"
+    return s
+  end
+
+  major = Config::CONFIG['MAJOR'].to_i
+  minor = Config::CONFIG['MINOR'].to_i
+  teeny = Config::CONFIG['TEENY'].to_i
+  ruby_version_code = major * 100 + minor * 10 + teeny
+
+  if ruby_version_code >= 180 then
+
+    define_expression(:EVSTR) do
+      return "\#\{#{self.body.as_expression}\}"
+    end
+
+  else
+
+    # TODO: not sure how to implement EVSTR on 1.6.x
+
+  end
+
+  define_expression(:ITER) do
+    return "#{self.iter.as_expression} {\n#{self.body.as_expression}}"
+  end
+
+  define_expression(:BREAK) do
+    s = "break"
+    if self.stts then
+      s += " #{self.stts.as_expression}"
+    end
+    return s
+  end
+
+  define_expression(:RETURN) do
+    s = "break"
+    if self.stts then
+      s += " #{self.stts.as_expression}"
+    end
+    return s
+  end
+
 end
 
