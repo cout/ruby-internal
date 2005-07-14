@@ -8,28 +8,35 @@ class Method
     return body().tbl || []
   end
 
-  # Return true if this method has a "rest" argument, that is, it has
-  # an argument that is preceded by an asterisk (*) in the argument
-  # list.
-  def has_rest_arg
-    block = body().next
-    return block.head.args.rest > 0
+  # If this method has a "rest" argument, that is, it has an argument
+  # that is preceded by an asterisk (*) in the argument list, then
+  # return its index, otherwise return nil.
+  def rest_arg
+    if block_arg then
+      rest = body.next.head.args.rest
+    else
+      rest = body.next.rest
+    end
+    return rest > 0 ? rest : nil
   end
 
-  # Return true if this method has a "block" argument, that is, it has
-  # an argument that is preceded by an ampersand (&) in the argument
-  # list.
-  def has_block_arg
+  # If this method has a "block" argument, that is, it has an argument
+  # that is preceded by an ampersand (&) in the argument list, then
+  # return its index, otherwise return nil.
+  def block_arg
     block = body().next
-    return block.next.head.class == Node::BLOCK_ARG
+    if block.class == Node::BLOCK and
+       block.next.head.class == Node::BLOCK_ARG then
+      return block.next.head.cnt
+    else
+      return nil
+    end
   end
 
   # Return a hash mapping each argument name to a description of that
   # argument.
   def argument_info
     names = argument_names()
-    block = body().next
-    args = block.head
 
     info = {}
     names.each do |name|
@@ -37,7 +44,7 @@ class Method
     end
 
     # Optional args
-    opt = args.opt
+    opt = block_arg ? body.next.head.opt : body.next.opt
     while opt do
       head = opt.head
       if head.class == Node::LASGN then
@@ -49,14 +56,14 @@ class Method
     end
 
     # Rest arg
-    if args.rest > 0 then
-      rest_name = names[args.rest - 2] # skip $_ and $~
+    if rest_arg then
+      rest_name = names[rest_arg]
       info[rest_name] = "*#{rest_name}"
     end
 
     # Block arg
-    if block.next.head.class == Node::BLOCK_ARG then
-      block_name = names[block.next.head.cnt - 2] # skip $_ and $~
+    if block_arg then
+      block_name = names[block_arg]
       info[block_name] = "&#{block_name}"
     end
 
