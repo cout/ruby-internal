@@ -81,7 +81,7 @@ NODE_TYPE_DESCRIPS = [
   [ 'BLOCK_ARG'   , 'CNT'   , 'NONE'  , 'NONE'  ], 
   [ 'COLON2'      , 'HEAD'  , 'MID'   , 'NONE'  ], 
   [ 'COLON3'      , 'MID'   , 'NONE'  , 'NONE'  ], 
-  [ 'NTH_REF'     , 'NTH'   , 'NONE'  , 'NONE'  ], 
+  [ 'NTH_REF'     , 'NTH'   , 'CNT'   , 'NONE'  ], 
   [ 'BACK_REF'    , 'NTH'   , 'NONE'  , 'NONE'  ], 
   [ 'HASH'        , 'HEAD'  , 'NONE'  , 'NONE'  ], 
   [ 'ZARRAY'      , 'NONE'  , 'NONE'  , 'NONE'  ], 
