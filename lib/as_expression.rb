@@ -36,17 +36,19 @@ class Node
     :^, :%, '!'.intern, '!='.intern, '=~'.intern, ':!~'.intern
   ]
 
+  # TODO: there should be a way to detect if the expressions need to be
+  # in parens
   define_expression(:CALL) do
     case self.mid
     when *@@arithmetic_expressions
       args = self.args
-      return "#{self.recv.as_expression} #{self.mid} #{args ? args.as_expression(false) : ''}"
+      return "(#{self.recv.as_expression}) #{self.mid} (#{args ?  args.as_expression(false) : ''})"
     when :[]
       args = self.args
-      return "#{self.recv.as_expression}[#{args ? args.as_expression(false) : ''}]"
+      return "(#{self.recv.as_expression})[#{args ? args.as_expression(false) : ''}]"
     else
       args = self.args
-      return "#{self.recv.as_expression}.#{self.mid}(#{args ? args.as_expression(false) : ''})"
+      return "(#{self.recv.as_expression}).#{self.mid}(#{args ? args.as_expression(false) : ''})"
     end
   end
 
@@ -108,8 +110,7 @@ class Node
         # don't do anything for variable definitions
         a.shift
       end
-      s = a.map { |n| n.as_expression }.join
-      return a.size > 1 ? "(#{s})" : s
+      return a.map { |n| n.as_expression }.join('; ')
     end
   end
 
@@ -118,7 +119,7 @@ class Node
     elems = []
     i = 0
     while i < a.size do
-      elems << "#{a[i].as_expression}=>#{a[i+1].as_expression}"
+      elems << "(#{a[i].as_expression})=>(#{a[i+1].as_expression})"
       i += 2
     end
     return "{#{elems.join(', ')}}"
@@ -127,9 +128,9 @@ class Node
   define_expression(:IF) do
     bodynode = self.body.class == Node::NEWLINE ? self.body.next : self.body
     elsenode = self.else.class == Node::NEWLINE ? self.else.next : self.else
-    return "#{self.cond.as_expression} ? " +
-           "#{bodynode.as_expression} : " +
-           "#{elsenode.as_expression}"
+    return "(#{self.cond.as_expression}) ? " +
+           "(#{bodynode.as_expression}) : " +
+           "(#{elsenode.as_expression})"
   end
 
   define_expression(:TRUENODE) do
@@ -145,11 +146,11 @@ class Node
   end
 
   define_expression(:DOT2) do
-    return "#{self.beg.as_expression}..#{self.end.as_expression}"
+    return "(#{self.beg.as_expression})..(#{self.end.as_expression})"
   end
 
   define_expression(:DOT3) do
-    return "#{self.beg.as_expression}..#{self.end.as_expression}"
+    return "(#{self.beg.as_expression})..(#{self.end.as_expression})"
   end
 
   define_expression(:GVAR) do
@@ -176,15 +177,23 @@ class Node
     return "#{self.vid} = #{self.value.as_expression}"
   end
 
+  define_expression(:DASGN) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
+  define_expression(:LASGN) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
   define_expression(:ATTR_ASGN) do
     case self.mid
     when :[]=
       args = self.args.to_a
       attrs = args[1..-2].map { |n| n.as_expression }
       value = args[-1].as_expression
-      return "#{self.recv.as_expression}[#{attrs.join(', ')}] = #{value}"
+      return "(#{self.recv.as_expression})[#{attrs.join(', ')}] = #{value}"
     else
-      return "#{self.recv.as_expression}.#{self.mid}#{self.args.as_expression(false)}"
+      return "(#{self.recv.as_expression}).#{self.mid}#{self.args.as_expression(false)}"
     end
   end
 
@@ -201,30 +210,30 @@ class Node
   end
 
   define_expression(:NEWLINE) do
-    return "#{self.next.as_expression}; "
+    return self.next.as_expression
   end
 
   define_expression(:STR) do
-    return "\"#{self.lit}\""
+    return "\"#{self.lit.inspect[1..-2]}\""
   end
 
   define_expression(:REGX) do
     # TODO: cflag
-    return "/#{self.lit}/"
+    return "/#{self.lit.inspect[1..-2]}/"
   end
 
   define_expression(:REGX_ONCE) do
     # TODO: cflag
-    return "/#{self.lit}/o"
+    return "/#{self.lit.inspect[1..-2]}/o"
   end
 
   define_expression(:XSTR) do
-    return "`#{self.lit}`"
+    return "`#{self.lit.inspect[1..-2]}`"
   end
 
   define_expression(:DSTR) do
     a = self.next.to_a
-    s = "\"#{self.lit}"
+    s = "\"#{self.lit.inspect[1..-2]}"
     a.each do |elem|
       case elem
       when Node::STR then s += elem.lit
@@ -237,7 +246,7 @@ class Node
 
   define_expression(:DREGX) do
     a = self.next.to_a
-    s = "/#{self.lit}"
+    s = "/#{self.lit.inspect[1..-2]}"
     a.each do |elem|
       case elem
       when Node::STR then s += elem.lit
@@ -251,7 +260,7 @@ class Node
 
   define_expression(:DREGX_ONCE) do
     a = self.next.to_a
-    s = "/#{self.lit}"
+    s = "/#{self.lit.inspect[1..-2]}"
     a.each do |elem|
       case elem
       when Node::STR then s += elem.lit
@@ -265,7 +274,7 @@ class Node
 
   define_expression(:DXSTR) do
     a = self.next.to_a
-    s = "`#{self.lit}"
+    s = "`#{self.lit.inspect[1..-2]}"
     a.each do |elem|
       case elem
       when Node::STR then s += elem.lit
@@ -294,7 +303,7 @@ class Node
   end
 
   define_expression(:ITER) do
-    return "#{self.iter.as_expression} {\n#{self.body.as_expression}}"
+    return "#{self.iter.as_expression} { #{self.body.as_expression} }"
   end
 
   define_expression(:BREAK) do
@@ -306,7 +315,7 @@ class Node
   end
 
   define_expression(:RETURN) do
-    s = "break"
+    s = "return"
     if self.stts then
       s += " #{self.stts.as_expression}"
     end
