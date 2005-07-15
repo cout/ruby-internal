@@ -34,8 +34,8 @@ class Node
 
   define_code(:BLOCK) do |indent|
     a = self.to_a
-    if a[0].class == Node::DASGN_CURR then
-      # don't do anything for variable definitions
+    if a[0].class == Node::DASGN_CURR and not a[0].value
+      # ignore variable definitions
       a.shift
     end
     return a.map { |n| "#{n.as_code(indent)}" }.join("\n")
@@ -45,6 +45,57 @@ class Node
     return "#{'  '*indent}#{self.iter.as_expression} {\n" +
            "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
            "#{'  '*indent}}"
+  end
+
+  define_code(:WHILE) do |indent|
+    if self.state == 1 then
+      return "#{'  '*indent}while #{self.cond.as_expression} do\n" +
+             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+             "#{'  '*indent}end"
+    else
+      return "#{'  '*indent}begin\n" +
+             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+             "#{'  '*indent}end while #{self.cond.as_expression}"
+    end
+  end
+
+  define_code(:UNTIL) do |indent|
+    if self.state == 1 then
+      return "#{'  '*indent}until #{self.cond.as_expression} do\n" +
+             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+             "#{'  '*indent}end"
+    else
+      return "#{'  '*indent}begin\n" +
+             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+             "#{'  '*indent}end until #{self.cond.as_expression}"
+    end
+  end
+
+  define_expression(:BEGIN) do |indent|
+    return "#{'  '*indent}begin\n" +
+           "#{'  '*indent}#{self.bdoy.as_code(indent+1)}\n" +
+           "#{'  '*indent}end"
+  end
+
+  define_expression(:ENSURE) do
+    return "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
+           "#{'  '*indent}ensure\n" +
+           "#{'  '*indent}#{self.ensr.as_code(indent+1)}"
+  end
+
+  define_expression(:RESCUE) do
+    return "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
+           "#{'  '*indent}rescue #{self.resq.as_code(indent+1)}"
+  end
+
+  define_expression(:RESBODY) do
+    if self.ensr then
+      a = self.ensr.to_a.map { |n| n.as_expression }
+      return "#{a.join(', ')}\n" +
+             "#{'  '*indent}#{self.resq.as_code(indent+1)}"
+    else
+      return "#{self.resq.as_code(indent+1)}"
+    end
   end
 
   define_code(:NEWLINE) do |indent|

@@ -106,8 +106,8 @@ class Node
 
     def as_expression
       a = self.to_a
-      if a[0].class == Node::DASGN_CURR then
-        # don't do anything for variable definitions
+      if a[0].class == Node::DASGN_CURR and not a[0].value
+        # ignore variable definitions
         a.shift
       end
       return a.map { |n| n.as_expression }.join('; ')
@@ -306,6 +306,22 @@ class Node
     return "#{self.iter.as_expression} { #{self.body.as_expression} }"
   end
 
+  define_expression(:WHILE) do
+    if self.state == 1 then
+      return "while #{self.cond.as_expression} do; #{self.body.as_expression}; end"
+    else
+      return "begin; #{self.body.as_expression}; end while #{self.cond.as_expression}"
+    end
+  end
+
+  define_expression(:UNTIL) do
+    if self.state == 1 then
+      return "until #{self.cond.as_expression} do; #{self.body.as_expression}; end"
+    else
+      return "begin; #{self.body.as_expression}; end until #{self.cond.as_expression}"
+    end
+  end
+
   define_expression(:BREAK) do
     s = "break"
     if self.stts then
@@ -322,5 +338,25 @@ class Node
     return s
   end
 
+  define_expression(:BEGIN) do
+    return "begin; #{self.body.as_expression}; end"
+  end
+
+  define_expression(:ENSURE) do
+    return "#{self.head.as_expression} ensure #{self.ensr.as_expression}"
+  end
+
+  define_expression(:RESCUE) do
+    return "#{self.head.as_expression} rescue #{self.resq.as_expression}"
+  end
+
+  define_expression(:RESBODY) do
+    if self.ensr then
+      a = self.ensr.to_a.map { |n| n.as_expression }
+      return "#{a.join(', ')}; #{self.resq.as_expression}"
+    else
+      return "#{self.resq.as_expression}"
+    end
+  end
 end
 
