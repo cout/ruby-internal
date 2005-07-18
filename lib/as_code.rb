@@ -101,5 +101,42 @@ class Node
   define_code(:NEWLINE) do |indent|
     return self.next.as_code(indent)
   end
+
+  define_code(:CASE) do
+    return "#{'  '*indent}case #{self.head.as_expression}\n" +
+           "#{self.body.as_code(indent)}end"
+  end
+
+  define_code(:WHEN) do
+    args = self.head.to_a.map { |n| n.as_expression }
+    return "#{'  '*indent}when #{args.join(', ')}\n" +
+           "#{'  '*indent}#{self.body.as_code(indent+1)}; "
+  end
+
+  define_expression(:CLASS) do
+    s_super = self.super ? " < #{self.super.as_expression}" : ''
+    return "#{'  '*indent}class #{self.cpath.as_expression}#{s_super}\n" +
+           "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+           "#{'  '*indent}end"
+  end
+
+  define_expression(:SCLASS) do
+    return "#{'  '*indent}class << #{self.recv.as_expression}\n" +
+           "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+           "#{'  '*indent}end"
+  end
+
+  define_expression(:DEFN) do
+    # TODO: what to do about noex?
+    return "#{'  '*indent}def #{self.mid}\n" +
+           "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+           "#{'  '*indent}end"
+  end
+
+  define_expression(:DEFS) do
+    return "#{'  '*indent}def #{self.recv.as_expression}.#{self.mid}\n" +
+           "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+           "#{'  '*indent}end"
+  end
 end
 

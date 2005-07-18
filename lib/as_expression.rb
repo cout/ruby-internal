@@ -61,7 +61,27 @@ class Node
   end
 
   define_expression(:SUPER) do
-    return "super(#{args ? args.as_expression(false) : ''})"
+    return "super(#{self.args ? self.args.as_expression(false) : ''})"
+  end
+
+  define_expression(:REDO) do
+    return "redo"
+  end
+
+  define_expression(:RETRY) do
+    return "retry"
+  end
+
+  define_expression(:NOT) do
+    return "not #{self.body.as_expression}"
+  end
+
+  define_expression(:AND) do
+    return "#{self.1st.as_expression} and #{self.2nd.as_expression}"
+  end
+
+  define_expression(:OR) do
+    return "#{self.1st.as_expression} or #{self.2nd.as_expression}"
   end
 
   class ARRAY < Node
@@ -145,6 +165,10 @@ class Node
     return "nil"
   end
 
+  define_expression(:SELF) do
+    return "self"
+  end
+
   define_expression(:DOT2) do
     return "(#{self.beg.as_expression})..(#{self.end.as_expression})"
   end
@@ -169,8 +193,12 @@ class Node
     return "#{self.vid}"
   end
 
-  define_expression(:NODE_NTH_REF) do
+  define_expression(:NTH_REF) do
     return "$#{self.nth}"
+  end
+
+  define_expression(:BACK_REF) do
+    return "$`"
   end
 
   define_expression(:DASGN_CURR) do
@@ -181,7 +209,29 @@ class Node
     return "#{self.vid} = #{self.value.as_expression}"
   end
 
+  define_expression(:IASGN) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
   define_expression(:LASGN) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
+  define_expression(:MASGN) do
+    lhs = self.head.to_a.map { |n| n.as_expression }
+    rhs = self.value.to_a.map { |n| n.as_expression }
+    return "#{lhs.join(', ')} = #{rhs.join(', ')}"
+  end
+
+  define_expression(:CDECL) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
+  define_expression(:CVDECL) do
+    return "#{self.vid} = #{self.value.as_expression}"
+  end
+
+  define_expression(:CVASGN) do
     return "#{self.vid} = #{self.value.as_expression}"
   end
 
@@ -202,7 +252,11 @@ class Node
   end
 
   define_expression(:COLON2) do
-    return "#{self.mid}::#{self.value.as_expression}"
+    return "#{self.head.as_expression}::#{self.mid}"
+  end
+
+  define_expression(:COLON3) do
+    return "::#{self.mid}"
   end
 
   define_expression(:LVAR) do
@@ -338,6 +392,14 @@ class Node
     return s
   end
 
+  define_expression(:YIELD) do
+    s = "yield"
+    if self.stts then
+      s += " #{self.stts.as_expression}"
+    end
+    return s
+  end
+
   define_expression(:BEGIN) do
     return "begin; #{self.body.as_expression}; end"
   end
@@ -357,6 +419,49 @@ class Node
     else
       return "#{self.resq.as_expression}"
     end
+  end
+
+  define_expression(:CASE) do
+    return "case #{self.head.as_expression}; #{self.body.as_expression}end"
+  end
+
+  define_expression(:WHEN) do
+    args = self.head.to_a.map { |n| n.as_expression }
+    return "when #{args.join(', ')} then #{self.body.as_expression}; "
+  end
+
+  define_expression(:ALIAS) do
+    return "alias #{self.new} #{self.old}"
+  end
+
+  define_expression(:VALIAS) do
+    return "alias #{self.new} #{self.old}"
+  end
+
+  define_expression(:UNDEF) do
+    return "alias #{self.mid}"
+  end
+
+  define_expression(:CLASS) do
+    s_super = self.super ? " < #{self.super.as_expression}" : ''
+    return "class #{self.cpath.as_expression}#{s_super}; #{self.body.as_expression}; end"
+  end
+
+  define_expression(:SCLASS) do
+    return "class << #{self.recv.as_expression}; #{self.body.as_expression}; end"
+  end
+
+  define_expression(:DEFN) do
+    # TODO: what to do about noex?
+    return "def #{self.mid}; #{self.next.as_expression}; end"
+  end
+
+  define_expression(:DEFS) do
+    return "def #{self.recv.as_expression}.#{self.mid}; #{self.next.as_expression}; end"
+  end
+
+  define_expression(:DEFINED) do
+    return "defined?(#{self.head.as_expression})"
   end
 end
 
