@@ -80,6 +80,12 @@ VALUE wrap_node(NODE * n)
     return Qnil;
   }
 
+  if(wrapped_nodes == Qnil)
+  {
+    /* We're finalizing at exit so we can't function properly */
+    rb_raise(rb_eRuntimeError, "Unable to wrap node during cleanup");
+  }
+
   node_id = rb_hash_aref(wrapped_nodes, LONG2FIX((long)n / 4));
 
   if(!NIL_P(node_id))
@@ -1370,6 +1376,7 @@ void Init_nodewrap(void)
 #endif
 
   wrapped_nodes = rb_hash_new();
+
   rb_global_variable(&wrapped_nodes);
   rb_set_end_proc(wrapped_nodes_end_proc, Qnil);
 
