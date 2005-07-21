@@ -412,9 +412,12 @@ void define_node_subclass_methods()
     [descrip.node1, descrip.node2, descrip.node3].each do |nen|
       next if nen == 'NONE'
       nen = nen.downcase
+      name = nen
+      name = 'first' if nen == '1st'
+      name = 'second' if nen == '2nd'
       puts <<-END
-    rb_define_method(#{node_type}, "#{nen}", node_#{nen}, 0);
-    rb_ary_push(members, rb_str_new2("#{nen}"));
+    rb_define_method(#{node_type}, "#{name}", node_#{nen}, 0);
+    rb_ary_push(members, rb_str_new2("#{name}"));
       END
     end
     puts <<-END

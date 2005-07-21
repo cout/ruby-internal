@@ -10,7 +10,6 @@ File.open(NODE_H_LOCATION) do |node_h|
     break if line.nil?
     case line
     when /^#define\s+nd_(\w+)\s+(.*)/
-      puts line
       NODEINFO[$1] = $2
     end
   end

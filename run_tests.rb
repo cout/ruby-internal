@@ -7,6 +7,7 @@ def run_tests
   end
 
   $:.unshift('ext')
+  $:.unshift('lib')
   tests = Dir['test/test_*.rb']
   tests.each do |test|
     load test
@@ -26,7 +27,8 @@ def run_tests
     end
   end
 
-  # TODO: this doesn't look quite right to me...
+  # TODO: this doesn't look quite right to me (we should run all the
+  # tests as one suite)...
   exitval = 0
   tests.each do |test|
     result = Test::Unit::UI::Console::TestRunner.run(
@@ -36,8 +38,6 @@ def run_tests
   end
 end
 
-p __FILE__
-p $0
 if __FILE__ == $0 then
   run_tests()
 end

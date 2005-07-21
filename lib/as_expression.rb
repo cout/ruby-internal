@@ -18,7 +18,8 @@ class Node
   end
 
   define_expression(:LIT) do
-    return self.lit.to_s
+    # TODO: #inspect might not give an eval-able expression
+    return self.lit.inspect
   end
 
   define_expression(:FCALL) do
@@ -27,13 +28,12 @@ class Node
   end
 
   define_expression(:VCALL) do
-    args = self.args
-    return "#{self.mid}(#{args ? args.as_expression(false) : ''})"
+    return self.mid.to_s
   end
 
   @@arithmetic_expressions = [
     :+, :-, :*, :/, :<, :>, :<=, :>=, :==, :===, :<=>, :<<, :>>, :&, :|,
-    :^, :%, '!'.intern, '!='.intern, '=~'.intern, ':!~'.intern
+    :^, :%, '!'.intern, '!='.intern
   ]
 
   # TODO: there should be a way to detect if the expressions need to be
@@ -50,10 +50,6 @@ class Node
       args = self.args
       return "(#{self.recv.as_expression}).#{self.mid}(#{args ? args.as_expression(false) : ''})"
     end
-  end
-
-  define_expression(:VCALL) do
-    return self.mid.to_s
   end
 
   define_expression(:ZSUPER) do
@@ -77,11 +73,11 @@ class Node
   end
 
   define_expression(:AND) do
-    return "#{self.1st.as_expression} and #{self.2nd.as_expression}"
+    return "#{self.first.as_expression} and #{self.second.as_expression}"
   end
 
   define_expression(:OR) do
-    return "#{self.1st.as_expression} or #{self.2nd.as_expression}"
+    return "#{self.first.as_expression} or #{self.second.as_expression}"
   end
 
   class ARRAY < Node
@@ -126,15 +122,17 @@ class Node
 
     def as_expression
       a = self.to_a
-      if a[0].class == Node::DASGN_CURR and not a[0].value
-        # ignore variable definitions
-        a.shift
+      d = a[0]
+      while d.class == Node::DASGN_CURR do
+        d = d.value
       end
+      a.shift if not d
       return a.map { |n| n.as_expression }.join('; ')
     end
   end
 
   define_expression(:HASH) do
+    return "{}" if not self.head
     a = self.head.to_a
     elems = []
     i = 0
@@ -174,7 +172,7 @@ class Node
   end
 
   define_expression(:DOT3) do
-    return "(#{self.beg.as_expression})..(#{self.end.as_expression})"
+    return "(#{self.beg.as_expression})...(#{self.end.as_expression})"
   end
 
   define_expression(:GVAR) do
@@ -235,7 +233,7 @@ class Node
     return "#{self.vid} = #{self.value.as_expression}"
   end
 
-  define_expression(:ATTR_ASGN) do
+  define_expression(:ATTRASGN) do
     case self.mid
     when :[]=
       args = self.args.to_a
@@ -252,7 +250,11 @@ class Node
   end
 
   define_expression(:COLON2) do
-    return "#{self.head.as_expression}::#{self.mid}"
+    if self.head then
+      return "#{self.head.as_expression}::#{self.mid}"
+    else
+      return self.mid.to_s
+    end
   end
 
   define_expression(:COLON3) do
@@ -401,23 +403,46 @@ class Node
   end
 
   define_expression(:BEGIN) do
-    return "begin; #{self.body.as_expression}; end"
+    if self.body.class == Node::RESCUE
+      return "begin; #{self.body.as_expression(true)}; end"
+    else
+      return "begin; #{self.body.as_expression}; end"
+    end
   end
 
   define_expression(:ENSURE) do
-    return "#{self.head.as_expression} ensure #{self.ensr.as_expression}"
-  end
-
-  define_expression(:RESCUE) do
-    return "#{self.head.as_expression} rescue #{self.resq.as_expression}"
-  end
-
-  define_expression(:RESBODY) do
-    if self.ensr then
-      a = self.ensr.to_a.map { |n| n.as_expression }
-      return "#{a.join(', ')}; #{self.resq.as_expression}"
+    if self.head then
+      return "#{self.head.as_expression} ensure #{self.ensr.as_expression}"
     else
-      return "#{self.resq.as_expression}"
+      return "ensure #{self.ensr.as_expression}"
+    end
+  end
+
+  define_expression(:RESCUE) do |*args|
+    begin_rescue = args[0] || false
+    if self.head then
+      if begin_rescue then
+        return "#{self.head.as_expression}; rescue #{self.resq.as_expression(begin_rescue)}"
+      else
+        return "#{self.head.as_expression} rescue #{self.resq.as_expression(begin_rescue)}"
+      end
+    else
+      return "rescue #{self.resq.as_expression(begin_rescue)}"
+    end
+  end
+
+  define_expression(:RESBODY) do |*args|
+    begin_rescue = args[0] || false
+    if begin_rescue then
+      if self.ensr then
+        a = self.ensr.to_a.map { |n| n.as_expression }
+        return "#{a.join(', ')}; #{self.resq.as_expression}"
+      else
+        return self.resq ? "; #{self.resq.as_expression}" : ''
+      end
+    else
+      # TODO: assuming self.ensr is false...
+      return self.resq ? self.resq.as_expression : ''
     end
   end
 
@@ -427,7 +452,16 @@ class Node
 
   define_expression(:WHEN) do
     args = self.head.to_a.map { |n| n.as_expression }
-    return "when #{args.join(', ')} then #{self.body.as_expression}; "
+    s = ''
+    if self.body then
+      s = "when #{args.join(', ')} then #{self.body.as_expression}; "
+    else
+      s = "when #{args.join(', ')}; "
+    end
+    if self.next then
+      s += self.next.as_expression
+    end
+    return s
   end
 
   define_expression(:ALIAS) do
@@ -451,6 +485,10 @@ class Node
     return "class << #{self.recv.as_expression}; #{self.body.as_expression}; end"
   end
 
+  define_expression(:SCOPE) do
+    return self.next ? self.next.as_expression : ''
+  end
+
   define_expression(:DEFN) do
     # TODO: what to do about noex?
     return "def #{self.mid}; #{self.next.as_expression}; end"
@@ -463,5 +501,7 @@ class Node
   define_expression(:DEFINED) do
     return "defined?(#{self.head.as_expression})"
   end
+
+  # TODO: MATCH3
 end
 
