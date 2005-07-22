@@ -405,8 +405,10 @@ class Node
   define_expression(:BEGIN) do
     if self.body.class == Node::RESCUE
       return "begin; #{self.body.as_expression(true)}; end"
-    else
+    elsif self.body
       return "begin; #{self.body.as_expression}; end"
+    else
+      return "begin; end"
     end
   end
 
