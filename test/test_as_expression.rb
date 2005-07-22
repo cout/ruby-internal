@@ -147,6 +147,13 @@ class TC_As_Expression < Test::Unit::TestCase
     define_method "test_#{name}", p
   end
 
+  def initialize(test_method_name)
+    # TODO: This seems to be the only way to get tests defined with #
+    # define_method to run on 1.8.1 and earlier.
+    @method_name = test_method_name
+    @test_passed = true
+  end
+
   def setup
     @foo = 42
   end
