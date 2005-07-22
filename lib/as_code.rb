@@ -77,7 +77,7 @@ class Node
 
   define_code(:BEGIN) do |node, indent|
     "#{'  '*indent}begin\n" +
-    "#{'  '*indent}#{self.bdoy.as_code(indent+1)}\n" +
+    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end
 
