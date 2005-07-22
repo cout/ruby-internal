@@ -3,12 +3,12 @@ require 'as_code'
 class Node
   def as_code(indent=0)
     # default -- most code is just an expression
-    return self.as_code_impl(indent)
+    self.as_code_impl(indent)
   end
 
   def as_code_impl(indent)
     # default -- most code is just an expression
-    return "#{'  '*indent}#{self.as_expression}"
+    "#{'  '*indent}#{self.as_expression}"
   end
 
   class << self
@@ -22,13 +22,13 @@ class Node
   define_code(:IF) do |indent|
     if self.body.class == Node::BLOCK or
        self.else.class == Node::BLOCK then
-      return "#{'  '*indent}if #{self.cond.as_expression} then\n" +
-             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-             "#{'  '*indent}else\n" +
-             "#{'  '*indent}#{self.else.as_code(indent+1)}\n" +
-             "#{'  '*indent}end"
+      "#{'  '*indent}if #{self.cond.as_expression} then\n" +
+      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}else\n" +
+      "#{'  '*indent}#{self.else.as_code(indent+1)}\n" +
+      "#{'  '*indent}end"
     else
-      return self.as_expression
+      self.as_expression
     end
   end
 
@@ -38,105 +38,105 @@ class Node
       # ignore variable definitions
       a.shift
     end
-    return a.map { |n| "#{n.as_code(indent)}" }.join("\n")
+    a.map { |n| "#{n.as_code(indent)}" }.join("\n")
   end
 
   define_code(:ITER) do |indent|
-    return "#{'  '*indent}#{self.iter.as_expression} {\n" +
-           "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-           "#{'  '*indent}}"
+    "#{'  '*indent}#{self.iter.as_expression} {\n" +
+    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    "#{'  '*indent}}"
   end
 
   define_code(:WHILE) do |indent|
     if self.state == 1 then
-      return "#{'  '*indent}while #{self.cond.as_expression} do\n" +
-             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-             "#{'  '*indent}end"
+      "#{'  '*indent}while #{self.cond.as_expression} do\n" +
+      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end"
     else
-      return "#{'  '*indent}begin\n" +
-             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-             "#{'  '*indent}end while #{self.cond.as_expression}"
+      "#{'  '*indent}begin\n" +
+      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end while #{self.cond.as_expression}"
     end
   end
 
   define_code(:UNTIL) do |indent|
     if self.state == 1 then
-      return "#{'  '*indent}until #{self.cond.as_expression} do\n" +
-             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-             "#{'  '*indent}end"
+      "#{'  '*indent}until #{self.cond.as_expression} do\n" +
+      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end"
     else
-      return "#{'  '*indent}begin\n" +
-             "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-             "#{'  '*indent}end until #{self.cond.as_expression}"
+      "#{'  '*indent}begin\n" +
+      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end until #{self.cond.as_expression}"
     end
   end
 
   define_expression(:BEGIN) do |indent|
-    return "#{'  '*indent}begin\n" +
-           "#{'  '*indent}#{self.bdoy.as_code(indent+1)}\n" +
-           "#{'  '*indent}end"
+    "#{'  '*indent}begin\n" +
+    "#{'  '*indent}#{self.bdoy.as_code(indent+1)}\n" +
+    "#{'  '*indent}end"
   end
 
   define_expression(:ENSURE) do
-    return "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
-           "#{'  '*indent}ensure\n" +
-           "#{'  '*indent}#{self.ensr.as_code(indent+1)}"
+    "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
+    "#{'  '*indent}ensure\n" +
+    "#{'  '*indent}#{self.ensr.as_code(indent+1)}"
   end
 
   define_expression(:RESCUE) do
-    return "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
-           "#{'  '*indent}rescue #{self.resq.as_code(indent+1)}"
+    "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
+    "#{'  '*indent}rescue #{self.resq.as_code(indent+1)}"
   end
 
   define_expression(:RESBODY) do
     if self.ensr then
       a = self.ensr.to_a.map { |n| n.as_expression }
-      return "#{a.join(', ')}\n" +
-             "#{'  '*indent}#{self.resq.as_code(indent+1)}"
+      "#{a.join(', ')}\n" +
+      "#{'  '*indent}#{self.resq.as_code(indent+1)}"
     else
-      return "#{self.resq.as_code(indent+1)}"
+      "#{self.resq.as_code(indent+1)}"
     end
   end
 
   define_code(:NEWLINE) do |indent|
-    return self.next.as_code(indent)
+    self.next.as_code(indent)
   end
 
   define_code(:CASE) do
-    return "#{'  '*indent}case #{self.head.as_expression}\n" +
-           "#{self.body.as_code(indent)}end"
+    "#{'  '*indent}case #{self.head.as_expression}\n" +
+    "#{self.body.as_code(indent)}end"
   end
 
   define_code(:WHEN) do
     args = self.head.to_a.map { |n| n.as_expression }
-    return "#{'  '*indent}when #{args.join(', ')}\n" +
-           "#{'  '*indent}#{self.body.as_code(indent+1)}; "
+    "#{'  '*indent}when #{args.join(', ')}\n" +
+    "#{'  '*indent}#{self.body.as_code(indent+1)}; "
   end
 
   define_expression(:CLASS) do
     s_super = self.super ? " < #{self.super.as_expression}" : ''
-    return "#{'  '*indent}class #{self.cpath.as_expression}#{s_super}\n" +
-           "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-           "#{'  '*indent}end"
+    "#{'  '*indent}class #{self.cpath.as_expression}#{s_super}\n" +
+    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    "#{'  '*indent}end"
   end
 
   define_expression(:SCLASS) do
-    return "#{'  '*indent}class << #{self.recv.as_expression}\n" +
-           "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-           "#{'  '*indent}end"
+    "#{'  '*indent}class << #{self.recv.as_expression}\n" +
+    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    "#{'  '*indent}end"
   end
 
   define_expression(:DEFN) do
     # TODO: what to do about noex?
-    return "#{'  '*indent}def #{self.mid}\n" +
-           "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
-           "#{'  '*indent}end"
+    "#{'  '*indent}def #{self.mid}\n" +
+    "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+    "#{'  '*indent}end"
   end
 
   define_expression(:DEFS) do
-    return "#{'  '*indent}def #{self.recv.as_expression}.#{self.mid}\n" +
-           "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
-           "#{'  '*indent}end"
+    "#{'  '*indent}def #{self.recv.as_expression}.#{self.mid}\n" +
+    "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+    "#{'  '*indent}end"
   end
 end
 
