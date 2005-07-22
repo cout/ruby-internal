@@ -379,7 +379,11 @@ static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
+#if RUBY_VERSION_CODE < 180
+  return m->oklass;
+#else
   return m->rklass;
+#endif
 }
 
 /*
