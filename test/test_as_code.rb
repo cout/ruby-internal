@@ -1,7 +1,7 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
 require 'nodewrap'
-require 'as_expression'
+require 'as_code'
 
 dir = File.dirname(__FILE__)
 require "#{dir}/expression_samples"
@@ -15,7 +15,7 @@ class TC_As_Expression < Test::Unit::TestCase
   EXPRESSION_SAMPLES.each do |name, code|
     p = proc {
       p_orig = eval("proc { #{code} }")
-      code_new = p_orig.body.as_expression
+      code_new = p_orig.body.as_code
       p_new = eval("proc { #{code_new} }")
       result_orig = result_new = nil
       exc_orig = exc_new = nil
