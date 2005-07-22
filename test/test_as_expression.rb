@@ -129,6 +129,8 @@ class TC_As_Expression < Test::Unit::TestCase
     # TODO: match3
   }
 
+  extend Test::Unit::Assertions
+
   CODE_SAMPLES.each do |name, code|
     p = proc {
       p_orig = eval("proc { #{code} }")
