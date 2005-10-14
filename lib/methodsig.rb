@@ -1,9 +1,6 @@
 require 'nodewrap'
 require 'as_expression'
 
-require 'pp'
-require 'nodepp'
-
 class Method
   # Return the names of the arguments this method takes, in the order in
   # which they appear in the argument list.
@@ -26,8 +23,9 @@ class Method
   # that is preceded by an asterisk (*) in the argument list, then
   # return its index, otherwise return nil.
   def rest_arg
+    # subtract 2 to account for implicit vars
     rest = args_node.rest()
-    return rest > 0 ? rest : nil
+    return rest > 0 ? rest - 2 : nil
   end
 
   # If this method has a "block" argument, that is, it has an argument
@@ -37,7 +35,8 @@ class Method
     block = self.body.next
     if block.class == Node::BLOCK and
        block.next.head.class == Node::BLOCK_ARG then
-      return block.next.head.cnt
+      # subtract 2 to account for implicit vars
+      return block.next.head.cnt - 2
     else
       return nil
     end
