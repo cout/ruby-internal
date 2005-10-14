@@ -21,11 +21,11 @@ class TC_As_Code < Test::Unit::TestCase
       exc_orig = exc_new = nil
       begin; result_orig = p_orig.call; rescue; exc_orig = $!; end
       begin; result_new = p_new.call; rescue; exc_new = $!; end
-      assert_equal(result_orig, result_new)
       assert_equal(exc_orig.class, exc_new.class)
       if exc_orig and exc_new then
         assert_equal(exc_orig.message, exc_new.message)
       end
+      assert_equal(result_orig, result_new)
     }
     define_method "test_#{name}", p
   end
