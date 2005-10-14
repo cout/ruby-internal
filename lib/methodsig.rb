@@ -1,6 +1,9 @@
 require 'nodewrap'
 require 'as_expression'
 
+require 'pp'
+require 'nodepp'
+
 class Method
   # Return the names of the arguments this method takes, in the order in
   # which they appear in the argument list.
@@ -8,23 +11,29 @@ class Method
     return self.body.tbl || []
   end
 
+  def args_node
+    if self.body.next.class == Node::ARGS then
+      return self.body.next
+    elsif self.body.next.head.class == Node::ARGS then
+      return self.body.next.head
+    else
+      raise "Could not find method arguments"
+    end
+  end
+  private :args_node
+
   # If this method has a "rest" argument, that is, it has an argument
   # that is preceded by an asterisk (*) in the argument list, then
   # return its index, otherwise return nil.
   def rest_arg
-    # if self.has_block_arg then
-    #   rest = self.body.next.head.args.rest
-    # else
-    #   rest = self.body.next.rest
-    # end
-    rest = self.body.next.head.rest
+    rest = args_node.rest()
     return rest > 0 ? rest : nil
   end
 
   # If this method has a "block" argument, that is, it has an argument
   # that is preceded by an ampersand (&) in the argument list, then
   # return its index, otherwise return nil.
-  def has_block_arg
+  def block_arg
     block = self.body.next
     if block.class == Node::BLOCK and
        block.next.head.class == Node::BLOCK_ARG then
@@ -38,7 +47,7 @@ class Method
   # argument.
   def argument_info
     names = self.argument_names()
-    has_block_arg = self.has_block_arg()
+    block_arg = self.block_arg()
 
     info = {}
     names.each do |name|
@@ -46,8 +55,7 @@ class Method
     end
 
     # Optional args
-    # opt = has_block_arg ? self.body.next.head.opt : self.body.next.opt
-    opt = self.body.next.head.opt
+    opt = args_node().opt
     while opt do
       head = opt.head
       if head.class == Node::LASGN then
@@ -65,7 +73,7 @@ class Method
     end
 
     # Block arg
-    if has_block_arg then
+    if block_arg then
       block_name = names[block_arg]
       info[block_name] = "&#{block_name}"
     end
