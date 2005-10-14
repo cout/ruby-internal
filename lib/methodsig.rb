@@ -5,26 +5,27 @@ class Method
   # Return the names of the arguments this method takes, in the order in
   # which they appear in the argument list.
   def argument_names
-    return body().tbl || []
+    return self.body.tbl || []
   end
 
   # If this method has a "rest" argument, that is, it has an argument
   # that is preceded by an asterisk (*) in the argument list, then
   # return its index, otherwise return nil.
   def rest_arg
-    if block_arg then
-      rest = body.next.head.args.rest
-    else
-      rest = body.next.rest
-    end
+    # if self.has_block_arg then
+    #   rest = self.body.next.head.args.rest
+    # else
+    #   rest = self.body.next.rest
+    # end
+    rest = self.body.next.head.rest
     return rest > 0 ? rest : nil
   end
 
   # If this method has a "block" argument, that is, it has an argument
   # that is preceded by an ampersand (&) in the argument list, then
   # return its index, otherwise return nil.
-  def block_arg
-    block = body().next
+  def has_block_arg
+    block = self.body.next
     if block.class == Node::BLOCK and
        block.next.head.class == Node::BLOCK_ARG then
       return block.next.head.cnt
@@ -36,7 +37,8 @@ class Method
   # Return a hash mapping each argument name to a description of that
   # argument.
   def argument_info
-    names = argument_names()
+    names = self.argument_names()
+    has_block_arg = self.has_block_arg()
 
     info = {}
     names.each do |name|
@@ -44,7 +46,8 @@ class Method
     end
 
     # Optional args
-    opt = block_arg ? body.next.head.opt : body.next.opt
+    # opt = has_block_arg ? self.body.next.head.opt : self.body.next.opt
+    opt = self.body.next.head.opt
     while opt do
       head = opt.head
       if head.class == Node::LASGN then
@@ -56,13 +59,13 @@ class Method
     end
 
     # Rest arg
-    if rest_arg then
+    if self.rest_arg then
       rest_name = names[rest_arg]
       info[rest_name] = "*#{rest_name}"
     end
 
     # Block arg
-    if block_arg then
+    if has_block_arg then
       block_name = names[block_arg]
       info[block_name] = "&#{block_name}"
     end
