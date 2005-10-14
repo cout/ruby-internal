@@ -42,6 +42,7 @@ EXPRESSION_SAMPLES = {
   :zhash                   => '{}',
   :ternary                 => 'true ? false : nil',
   :if                      => 'if true then false; else nil; end',
+  :if2                     => '42 if true',
   :true                    => 'true',
   :false                   => 'false',
   :nil                     => 'nil',
@@ -59,7 +60,7 @@ EXPRESSION_SAMPLES = {
   :iasgn                   => '@foo = 6',
   # TODO: lasgn
   # TODO: masgn
-  :cdecl                   => 'TC_As_Expression.class_eval { remove_const(:FOO) }; FOO = 1',
+  :cdecl                   => 'self.class.class_eval { remove_const(:FOO) if const_defined?(:FOO) }; FOO = 1',
   :cvdecl                  => '@@foo = 1',
   # TODO: cvasgn
   :attrasgn                => 'h = {}; h.default = true; h',
