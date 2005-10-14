@@ -157,9 +157,14 @@ class Node
   define_expression(:IF) do |node|
     bodynode = node.body.class == Node::NEWLINE ? node.body.next : node.body
     elsenode = node.else.class == Node::NEWLINE ? node.else.next : node.else
-    "(#{node.cond.as_expression}) ? " +
-    "(#{bodynode.as_expression}) : " +
-    "(#{elsenode.as_expression})"
+    if elsenode then
+      "(#{node.cond.as_expression}) ? " +
+      "(#{bodynode.as_expression}) : " +
+      "(#{elsenode.as_expression})"
+    else
+      "(#{bodynode.as_expression}) if " +
+      "(#{node.cond.as_expression})"
+    end
   end
 
   define_expression(:TRUENODE) do |node|

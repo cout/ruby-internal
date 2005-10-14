@@ -25,11 +25,14 @@ class Node
   define_code(:IF) do |node, indent|
     if node.body.class == Node::BLOCK or
        node.else.class == Node::BLOCK then
-      "#{'  '*indent}if #{node.cond.as_expression} then\n" +
-      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
-      "#{'  '*indent}else\n" +
-      "#{'  '*indent}#{node.else.as_code(indent+1)}\n" +
-      "#{'  '*indent}end"
+      s = "#{'  '*indent}if #{node.cond.as_expression} then\n"
+      s << "#{'  '*indent}#{node.body.as_code(indent+1)}\n"
+      if node.else then
+        s << "#{'  '*indent}else\n"
+        s << "#{'  '*indent}#{node.else.as_code(indent+1)}\n"
+      end
+      s << "#{'  '*indent}end"
+      s
     else
       node.as_expression
     end
