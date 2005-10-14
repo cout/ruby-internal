@@ -27,18 +27,20 @@ def run_tests
     end
   end
 
-  # TODO: this doesn't look quite right to me (we should run all the
-  # tests as one suite)...
-  exitval = 0
+  suite = Test::Unit::TestSuite.new
   tests.each do |test|
-    result = Test::Unit::UI::Console::TestRunner.run(
-        test.suite,
-        verbose)
-    exitval += result.error_count + result.failure_count
+    test.suite.tests.each do |testcase|
+      suite << testcase
+    end
   end
+
+  return Test::Unit::UI::Console::TestRunner.run(
+      suite,
+      verbose)
 end
 
 if __FILE__ == $0 then
-  run_tests()
+  result = run_tests()
+  exit(result.error_count + result.failure_count)
 end
 
