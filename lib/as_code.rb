@@ -3,16 +3,15 @@ require 'as_code'
 class Node
   public
 
-  def as_code(indent=0)
-    # default -- most code is just an expression
-    return as_code_impl(self, indent)
+  def as_code(indent=0, *args)
+    return as_code_impl(self, indent, *args)
   end
 
   private
 
-  def as_code_impl(node, indent)
+  def as_code_impl(node, indent, *args)
     # default -- most code is just an expression
-    "#{'  '*indent}#{self.as_expression}"
+    "#{'  '*indent}#{node.as_expression(*args)}"
   end
 
   class << self
@@ -24,20 +23,20 @@ class Node
   end
 
   define_code(:IF) do |node, indent|
-    if self.body.class == Node::BLOCK or
-       self.else.class == Node::BLOCK then
-      "#{'  '*indent}if #{self.cond.as_expression} then\n" +
-      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    if node.body.class == Node::BLOCK or
+       node.else.class == Node::BLOCK then
+      "#{'  '*indent}if #{node.cond.as_expression} then\n" +
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
       "#{'  '*indent}else\n" +
-      "#{'  '*indent}#{self.else.as_code(indent+1)}\n" +
+      "#{'  '*indent}#{node.else.as_code(indent+1)}\n" +
       "#{'  '*indent}end"
     else
-      self.as_expression
+      node.as_expression
     end
   end
 
   define_code(:BLOCK) do |node, indent|
-    a = self.to_a
+    a = node.to_a
     if a[0].class == Node::DASGN_CURR and not a[0].value
       # ignore variable definitions
       a.shift
@@ -46,100 +45,134 @@ class Node
   end
 
   define_code(:ITER) do |node, indent|
-    "#{'  '*indent}#{self.iter.as_expression} {\n" +
-    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    "#{'  '*indent}#{node.iter.as_expression} {\n" +
+    "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
     "#{'  '*indent}}"
   end
 
   define_code(:WHILE) do |node, indent|
-    if self.state == 1 then
-      "#{'  '*indent}while #{self.cond.as_expression} do\n" +
-      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    if node.state == 1 then
+      "#{'  '*indent}while #{node.cond.as_expression} do\n" +
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
       "#{'  '*indent}end"
     else
       "#{'  '*indent}begin\n" +
-      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-      "#{'  '*indent}end while #{self.cond.as_expression}"
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end while #{node.cond.as_expression}"
     end
   end
 
   define_code(:UNTIL) do |node, indent|
-    if self.state == 1 then
-      "#{'  '*indent}until #{self.cond.as_expression} do\n" +
-      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    if node.state == 1 then
+      "#{'  '*indent}until #{node.cond.as_expression} do\n" +
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
       "#{'  '*indent}end"
     else
       "#{'  '*indent}begin\n" +
-      "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-      "#{'  '*indent}end until #{self.cond.as_expression}"
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end until #{node.cond.as_expression}"
     end
   end
 
   define_code(:BEGIN) do |node, indent|
-    "#{'  '*indent}begin\n" +
-    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
-    "#{'  '*indent}end"
+    if node.body.class == Node::RESCUE then
+      "#{'  '*indent}begin\n" +
+      "#{'  '*indent}#{node.body.as_code(indent+1, true)}\n" +
+      "#{'  '*indent}end"
+    elsif node.body then
+      "#{'  '*indent}begin\n" +
+      "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
+      "#{'  '*indent}end"
+    else
+      "#{'  '*indent}begin\n" +
+      "#{'  '*indent}end\n"
+    end
   end
 
   define_code(:ENSURE) do |node, indent|
-    "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
-    "#{'  '*indent}ensure\n" +
-    "#{'  '*indent}#{self.ensr.as_code(indent+1)}"
+    s = ''
+    if node.head then
+      s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
+    end
+    s << "#{'  '*indent}ensure\n" +
+    s << "#{'  '*indent}#{node.ensr.as_code(indent+1)}"
+    return s
   end
 
-  define_code(:RESCUE) do |node, indent|
-    "#{'  '*indent}#{self.head.as_code(indent+1)}\n" +
-    "#{'  '*indent}rescue #{self.resq.as_code(indent+1)}"
-  end
-
-  define_code(:RESBODY) do |node, indent|
-    if self.ensr then
-      a = self.ensr.to_a.map { |n| n.as_expression }
-      "#{a.join(', ')}\n" +
-      "#{'  '*indent}#{self.resq.as_code(indent+1)}"
+  define_code(:RESCUE) do |node, indent, *args|
+    begin_rescue = args[0] || false
+    if node.head then
+      if begin_rescue then
+        "#{'  '*indent}#{node.head.as_code(indent+1)}\n" +
+        "#{'  '*indent}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
+      else
+        "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
+      end
     else
-      "#{self.resq.as_code(indent+1)}"
+      "rescue #{node.resq.as_expression(begin_rescue)}"
+    end
+  end
+
+  define_code(:RESBODY) do |node, indent, *args|
+    begin_rescue = args[0] || false
+    if begin_rescue then
+      if node.ensr then
+        a = node.ensr.to_a.map { |n| n.as_expression }
+        "#{a.join(', ')}\n" +
+        "#{'  '*indent}#{node.resq.as_code(indent+1)}"
+      else
+        node.resq ? "\n#{'  '*indent}#{node.resq.as_code(indent+1)}" : ''
+      end
+    else
+      # TODO: assuming node.ensr is false...
+      node.resq ? node.resq.as_code : ''
     end
   end
 
   define_code(:NEWLINE) do |node, indent|
-    self.next.as_code(indent)
+    node.next.as_code(indent)
   end
 
   define_code(:CASE) do |node, indent|
-    "#{'  '*indent}case #{self.head.as_expression}\n" +
-    "#{self.body.as_code(indent)}end"
+    "#{'  '*indent}case #{node.head.as_expression}\n" +
+    "#{node.body.as_code(indent)}end"
   end
 
   define_code(:WHEN) do |node, indent|
-    args = self.head.to_a.map { |n| n.as_expression }
-    "#{'  '*indent}when #{args.join(', ')}\n" +
-    "#{'  '*indent}#{self.body.as_code(indent+1)}; "
+    args = node.head.to_a.map { |n| n.as_expression }
+    s = "#{'  '*indent}when #{args.join(', ')}\n"
+    if node.body then
+      s << "#{'  '*indent}#{node.body.as_code(indent+1)}; "
+    end
+    if node.next then
+      s << node.next.as_code
+    end
+    s
   end
 
   define_code(:CLASS) do |node, indent|
-    s_super = self.super ? " < #{self.super.as_expression}" : ''
-    "#{'  '*indent}class #{self.cpath.as_expression}#{s_super}\n" +
-    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    s_super = node.super ? " < #{node.super.as_expression}" : ''
+    "#{'  '*indent}class #{node.cpath.as_expression}#{s_super}\n" +
+    "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end
 
   define_code(:SCLASS) do |node, indent|
-    "#{'  '*indent}class << #{self.recv.as_expression}\n" +
-    "#{'  '*indent}#{self.body.as_code(indent+1)}\n" +
+    "#{'  '*indent}class << #{node.recv.as_expression}\n" +
+    "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end
 
   define_code(:DEFN) do |node, indent|
     # TODO: what to do about noex?
-    "#{'  '*indent}def #{self.mid}\n" +
-    "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+    "#{'  '*indent}def #{node.mid}\n" +
+    "#{'  '*indent}#{node.next.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end
 
   define_code(:DEFS) do |node, indent|
-    "#{'  '*indent}def #{self.recv.as_expression}.#{self.mid}\n" +
-    "#{'  '*indent}#{self.next.as_code(indent+1)}\n" +
+    "#{'  '*indent}def #{node.recv.as_expression}.#{node.mid}\n" +
+    "#{'  '*indent}#{node.next.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end
 end
