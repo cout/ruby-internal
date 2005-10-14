@@ -99,7 +99,7 @@ class Node
     end
     s << "#{'  '*indent}ensure\n" +
     s << "#{'  '*indent}#{node.ensr.as_code(indent+1)}"
-    return s
+    s
   end
 
   define_code(:RESCUE) do |node, indent, *args|
