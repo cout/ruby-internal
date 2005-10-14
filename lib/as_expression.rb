@@ -211,7 +211,7 @@ class Node
   end
 
   define_expression(:DASGN_CURR) do |node|
-    "#{node.vid} = #{node.value.as_expression}"
+    node.value ? "#{node.vid} = #{node.value.as_expression}" : ''
   end
 
   define_expression(:DASGN) do |node|
@@ -414,9 +414,9 @@ class Node
   end
 
   define_expression(:BEGIN) do |node|
-    if node.body.class == Node::RESCUE
+    if node.body.class == Node::RESCUE then
       "begin; #{node.body.as_expression(true)}; end"
-    elsif node.body
+    elsif node.body then
       "begin; #{node.body.as_expression}; end"
     else
       "begin; end"
