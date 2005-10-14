@@ -9,7 +9,7 @@ require "#{dir}/expression_samples"
 $stdout.sync = true
 $stderr.sync = true
 
-class TC_As_Expression < Test::Unit::TestCase
+class TC_As_Code < Test::Unit::TestCase
   extend Test::Unit::Assertions
 
   EXPRESSION_SAMPLES.each do |name, code|
