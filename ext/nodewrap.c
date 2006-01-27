@@ -12,7 +12,6 @@
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
-static VALUE rb_cProc;
 static VALUE rb_cUnboundProc;
 static VALUE rb_cMethod;
 static VALUE rb_cUnboundMethod;
@@ -1326,7 +1325,6 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNodeType, "to_i", node_type_to_i, 0);
 
   /* For rdoc: rb_cProc = rb_define_class("Proc", rb_cObject) */
-  rb_cProc = rb_const_get(rb_cObject, rb_intern("Proc"));
   rb_define_method(rb_cProc, "body", proc_body, 0);
   rb_define_method(rb_cProc, "var", proc_var, 0);
   rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
