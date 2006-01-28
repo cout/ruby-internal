@@ -120,8 +120,7 @@ class Method
     end
   end
 
-  # Return a MethodOrigin object representing where the method was
-  # defined.
+  # Return a Method::Origin representing where the method was defined.
   def origin
     block = body().next
     return Origin.new(block.nd_file, block.nd_line)

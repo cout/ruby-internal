@@ -17,7 +17,7 @@ class Node
   class << self
     def define_code(klass, &block)
       if const_defined?(klass) then
-        const_get(klass).__send__(:define_method, :as_code_impl, &block)
+        const_get(klass).instance_eval { define_method(:as_code_impl, &block) }
       end
     end
   end
