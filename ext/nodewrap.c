@@ -1205,12 +1205,12 @@ static VALUE ruby_eval_tree_begin_getter()
     return Qnil;
   }
 }
-#endif
 
 static void ruby_eval_tree_begin_setter()
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_begin_setter() not implemented");
 }
+#endif
 
 static VALUE ruby_eval_tree_getter()
 {
