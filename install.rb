@@ -182,7 +182,7 @@ class ConfigTable
 
     def new
       c = newobj()
-      c.__send__ :init
+      c.instance_eval { init }
       c
     end
 
