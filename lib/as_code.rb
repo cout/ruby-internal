@@ -1,4 +1,5 @@
-require 'as_code'
+require 'nodewrap'
+require 'rbconfig'
 
 class Node
   public
@@ -78,7 +79,8 @@ class Node
   end
 
   define_code(:BEGIN) do |node, indent|
-    if node.body.class == Node::RESCUE then
+    if node.body.class == Node::RESCUE or
+       node.body.class == Node::ENSURE then
       "#{'  '*indent}begin\n" +
       "#{'  '*indent}#{node.body.as_code(indent+1, true)}\n" +
       "#{'  '*indent}end"
@@ -92,27 +94,49 @@ class Node
     end
   end
 
-  define_code(:ENSURE) do |node, indent|
+  def self.begin_end(indent, have_begin)
+    major = Config::CONFIG['MAJOR'].to_i
+    minor = Config::CONFIG['MINOR'].to_i
+    teeny = Config::CONFIG['TEENY'].to_i
+    ruby_version_code = major * 100 + minor * 10 + teeny
     s = ''
-    if node.head then
-      s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
+    if ruby_version_code >= 190 then
+      s << "#{'  '*indent}begin\n"
+      indent += 1
+      have_begin = true
     end
-    s << "#{'  '*indent}ensure\n" +
-    s << "#{'  '*indent}#{node.ensr.as_code(indent+1)}"
-    s
+    yield s, indent + 1, have_begin
+    if ruby_version_code >= 190 then
+      indent -= 1
+      s << "\n#{'  '*indent}end"
+    end
+    return s
+  end
+
+  define_code(:ENSURE) do |node, indent, *args|
+    begin_ensure = args[0] || false
+    Node.begin_end(indent, begin_ensure) do |s, indent, begin_ensure|
+      if node.head then
+        s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
+      end
+      s << "#{'  '*indent}ensure\n"
+      s << "#{'  '*indent}#{node.ensr.as_code(indent+1)}"
+    end
   end
 
   define_code(:RESCUE) do |node, indent, *args|
     begin_rescue = args[0] || false
-    if node.head then
-      if begin_rescue then
-        "#{'  '*indent}#{node.head.as_code(indent+1)}\n" +
-        "#{'  '*indent}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
+    Node.begin_end(indent, begin_rescue) do |s, indent, begin_rescue|
+      if node.head then
+        if begin_rescue then
+          s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
+          s << "#{'  '*indent}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
+        else
+          s << "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
+        end
       else
-        "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
+        s << "rescue #{node.resq.as_expression(begin_rescue)}"
       end
-    else
-      "rescue #{node.resq.as_expression(begin_rescue)}"
     end
   end
 

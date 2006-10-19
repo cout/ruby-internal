@@ -155,8 +155,13 @@ class Node
   end
 
   define_expression(:IF) do |node|
-    bodynode = node.body.class == Node::NEWLINE ? node.body.next : node.body
-    elsenode = node.else.class == Node::NEWLINE ? node.else.next : node.else
+    if Node.const_defined?(:NEWLINE) then
+      bodynode = node.body.class == Node::NEWLINE ? node.body.next : node.body
+      elsenode = node.else.class == Node::NEWLINE ? node.else.next : node.else
+    else
+      bodynode = node.body
+      elsenode = node.else
+    end
     if elsenode then
       "(#{node.cond.as_expression}) ? " +
       "(#{bodynode.as_expression}) : " +
