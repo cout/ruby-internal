@@ -1,0 +1,101 @@
+
+{
+  memcpy/rb_thread_save_context(Value1)
+  Memcheck:Addr1
+  fun:memcpy
+  fun:rb_thread_save_context
+}
+
+{
+  memcpy/rb_thread_restore_context(Value1)
+  Memcheck:Addr1
+  fun:memcpy
+  fun:rb_thread_restore_context
+}
+
+{
+  strchr/_dl_catch_error(Cond)
+  Memcheck:Cond
+  fun:strchr
+  obj:/lib/libc-2.2.5.so
+  fun:_dl_catch_error
+}
+
+{
+  gc_mark(Cond)
+  Memcheck:Cond
+  fun:gc_mark
+}
+
+{
+  gc_mark(Value4)
+  Memcheck:Value4
+  fun:gc_mark
+}
+
+{
+  gc_mark_children(Cond)
+  Memcheck:Cond
+  fun:gc_mark_children
+}
+
+{
+  gc_mark_children(Value4)
+  Memcheck:Value4
+  fun:gc_mark_children
+}
+
+{
+  mark_locations_array(Cond)
+  Memcheck:Cond
+  fun:mark_locations_array
+}
+
+{
+  mark_locations_array(Value4)
+  Memcheck:Value4
+  fun:mark_locations_array
+}
+
+{
+  mark_locations_array(Value4)
+  Memcheck:Addr4
+  fun:mark_locations_array
+}
+
+{
+  rb_gc_mark(Cond)
+  Memcheck:Cond
+  fun:rb_gc_mark
+}
+
+{
+  rb_gc_mark(Value4)
+  Memcheck:Value4
+  fun:rb_gc_mark
+}
+
+{
+  rb_gc_mark_children(Value4)
+  Memcheck:Value4
+  fun:rb_gc_mark_children
+}
+
+{
+  rb_gc_mark_children(Cond)
+  Memcheck:Cond
+  fun:rb_gc_mark_children
+}
+
+{
+  rb_thread_save_context(Addr4)
+  Memcheck:Addr4
+  fun:rb_thread_save_context
+}
+
+# TODO: I'm not sure if this rule is good or not
+{
+  rb_yield_0(Addr4)
+  Memcheck:Addr4
+  fun:rb_yield_0
+}
