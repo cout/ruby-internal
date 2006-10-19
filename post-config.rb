@@ -12,6 +12,32 @@ if not File.exist?(path) or
    exit 1
 end
 
+version_h=File.join(path, 'version.h')
+if not File.exist?(path) or
+   not File.directory?(path) or
+   not File.exist?(ruby_h) then
+   $stderr.puts "ERROR: Could not find version.h at #{path}"
+   exit 1
+end
+
+File.open(version_h) do |vh|
+  found_version = false
+  vh.each_line do |line|
+    if line =~ /#define\s+RUBY_VERSION\s+\"(.*?)\"/
+      found_version = true
+      if RUBY_VERSION != $1 then
+        $stderr.puts "Wrong version for source; expected #{RUBY_VERSION} but got #{$1}"
+        exit 1
+      end
+    end
+  end
+  if not found_version then
+    $stderr.puts "ERROR: Could not determine ruby version from version.h"
+    exit 1
+  end
+end
+
+
 dive_into('ext') do
   command('make clean')
 end
