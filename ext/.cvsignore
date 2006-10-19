@@ -6,4 +6,3 @@ nodeinfo.c
 nodeinfo.h
 node_type_descrip.c
 classpath.c
-classpath.h
