@@ -143,6 +143,8 @@ VALUE marshal_load(VALUE obj)
  * ---------------------------------------------------------------------
  */
 
+/* TODO: replace with class2path */
+
 static char const * lookup_module_str = 
   "proc { |name|\n"
   "  o = Object\n"
@@ -236,7 +238,7 @@ static VALUE node_nd_type(VALUE self)
   NODE * n;
   const Node_Type_Descrip * descrip;
   Data_Get_Struct(self, NODE, n);
-  rb_check_type((VALUE)(self),0x22);
+  rb_check_type((VALUE)(self), T_DATA);
   descrip = node_type_descrip(nd_type(n));
   return rb_struct_new(
       rb_cNodeType,
