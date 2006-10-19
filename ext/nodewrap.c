@@ -143,7 +143,9 @@ VALUE marshal_load(VALUE obj)
  * ---------------------------------------------------------------------
  */
 
-/* TODO: replace with class2path */
+/* This differs from rb_class2path in that it handles the case of
+ * <Singleton>.
+ */
 
 static char const * lookup_module_str = 
   "proc { |name|\n"
