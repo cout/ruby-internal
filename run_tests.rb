@@ -27,7 +27,7 @@ def run_tests
     end
   end
 
-  suite = Test::Unit::TestSuite.new
+  suite = Test::Unit::TestSuite.new("Nodewrap")
   tests.each do |test|
     test.suite.tests.each do |testcase|
       suite << testcase
