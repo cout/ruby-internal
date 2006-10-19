@@ -44,7 +44,7 @@ end
 begin_nodes = []
 set_trace_func proc {
   n = $ruby_eval_tree
-  if $ruby_eval_tree_begin then
+  if defined?($ruby_eval_tree_begin) and $ruby_eval_tree_begin then
     n.pretty_print($stderr)
     begin_nodes << $ruby_eval_tree_begin
   end

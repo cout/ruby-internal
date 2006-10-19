@@ -32,13 +32,13 @@
 #     |     |-rest = -1
 #     |     +-opt = false
 #     |-mid = :foo
-#     +-noex = 2
+#     +-noex = PRIVATE
 
 require 'nodepp'
 
 set_trace_func proc {
   n = $ruby_eval_tree
-  if $ruby_eval_tree_begin then
+  if defined?($ruby_eval_tree_begin) and $ruby_eval_tree_begin then
     $ruby_eval_tree_begin.pretty_print($stderr)
   end
   if n then
