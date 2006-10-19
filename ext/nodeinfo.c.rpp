@@ -76,29 +76,53 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case node_elem_ref
     when /\.node$/, /\.value/
       puts <<-END
-      if(TYPE(n->nd_#{node_elem_name}) == T_NODE)
+      switch(TYPE(n->nd_#{node_elem_name}))
       {
-        /* node */
-        if(n->nd_#{node_elem_name})
+        case T_NODE:
+          if(n->nd_#{node_elem_name})
+          {
+            dump_node_to_hash((NODE *)n->nd_#{node_elem_name}, node_hash);
+            return rb_assoc_new(
+                INT2NUM(((struct RBasic *)(n->nd_#{node_elem_name}))->flags),
+                node_id((NODE *)n->nd_#{node_elem_name}));
+          }
+          else
+          {
+            return rb_assoc_new(INT2NUM(T_NODE), Qnil);
+          }
+
+        case T_CLASS:
+        case T_MODULE:
         {
-          dump_node_to_hash((NODE *)n->nd_#{node_elem_name}, node_hash);
-          return rb_assoc_new(Qtrue, node_id((NODE *)n->nd_#{node_elem_name}));
+          /* When dumping a class, we dump just the name (otherwise we'd
+           * get multiple copies of the class each time we load a method
+           * on the other side).
+           */
+          VALUE klass = (VALUE)n->nd_#{node_elem_name};
+          VALUE path;
+          if(FL_TEST(klass, FL_SINGLETON))
+          {
+            VALUE singleton = rb_iv_get(klass, "__attached__");
+            path = rb_class_path(singleton);
+          }
+          else
+          {
+            path = rb_class_path(klass);
+            if(STR2CSTR(path)[0] == '#')
+            {
+              rb_raise(rb_eArgError, "cannot dump anonymous class");
+            }
+          }
+          return rb_assoc_new(
+              INT2NUM(((struct RBasic *)(n->nd_#{node_elem_name}))->flags),
+              path);
         }
-        else
-        {
-          return rb_assoc_new(Qtrue, Qnil);
-        }
-      }
-      if(   TYPE(n->nd_#{node_elem_name}) == T_CLASS
-         || TYPE(n->nd_#{node_elem_name}) == T_MODULE)
-      {
-        /* TODO */
-        return rb_assoc_new(Qfalse, Qnil);
-      }
-      else
-      {
-        /* object */
-        return rb_assoc_new(Qfalse, (VALUE)n->nd_#{node_elem_name});
+        
+        default:
+          /* TODO: would like to dump flags, not type */
+          return rb_assoc_new(
+              INT2NUM(TYPE((VALUE)n->nd_#{node_elem_name})),
+              (VALUE)n->nd_#{node_elem_name});
       }
       END
     when /\.id$/
@@ -120,7 +144,10 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       END
     when /\.(tbl)$/
       puts <<-END
-      return variable_names(n->nd_#{node_elem_name});
+      {
+      VALUE v = variable_names(n->nd_#{node_elem_name});
+      return v;
+      }
       END
     when /\.(entry)$/
       puts <<-END
@@ -155,6 +182,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts <<-END
     case NEN_#{node_elem_name.upcase}:
+    {
     END
 
     if node_elem_name == "noex" or node_elem_name == "cflag" then
@@ -166,33 +194,57 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
     when /\.node$/, /\.value$/
       puts <<-END
       Check_Type(v, T_ARRAY);
-      if(RTEST(RARRAY(v)->ptr[0]))
+      if(RARRAY(v)->len != 2)
       {
-        /* node */
-        v = RARRAY(v)->ptr[1];
-        if(v == Qnil)
+        rb_raise(rb_eArgError, "wrong size for array");
+      }
+      int flags = NUM2INT(RARRAY(v)->ptr[0]);
+      switch(flags & T_MASK)
+      {
+        case T_NODE:
         {
-          n->nd_#{node_elem_name} = 0;
-        }
-        else
-        {
-          VALUE nid = rb_hash_aref(id_hash, v);
-          if(RTEST(nid))
+          v = RARRAY(v)->ptr[1];
+          if(v == Qnil)
           {
-            *(NODE **)(&n->nd_#{node_elem_name}) = id_to_node(nid);
+            n->nd_#{node_elem_name} = 0;
           }
           else
           {
-            NODE * new_node = NEW_NIL();
-            load_node_from_hash(new_node, v, node_hash, id_hash);
-            *(NODE **)(&n->#{node_elem_ref}) = new_node;
+            VALUE nid = rb_hash_aref(id_hash, v);
+            if(RTEST(nid))
+            {
+              *(NODE **)(&n->nd_#{node_elem_name}) = id_to_node(nid);
+            }
+            else
+            {
+              NODE * new_node = NEW_NIL();
+              load_node_from_hash(new_node, v, node_hash, id_hash);
+              *(NODE **)(&n->#{node_elem_ref}) = new_node;
+            }
           }
+          break;
         }
-      }
-      else
-      {
-        /* object */
-        *(VALUE *)(&n->nd_#{node_elem_name}) = RARRAY(v)->ptr[1];
+        case T_CLASS:
+        case T_MODULE:
+        {
+          VALUE str = RARRAY(v)->ptr[1];
+          Check_Type(str, T_STRING);
+          VALUE klass = rb_path2class(STR2CSTR(str));
+          if(flags & FL_SINGLETON)
+          {
+            *(VALUE *)(&n->nd_#{node_elem_name}) =
+              rb_singleton_class(klass);
+          }
+          else
+          {
+            *(VALUE *)(&n->nd_#{node_elem_name}) =
+              klass;
+          }
+          break;
+        }
+        default:
+          *(VALUE *)(&n->nd_#{node_elem_name}) = RARRAY(v)->ptr[1];
+          break;
       }
       return;
       END
@@ -237,7 +289,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
           }
         }
         n->nd_#{node_elem_name} = ALLOC_N(ID, len + 3);
-        memcpy(n->nd_#{node_elem_name}, tmp_tbl, len + 3);
+        memcpy(n->nd_#{node_elem_name}, tmp_tbl, sizeof(ID) * (len + 3));
       }
       return;
       END
@@ -251,6 +303,9 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       rb_raise(rb_eRuntimeError, "Cannot load #{$1}");
       END
     end
+    puts <<-END
+      }
+    END
   end
   nil
 END

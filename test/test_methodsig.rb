@@ -176,3 +176,8 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal "#{self.class.name}##{name}(a, b=42, *r, &block)", sig.to_s
   end
 end
+
+if __FILE__ == $0 then
+  exit Test::Unit::AutoRunner.run
+end
+

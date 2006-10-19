@@ -50,3 +50,7 @@ class TC_As_Expression < Test::Unit::TestCase
   FOO = 57
 end
 
+if __FILE__ == $0 then
+  exit Test::Unit::AutoRunner.run
+end
+
