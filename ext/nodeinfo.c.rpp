@@ -1,6 +1,7 @@
 #include "nodeinfo.h"
 #include "version.h"
 #include "global_entry.h"
+#include "builtins.h"
 
 static int is_flip_state(ID id)
 {
@@ -194,16 +195,16 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
     when /\.node$/, /\.value$/
       puts <<-END
       Check_Type(v, T_ARRAY);
-      if(RARRAY(v)->len != 2)
+      if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY(v)->ptr[0]);
+      int flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_NODE:
         {
-          v = RARRAY(v)->ptr[1];
+          v = RARRAY_PTR(v)[1];
           if(v == Qnil)
           {
             n->nd_#{node_elem_name} = 0;
@@ -227,7 +228,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY(v)->ptr[1];
+          VALUE str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
           VALUE klass = rb_path2class(STR2CSTR(str));
           if(flags & FL_SINGLETON)
@@ -243,7 +244,7 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
           break;
         }
         default:
-          *(VALUE *)(&n->nd_#{node_elem_name}) = RARRAY(v)->ptr[1];
+          *(VALUE *)(&n->nd_#{node_elem_name}) = RARRAY_PTR(v)[1];
           break;
       }
       return;
@@ -270,14 +271,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         ID * tmp_tbl;
 
         Check_Type(v, T_ARRAY);
-        len = RARRAY(v)->len;
+        len = RARRAY_LEN(v);
         tmp_tbl = ALLOCA_N(ID, len + 3);
         tmp_tbl[0] = (ID)(len + 2);
         tmp_tbl[1] = (ID)('_');
         tmp_tbl[2] = (ID)('~');
         for(j = 0; j < len; ++j)
         {
-          VALUE e = RARRAY(v)->ptr[j];
+          VALUE e = RARRAY_PTR(v)[j];
           if(e == Qnil)
           {
             /* flip state */

@@ -2,6 +2,7 @@
 #include "evalinfo.h"
 #include "nodewrap.h"
 #include "node_type_descrip.h"
+#include "builtins.h"
 
 #include "ruby.h"
 #include "version.h"
@@ -466,7 +467,7 @@ static VALUE method_load(VALUE klass, VALUE str)
   }
 
   Check_Type(rarr, T_ARRAY);
-  if(RARRAY(rarr)->len != 6)
+  if(RARRAY_LEN(rarr) != 6)
   {
     rb_raise(rb_eArgError, "corrupt data");
   }
@@ -474,7 +475,7 @@ static VALUE method_load(VALUE klass, VALUE str)
   retval = rb_funcall(
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("id")));
   Data_Get_Struct(retval, struct METHOD, method);
-  arr = RARRAY(rarr)->ptr;
+  arr = RARRAY_PTR(rarr);
   method->klass =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
 #if RUBY_VERSION_CODE >= 180
@@ -584,8 +585,8 @@ static VALUE proc_load(VALUE klass, VALUE str)
   }
 
   Check_Type(arr, T_ARRAY);
-  body = unwrap_node(RARRAY(arr)->ptr[0]);
-  var = unwrap_node(RARRAY(arr)->ptr[1]);
+  body = unwrap_node(RARRAY_PTR(arr)[0]);
+  var = unwrap_node(RARRAY_PTR(arr)[1]);
   return create_proc(rb_cUnboundProc, Qnil, body, var);
 }
 
@@ -763,7 +764,7 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   if(rb_nd_file != Qnil)
   {
     Check_Type(rb_nd_file, T_STRING);
-    nd_file = rb_source_filename(RSTRING(rb_nd_file)->ptr);
+    nd_file = rb_source_filename(RSTRING_PTR(rb_nd_file));
   }
 
   /* 1) We must NOT get an exception from here on out, since we are
@@ -858,9 +859,9 @@ static VALUE generate_method_hash(VALUE module, VALUE method_list)
   char const * s;
   VALUE v;
 
-  for(j = 0; j < RARRAY(method_list)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(method_list); ++j)
   {
-    s = STR2CSTR(RARRAY(method_list)->ptr[j]);
+    s = STR2CSTR(RARRAY_PTR(method_list)[j]);
     id = rb_intern(s);
     if(   id == rb_intern("new")
        || id == rb_intern("allocate")
@@ -901,11 +902,11 @@ static VALUE included_modules_list(VALUE module)
   VALUE included_module_list = rb_ary_new();
   size_t j;
 
-  for(j = 0; j < RARRAY(included_modules)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(included_modules); ++j)
   {
     rb_ary_push(
         included_module_list,
-        rb_mod_name(RARRAY(included_modules)->ptr[j]));
+        rb_mod_name(RARRAY_PTR(included_modules)[j]));
   }
 
   return included_module_list;
@@ -1055,9 +1056,9 @@ static void include_modules(module, included_modules)
   VALUE name;
 
   rb_check_type(included_modules, T_ARRAY);
-  for(j = 0; j < RARRAY(included_modules)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(included_modules); ++j)
   {
-    name = RARRAY(included_modules)->ptr[j];
+    name = RARRAY_PTR(included_modules)[j];
     v = rb_funcall(lookup_module_proc, rb_intern("call"), 1, name);
     rb_funcall(module, rb_intern("include"), 1, v);
   }
