@@ -129,9 +129,6 @@ class TC_Nodewrap < Test::Unit::TestCase
     def foo
       return 42
     end
-
-    # for testing cvar
-    @@a = 42
   end
 
   class TestClass < TestClassBase
@@ -143,6 +140,10 @@ class TC_Nodewrap < Test::Unit::TestCase
       FOO = 4
       @foo = 5
     end
+
+    # for testing cvar
+    # (can't be in base class due to change in 1.9 of class var lookup)
+    @@a = 42
   end
 
   def test_marshal_class
