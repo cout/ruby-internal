@@ -95,7 +95,7 @@ NODE_TYPE_DESCRIPS = [
 ]
 if RUBY_VERSION_CODE < 180 then
 NODE_TYPE_DESCRIPS.concat [
-  [ 'EVSTR'       , 'LIT'   , 'HEAD'  , 'NEXT'  ], 
+  [ 'EVSTR'       , 'HEAD'  , 'NEXT'  , 'NONE'  ], 
 ]
 else
 NODE_TYPE_DESCRIPS.concat [

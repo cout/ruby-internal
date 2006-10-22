@@ -474,7 +474,7 @@ static VALUE method_load(VALUE klass, VALUE str)
 
   /* Create a METHOD object -- doesn't matter which method we use */
   retval = rb_funcall(
-      rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("object_id")));
+      rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY_PTR(rarr);
   method->klass =

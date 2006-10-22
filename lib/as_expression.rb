@@ -375,7 +375,9 @@ class Node
 
   else
 
-    # TODO: not sure how to implement EVSTR on 1.6.x
+    define_expression(:EVSTR) do |node|
+      "\#\{#{node.head}\}"
+    end
 
   end
 
@@ -443,7 +445,11 @@ class Node
         "begin; #{node.head.as_expression} ensure #{node.ensr.as_expression}; end"
       end
     else
-      "ensure #{node.ensr.as_expression}"
+      if begin_ensure then
+        "ensure #{node.ensr.as_expression}"
+      else
+        "begin; ensure #{node.ensr.as_expression}; end"
+      end
     end
   end
 
@@ -515,7 +521,12 @@ class Node
 
   define_expression(:CLASS) do |node|
     s_super = node.super ? " < #{node.super.as_expression}" : ''
-    "class #{node.cpath.as_expression}#{s_super}; #{node.body.as_expression}; end"
+    if node.respond_to?(:cpath) then
+      path = node.cpath.as_expression
+    else
+      path = node.cname
+    end
+    "class #{path}#{s_super}; #{node.body.as_expression}; end"
   end
 
   define_expression(:SCLASS) do |node|

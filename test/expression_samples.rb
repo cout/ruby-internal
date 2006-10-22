@@ -1,3 +1,9 @@
+require 'rbconfig'
+
+class TEST_CLASS
+  FOO = 10
+end
+
 EXPRESSION_SAMPLES = {
   :lit                     => '42',
   :vcall                   => 'foo',
@@ -60,13 +66,13 @@ EXPRESSION_SAMPLES = {
   :iasgn                   => '@foo = 6',
   # TODO: lasgn
   # TODO: masgn
-  :cdecl                   => 'self.class.class_eval { remove_const(:FOO) if const_defined?(:FOO) }; FOO = 1',
+  :cdecl                   => 'remove_foo; FOO = 1',
   :cvdecl                  => '@@foo = 1',
   # TODO: cvasgn
   :attrasgn                => 'h = {}; h.default = true; h',
   :const                   => 'FOO',
-  :colon2                  => 'TC_As_Expression::FOO',
-  :colon3                  => '::TC_As_Expression::FOO',
+  :colon2                  => 'self::FOO',
+  :colon3                  => '::TEST_CLASS::FOO',
   # TODO: lvar
   # TODO: newline
   :str                     => '"foo"',
@@ -80,16 +86,25 @@ EXPRESSION_SAMPLES = {
   # :dregx_cflag           => 'a = 1; b = 2; /#{a}#{b}/i',
   :dregx_once              => 'a = 1; b = 2; /#{a}#{b}/',
   # :dregx_once_cflag      => 'a = 1; b = 2; /#{a}#{b}/oi',
+  # TODO dregx with next set
   # TODO: dxstr
   # TODO: evstr
-  :iter                    => 'loop { break 10 }',
-  :while_1                 => 'while true; break 7; end',
-  :while_1_do              => 'while true do; break 7; end',
-  :while_0                 => 'begin; break 7; end while true',
-  :until_1                 => 'until false; break 7; end',
-  :until_1_do              => 'until false do; break 7; end',
-  :until_0                 => 'begin; break 7; end until false',
-  :break                   => 'break 49',
+  :iter                    => 'loop { break }',
+  :iter_x                  => 'loop { break 10 }',
+  :while_1                 => 'while true; break; end',
+  :while_1_x               => 'while true; break 7; end',
+  :while_1_do              => 'while true do; break; end',
+  :while_1_do_x            => 'while true do; break 7; end',
+  :while_0                 => 'begin; break; end while true',
+  :while_0_x               => 'begin; break 7; end while true',
+  :until_1                 => 'until false; break; end',
+  :until_1_x               => 'until false; break 7; end',
+  :until_1_do              => 'until false do; break; end',
+  :until_1_do_x            => 'until false do; break 7; end',
+  :until_0                 => 'begin; break; end until false',
+  :until_0_x               => 'begin; break 7; end until false',
+  :break                   => 'break',
+  :break_x                 => 'break 49',
   # TODO: yield
   :begin                   => 'begin; 42; end',
   :begin_empty             => 'begin; end',
@@ -117,4 +132,21 @@ EXPRESSION_SAMPLES = {
   :defined                 => 'defined?(NilClass)',
   # TODO: match3
 }
+
+
+major = Config::CONFIG['MAJOR'].to_i
+minor = Config::CONFIG['MINOR'].to_i
+teeny = Config::CONFIG['TEENY'].to_i
+ruby_version_code = major * 100 + minor * 10 + teeny
+
+if ruby_version_code < 170 then
+  EXPRESSION_SAMPLES.delete(:break_x)
+  EXPRESSION_SAMPLES.delete(:iter_x)
+  EXPRESSION_SAMPLES.delete(:while_1_x)
+  EXPRESSION_SAMPLES.delete(:while_1_do_x)
+  EXPRESSION_SAMPLES.delete(:while_0_x)
+  EXPRESSION_SAMPLES.delete(:until_1_x)
+  EXPRESSION_SAMPLES.delete(:until_1_do_x)
+  EXPRESSION_SAMPLES.delete(:until_0_x)
+end
 

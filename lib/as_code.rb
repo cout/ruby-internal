@@ -1,5 +1,6 @@
 require 'nodewrap'
 require 'rbconfig'
+require 'as_expression'
 
 class Node
   public
@@ -95,18 +96,13 @@ class Node
   end
 
   def self.begin_end(indent, have_begin)
-    major = Config::CONFIG['MAJOR'].to_i
-    minor = Config::CONFIG['MINOR'].to_i
-    teeny = Config::CONFIG['TEENY'].to_i
-    ruby_version_code = major * 100 + minor * 10 + teeny
     s = ''
-    if ruby_version_code >= 190 then
+    if not have_begin then
       s << "#{'  '*indent}begin\n"
       indent += 1
-      have_begin = true
     end
-    yield s, indent + 1, have_begin
-    if ruby_version_code >= 190 then
+    yield s, indent + 1, true
+    if not have_begin then
       indent -= 1
       s << "\n#{'  '*indent}end"
     end
@@ -179,7 +175,12 @@ class Node
 
   define_code(:CLASS) do |node, indent|
     s_super = node.super ? " < #{node.super.as_expression}" : ''
-    "#{'  '*indent}class #{node.cpath.as_expression}#{s_super}\n" +
+    if node.respond_to?(:cpath) then
+      path = node.cpath.as_expression
+    else
+      path = node.cname
+    end
+    "#{'  '*indent}class #{path}#{s_super}\n" +
     "#{'  '*indent}#{node.body.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
   end

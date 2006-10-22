@@ -41,8 +41,22 @@ class TC_As_Expression < Test::Unit::TestCase
     @foo = 42
   end
 
+  # 1.7 and later
   def foo(*args)
     return args
+  end
+
+  def remove_foo
+    self.class.remove_foo
+  end
+
+  # 1.6
+  def self.foo(*args)
+    return args
+  end
+
+  def self.remove_foo
+    self.class_eval { remove_const(:FOO) if const_defined?(:FOO) }
   end
 
   @@foo = 10
@@ -51,6 +65,21 @@ class TC_As_Expression < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run
+  if Test::Unit.const_defined?(:AutoRunner) then
+    exit Test::Unit::AutoRunner.run
+  else
+    if ARGV.empty? then
+      suite = TC_As_Expression.suite
+    else
+      suite = Test::Unit::TestSuite.new('TC_As_Expression')
+      TC_As_Expression.suite.tests.each do |test|
+        ARGV.each do |arg|
+          suite << test if /#{arg}/ =~ test.name
+        end
+      end
+    end
+    result = Test::Unit::UI::Console::TestRunner.run(suite)
+    exit(result.error_count + result.failure_count)
+  end
 end
 
