@@ -472,8 +472,9 @@ static VALUE method_load(VALUE klass, VALUE str)
     rb_raise(rb_eArgError, "corrupt data");
   }
 
+  /* Create a METHOD object -- doesn't matter which method we use */
   retval = rb_funcall(
-      rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("id")));
+      rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("object_id")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY_PTR(rarr);
   method->klass =
