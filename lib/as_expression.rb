@@ -39,7 +39,7 @@ class Node
     node.mid.to_s
   end
 
-  @@arithmetic_expressions = [
+  arithmetic_expressions = [
     :+, :-, :*, :/, :<, :>, :<=, :>=, :==, :===, :<=>, :<<, :>>, :&, :|,
     :^, :%, '!'.intern, '!='.intern
   ]
@@ -48,7 +48,7 @@ class Node
   # in parens
   define_expression(:CALL) do |node|
     case node.mid
-    when *@@arithmetic_expressions
+    when *arithmetic_expressions
       args = node.args
       "(#{node.recv.as_expression}) #{node.mid} (#{args ?  args.as_expression(false) : ''})"
     when :[]
@@ -424,7 +424,8 @@ class Node
   end
 
   define_expression(:BEGIN) do |node|
-    if node.body.class == Node::RESCUE then
+    if node.body.class == Node::RESCUE or
+       node.body.class == Node::ENSURE then
       "begin; #{node.body.as_expression(true)}; end"
     elsif node.body then
       "begin; #{node.body.as_expression}; end"
@@ -433,9 +434,14 @@ class Node
     end
   end
 
-  define_expression(:ENSURE) do |node|
+  define_expression(:ENSURE) do |node, *args|
+    begin_ensure = args[0] || false
     if node.head then
-      "#{node.head.as_expression} ensure #{node.ensr.as_expression}"
+      if begin_ensure then
+        "#{node.head.as_expression} ensure #{node.ensr.as_expression}"
+      else
+        "begin; #{node.head.as_expression} ensure #{node.ensr.as_expression}; end"
+      end
     else
       "ensure #{node.ensr.as_expression}"
     end
@@ -447,10 +453,18 @@ class Node
       if begin_rescue then
         "#{node.head.as_expression}; rescue #{node.resq.as_expression(begin_rescue)}"
       else
-        "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
+        if not node.resq or not node.resq.resq then
+          "begin; #{node.head.as_expression}; rescue; end"
+        else
+          "(#{node.head.as_expression}) rescue #{node.resq.as_expression(begin_rescue)}"
+        end
       end
     else
-      "rescue #{node.resq.as_expression(begin_rescue)}"
+      if not node.resq or not node.resq.resq then
+        "begin; rescue; end"
+      else
+        "rescue #{node.resq.as_expression(begin_rescue)}"
+      end
     end
   end
 

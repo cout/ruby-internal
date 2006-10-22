@@ -25,7 +25,13 @@ class Method
   def rest_arg
     # subtract 2 to account for implicit vars
     rest = args_node.rest()
-    return rest > 0 ? rest - 2 : nil
+    if rest.class == Node::LASGN then
+      return rest.cnt - 2
+    elsif not rest
+      return nil
+    else
+      return rest > 0 ? rest - 2 : nil
+    end
   end
 
   # If this method has a "block" argument, that is, it has an argument
