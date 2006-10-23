@@ -74,7 +74,7 @@ static void free_node(
 VALUE wrap_node(NODE * n)
 {
   VALUE node_id;
- 
+
   if(!n)
   {
     return Qnil;
@@ -532,7 +532,20 @@ static VALUE proc_var(VALUE proc)
     rb_raise(rb_eSecurityError, "Insecure: can't get proc var");
   }
   Data_Get_Struct(proc, struct BLOCK, b);
-  return wrap_node(b->var);
+  if(b->var == (NODE*)1)
+  {
+    /* no parameter || */
+    return INT2NUM(1);
+  }
+  else if(b->var == (NODE*)2)
+  {
+    /* also no params, but I'm not sure how this one gets generated */
+    return INT2NUM(2);
+  }
+  else
+  {
+    return wrap_node(b->var);
+  }
 }
 
 /*
@@ -1348,12 +1361,14 @@ void Init_nodewrap(void)
   /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
   rb_define_method(rb_cMethod, "receiver", method_receiver, 0);
-  rb_define_method(rb_cMethod, "method_id", method_id, 0);
-  rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
   rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
 
   /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
+  rb_define_method(rb_cMethod, "method_id", method_id, 0);
+  rb_define_method(rb_cUnboundMethod, "method_id", method_id, 0);
+  rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
+  rb_define_method(rb_cUnboundMethod, "method_oid", method_oid, 0);
   rb_define_method(rb_cMethod, "body", method_body, 0);
   rb_define_method(rb_cUnboundMethod, "body", method_body, 0);
   rb_define_method(rb_cMethod, "_dump", method_dump, 1);
