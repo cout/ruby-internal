@@ -9,6 +9,9 @@ require "#{dir}/expression_samples"
 $stdout.sync = true
 $stderr.sync = true
 
+require 'pp'
+require 'nodepp'
+
 class TC_As_Expression < Test::Unit::TestCase
   extend Test::Unit::Assertions
 
@@ -35,6 +38,111 @@ class TC_As_Expression < Test::Unit::TestCase
     # define_method to run on 1.8.1 and earlier.
     @method_name = test_method_name
     @test_passed = true
+  end
+
+  def method_no_args
+  end
+
+  def test_method_no_args_as_expression
+    m = method(:method_no_args)
+    assert_equal 'def method_no_args(); nil; end', m.as_expression
+  end
+
+  def method_one_arg(a)
+  end
+
+  def test_method_one_arg_as_expression
+    m = method(:method_one_arg)
+    assert_equal 'def method_one_arg(a); nil; end', m.as_expression
+  end
+
+  def method_two_args(a, b)
+  end
+
+  def test_method_two_args_as_expression
+    m = method(:method_two_args)
+    assert_equal 'def method_two_args(a, b); nil; end', m.as_expression
+  end
+
+  def method_rest_arg(*rest)
+  end
+
+  def test_method_rest_arg_as_expression
+    m = method(:method_rest_arg)
+    assert_equal 'def method_rest_arg(*rest); nil; end', m.as_expression
+  end
+
+  def method_block_arg(&block)
+  end
+
+  def test_method_block_arg_as_expression
+    m = method(:method_block_arg)
+    assert_equal 'def method_block_arg(&block); nil; end', m.as_expression
+  end
+
+  def method_rest_and_block_arg(*rest, &block)
+  end
+
+  def test_method_rest_and_block_arg_as_expression
+    m = method(:method_rest_and_block_arg)
+    assert_equal 'def method_rest_and_block_arg(*rest, &block); nil; end', m.as_expression
+  end
+
+  def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)
+  end
+
+  def test_method_two_args_and_rest_and_block_arg_as_expression
+    m = method(:method_two_args_and_rest_and_block_arg)
+    assert_equal 'def method_two_args_and_rest_and_block_arg(a, b, *rest, &block); nil; end', m.as_expression
+  end
+
+  def method_with_body(a, b)
+    a + b
+  end
+
+  def test_method_with_body_as_expression
+    m = method(:method_with_body)
+    assert_equal 'def method_with_body(a, b); (a) + (b); end', m.as_expression
+  end
+
+  def test_proc_no_args_as_expression
+    p = proc { }
+    assert_equal 'proc { }', p.as_expression
+  end
+
+  def test_proc_empty_args_as_expression
+    p = proc { || }
+    assert_equal 'proc { || }', p.as_expression
+  end
+
+  def test_proc_one_arg_as_expression
+    p = proc { |a| }
+    assert_equal 'proc { |a| }', p.as_expression
+  end
+
+  def test_proc_one_array_arg_as_expression
+    p = proc { |a,| }
+    assert_equal 'proc { |a,| }', p.as_expression
+  end
+
+  def test_proc_two_args_as_expression
+    p = proc { |a, b| }
+    assert_equal 'proc { |a, b| }', p.as_expression
+  end
+
+  def test_proc_rest_arg_as_expression
+    p = proc { |*rest| }
+    assert_equal 'proc { |*rest| }', p.as_expression
+  end
+
+  def test_proc_two_args_and_rest_arg_as_expression
+    p = proc { |a, b, *rest| }
+    assert_equal 'proc { |a, b, *rest| }', p.as_expression
+  end
+
+  def test_proc_with_body_as_expression
+    p = proc { |a, b| a + b }
+    assert_equal 'proc { |a, b| (a) + (b) }', p.as_expression
   end
 
   def setup

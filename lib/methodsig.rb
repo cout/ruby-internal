@@ -1,7 +1,7 @@
 require 'nodewrap'
 require 'as_expression'
 
-class Method
+module MethodSig
   # Return the names of the arguments this method takes, in the order in
   # which they appear in the argument list.
   def argument_names
@@ -99,17 +99,13 @@ class Method
 
     def to_s
       params = @arg_names.map{ |n| arg_info[n] }
-      return "#{@origin_class}\##{@name}(#{params.join(', ')})"
+      return "#{@origin_class}\##{@name}(#{param_list})"
     end
-  end
 
-  # Return a String representing the method's signature.
-  def signature
-    return Signature.new(
-        origin_class() || attached_class(),
-        method_oid().to_s,
-        argument_names(),
-        argument_info)
+    def param_list
+      params = @arg_names.map{ |n| arg_info[n] }
+      return params.join(', ')
+    end
   end
 
   # An abstraction for a method origin.
@@ -130,6 +126,32 @@ class Method
   def origin
     block = body().next
     return Origin.new(block.nd_file, block.nd_line)
+  end
+end
+
+class Method
+  include MethodSig
+
+  # Return a String representing the method's signature.
+  def signature
+    return Signature.new(
+        origin_class() || attached_class(),
+        method_oid().to_s,
+        argument_names(),
+        argument_info)
+  end
+end
+
+class UnboundMethod
+  include MethodSig
+
+  # Return a String representing the method's signature.
+  def signature
+    return Signature.new(
+        nil,
+        method_oid().to_s,
+        argument_names(),
+        argument_info)
   end
 end
 

@@ -1,3 +1,6 @@
+require 'nodewrap'
+require 'methodsig'
+require 'procsig'
 require 'rbconfig'
 
 class Node
@@ -135,7 +138,8 @@ class Node
         d = d.value
       end
       a.shift if not d
-      a.map { |n| n.as_expression }.join('; ')
+      expressions = a.map { |n| n.as_expression }
+      return expressions.reject { |e| e.nil? }.join('; ')
     end
   end
 
@@ -550,6 +554,37 @@ class Node
     "defined?(#{node.head.as_expression})"
   end
 
+  define_expression(:ARGS) do |node|
+    nil
+  end
+
+  define_expression(:BLOCK_ARG) do |node|
+    nil
+  end
+
   # TODO: MATCH3
+end
+
+class Method
+  # It doesn't entirely make sense to have Method#as_expression, because
+  # a method definition isn't an expression.  We have one anyway, to be
+  # consistent with Proc.
+  def as_expression
+    sig = self.signature
+    body = self.body.as_expression
+    return "def #{sig.name}(#{sig.param_list}); #{body}; end"
+  end
+end
+
+class Proc
+  def as_expression
+    sig = self.signature
+    body = self.body ? self.body.as_expression : ''
+    return(
+      "proc { " +
+      "#{sig.args.unspecified ? "" : sig.to_s + ' '}" +
+      "#{self.body ? self.body.as_expression + ' ' : ''}" +
+      "}")
+  end
 end
 

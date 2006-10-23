@@ -37,6 +37,111 @@ class TC_As_Code < Test::Unit::TestCase
     @test_passed = true
   end
 
+  def method_no_args
+  end
+
+  def test_method_no_args_as_code
+    m = method(:method_no_args)
+    assert_equal "def method_no_args()\n  nil\nend", m.as_code
+  end
+
+  def method_one_arg(a)
+  end
+
+  def test_method_one_arg_as_code
+    m = method(:method_one_arg)
+    assert_equal "def method_one_arg(a)\n  nil\nend", m.as_code
+  end
+
+  def method_two_args(a, b)
+  end
+
+  def test_method_two_args_as_code
+    m = method(:method_two_args)
+    assert_equal "def method_two_args(a, b)\n  nil\nend", m.as_code
+  end
+
+  def method_rest_arg(*rest)
+  end
+
+  def test_method_rest_arg_as_code
+    m = method(:method_rest_arg)
+    assert_equal "def method_rest_arg(*rest)\n  nil\nend", m.as_code
+  end
+
+  def method_block_arg(&block)
+  end
+
+  def test_method_block_arg_as_code
+    m = method(:method_block_arg)
+    assert_equal "def method_block_arg(&block)\n  nil\nend", m.as_code
+  end
+
+  def method_rest_and_block_arg(*rest, &block)
+  end
+
+  def test_method_rest_and_block_arg_as_code
+    m = method(:method_rest_and_block_arg)
+    assert_equal "def method_rest_and_block_arg(*rest, &block)\n  nil\nend", m.as_code
+  end
+
+  def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)
+  end
+
+  def test_method_two_args_and_rest_and_block_arg_as_code
+    m = method(:method_two_args_and_rest_and_block_arg)
+    assert_equal "def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)\n  nil\nend", m.as_code
+  end
+
+  def method_with_body(a, b)
+    a + b
+  end
+
+  def test_method_with_body_as_code
+    m = method(:method_with_body)
+    assert_equal "def method_with_body(a, b)\n  (a) + (b)\nend", m.as_code
+  end
+
+  def test_proc_no_args_as_code
+    p = proc { }
+    assert_equal "proc do\nend", p.as_code
+  end
+
+  def test_proc_empty_args_as_code
+    p = proc { || }
+    assert_equal "proc do ||\nend", p.as_code
+  end
+
+  def test_proc_one_arg_as_code
+    p = proc { |a| }
+    assert_equal "proc do |a|\nend", p.as_code
+  end
+
+  def test_proc_one_array_arg_as_expression
+    p = proc { |a,| }
+    assert_equal "proc do |a,|\nend", p.as_code
+  end
+
+  def test_proc_two_args_as_code
+    p = proc { |a, b| }
+    assert_equal "proc do |a, b|\nend", p.as_code
+  end
+
+  def test_proc_rest_arg_as_code
+    p = proc { |*rest| }
+    assert_equal "proc do |*rest|\nend", p.as_code
+  end
+
+  def test_proc_two_args_and_rest_arg_as_code
+    p = proc { |a, b, *rest| }
+    assert_equal "proc do |a, b, *rest|\nend", p.as_code
+  end
+
+  def test_proc_with_body_as_code
+    p = proc { |a, b| a + b }
+    assert_equal "proc do |a, b|\n  (a) + (b)\nend", p.as_code
+  end
+
   def setup
     @foo = 42
   end
