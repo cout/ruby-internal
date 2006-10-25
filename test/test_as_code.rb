@@ -99,7 +99,7 @@ class TC_As_Code < Test::Unit::TestCase
 
   def test_method_with_body_as_code
     m = method(:method_with_body)
-    assert_equal "def method_with_body(a, b)\n  (a) + (b)\nend", m.as_code
+    assert_equal "def method_with_body(a, b)\n  a + b\nend", m.as_code
   end
 
   def test_proc_no_args_as_code
@@ -139,7 +139,7 @@ class TC_As_Code < Test::Unit::TestCase
 
   def test_proc_with_body_as_code
     p = proc { |a, b| a + b }
-    assert_equal "proc do |a, b|\n  (a) + (b)\nend", p.as_code
+    assert_equal "proc do |a, b|\n  a + b\nend", p.as_code
   end
 
   def setup
@@ -171,7 +171,7 @@ end
 
 if __FILE__ == $0 then
   if Test::Unit.const_defined?(:AutoRunner) then
-    exit Test::Unit::AutoRunner.run
+    exit Test::Unit::AutoRunner.run(__FILE__)
   else
     if ARGV.empty? then
       suite = TC_As_Code.suite

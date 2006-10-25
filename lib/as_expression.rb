@@ -14,6 +14,17 @@ class Node
     return as_expression_impl(self, *args)
   end
 
+  # Return a string as with as_expression, but surround it with parens
+  # if it is a composite expression, so that it can be used to form more
+  # complex expressions.
+  def as_paren_expression(*args)
+    expr = self.as_expression(*args)
+    if not OMIT_PARENS[self.class] then
+      expr = "(#{expr})"
+    end
+    return expr
+  end
+
   private
 
   # default
@@ -51,16 +62,18 @@ class Node
   # TODO: there should be a way to detect if the expressions need to be
   # in parens
   define_expression(:CALL) do |node|
+    recv_expr = node.recv.as_paren_expression
+
     case node.mid
     when *arithmetic_expressions
       args = node.args
-      "(#{node.recv.as_expression}) #{node.mid} (#{args ?  args.as_expression(false) : ''})"
+      "#{recv_expr} #{node.mid} #{args ? args.as_paren_expression(false) : ''}"
     when :[]
       args = node.args
-      "(#{node.recv.as_expression})[#{args ? args.as_expression(false) : ''}]"
+      "#{recv_expr}[#{args ? args.as_expression(false) : ''}]"
     else
       args = node.args
-      "(#{node.recv.as_expression}).#{node.mid}(#{args ? args.as_expression(false) : ''})"
+      "#{recv_expr}.#{node.mid}(#{args ? args.as_expression(false) : ''})"
     end
   end
 
@@ -151,12 +164,12 @@ class Node
       elsenode = node.else
     end
     if elsenode then
-      "(#{node.cond.as_expression}) ? " +
-      "(#{bodynode.as_expression}) : " +
-      "(#{elsenode.as_expression})"
+      "#{node.cond.as_paren_expression} ? " +
+      "#{bodynode.as_paren_expression} : " +
+      "#{elsenode.as_paren_expression}"
     else
-      "(#{bodynode.as_expression}) if " +
-      "(#{node.cond.as_expression})"
+      "#{bodynode.as_paren_expression} if " +
+      "#{node.cond.as_paren_expression}"
     end
   end
 
@@ -177,11 +190,11 @@ class Node
   end
 
   define_expression(:DOT2) do |node|
-    "(#{node.beg.as_expression})..(#{node.end.as_expression})"
+    "#{node.beg.as_paren_expression}..#{node.end.as_paren_expression}"
   end
 
   define_expression(:DOT3) do |node|
-    "(#{node.beg.as_expression})...(#{node.end.as_expression})"
+    "#{node.beg.as_paren_expression}...#{node.end.as_paren_expression}"
   end
 
   define_expression(:GVAR) do |node|
@@ -248,9 +261,9 @@ class Node
       args = node.args.to_a
       attrs = args[1..-2].map { |n| n.as_expression }
       value = args[-1].as_expression
-      "(#{node.recv.as_expression})[#{attrs.join(', ')}] = #{value}"
+      "#{node.recv.as_paren_expression}[#{attrs.join(', ')}] = #{value}"
     else
-      "(#{node.recv.as_expression}).#{node.mid}#{node.args.as_expression(false)}"
+      "#{node.recv.as_paren_expression}.#{node.mid}#{node.args.as_expression(false)}"
     end
   end
 
@@ -450,7 +463,7 @@ class Node
         if not node.resq or not node.resq.resq then
           "begin; #{node.head.as_expression}; rescue; end"
         else
-          "(#{node.head.as_expression}) rescue #{node.resq.as_expression(begin_rescue)}"
+          "#{node.head.as_paren_expression} rescue #{node.resq.as_expression(begin_rescue)}"
         end
       end
     else
@@ -552,6 +565,18 @@ class Node
   end
 
   # TODO: MATCH3
+
+  OMIT_PARENS = {
+    LVAR   => true,
+    GVAR   => true,
+    IVAR   => true,
+    CVAR   => true,
+    DVAR   => true,
+    LIT    => true,
+    ARRAY  => true,
+    ZARRAY => true,
+    HASH   => true,
+  }
 end
 
 class Method

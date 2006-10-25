@@ -102,7 +102,7 @@ class TC_As_Expression < Test::Unit::TestCase
 
   def test_method_with_body_as_expression
     m = method(:method_with_body)
-    assert_equal 'def method_with_body(a, b); (a) + (b); end', m.as_expression
+    assert_equal 'def method_with_body(a, b); a + b; end', m.as_expression
   end
 
   def test_proc_no_args_as_expression
@@ -142,7 +142,7 @@ class TC_As_Expression < Test::Unit::TestCase
 
   def test_proc_with_body_as_expression
     p = proc { |a, b| a + b }
-    assert_equal 'proc { |a, b| (a) + (b) }', p.as_expression
+    assert_equal 'proc { |a, b| a + b }', p.as_expression
   end
 
   def setup
@@ -174,7 +174,7 @@ end
 
 if __FILE__ == $0 then
   if Test::Unit.const_defined?(:AutoRunner) then
-    exit Test::Unit::AutoRunner.run
+    exit Test::Unit::AutoRunner.run(__FILE__)
   else
     if ARGV.empty? then
       suite = TC_As_Expression.suite
