@@ -64,7 +64,7 @@ Common_Node_Samples = {
   :dregx_once  => "/\#{42}/o",
   :args        => "",
   :argscat     => "",
-  :argspush    => "",
+  :argspush    => "''[0,*[1]] = 'foo'",
   :restargs    => "",
   :block_arg   => "", # def foo(&block)
   :block_pass  => "",
