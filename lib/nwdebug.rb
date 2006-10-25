@@ -13,6 +13,6 @@ end
 if __FILE__ == $0 then
   include Nodewrap
   a = 41
-  printdebug { a + 1}
+  printdebug { a + 1 }
 end
 
