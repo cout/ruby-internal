@@ -1,6 +1,7 @@
 require 'nodewrap'
 require 'methodsig'
 require 'procsig'
+require 'node_to_a'
 require 'rbconfig'
 
 class Node
@@ -92,16 +93,6 @@ class Node
   end
 
   class ARRAY < Node
-    def to_a
-      a = []
-      e = self
-      while e do
-        a << e.head
-        e = e.next
-      end
-      a
-    end
-
     def as_expression_impl(node, brackets = true)
       s = brackets ? '[' : ''
       s += node.to_a.map { |n| n.as_expression }.join(', ')
@@ -111,35 +102,28 @@ class Node
   end
 
   class ZARRAY < Node
-    def to_a
-      []
-    end
-
     def as_expression_impl(node, brackets = true)
       brackets ? '[]' : ''
     end
   end
 
   class BLOCK < Node
-    def to_a
-      a = []
-      e = self
-      while e do
-        a << e.head
-        e = e.next
-      end
-      a
-    end
-
     def as_expression_impl(node)
       a = node.to_a
+      if a.size == 1 then
+        return 'nil'
+      end
       d = a[0]
       while d.class == Node::DASGN_CURR do
         d = d.value
       end
       a.shift if not d
       expressions = a.map { |n| n.as_expression }
-      return expressions.reject { |e| e.nil? }.join('; ')
+      if expressions.nitems == 0 then
+        return 'nil'
+      else
+        return expressions.reject { |e| e.nil? }.join('; ')
+      end
     end
   end
 
@@ -538,7 +522,12 @@ class Node
   end
 
   define_expression(:SCOPE) do |node|
-    node.next ? node.next.as_expression : ''
+    case node.next
+    when nil then ''
+    when Node::ARGS then 'nil'
+    when Node::BLOCK_ARG then 'nil'
+    else node.next.as_expression
+    end
   end
 
   define_expression(:DEFN) do |node|

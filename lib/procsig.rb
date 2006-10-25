@@ -1,15 +1,4 @@
-class Node
-  class ARRAY
-    def to_a
-      a = []
-      node = self
-      while node do
-        a.push(node.head)
-        node = node.next
-      end
-    end
-  end
-end
+require 'node_to_a'
 
 class Proc
   class Arguments
