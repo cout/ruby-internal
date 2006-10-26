@@ -102,6 +102,31 @@ class TC_As_Code < Test::Unit::TestCase
     assert_equal "def method_with_body(a, b)\n  a + b\nend", m.as_code
   end
 
+  def method_begin_ensure_as_code(a, b, *rest, &block)
+    begin
+      if not a and not b then
+        raise "Need more input!"
+      end
+      return a + b
+    ensure
+      puts "In ensure block"
+    end
+  end
+
+  def test_method_begin_ensure_as_code
+    m = method(:method_begin_ensure_as_code)
+    assert_equal <<-END.chomp, m.as_code(3)
+      def method_begin_ensure_as_code(a, b, *rest, &block)
+        begin
+          (raise("Need more input!")) if (not a and not b)
+          return a + b
+        ensure
+          puts("In ensure block")
+        end
+      end
+    END
+  end
+
   def test_proc_no_args_as_code
     p = proc { }
     assert_equal "proc do\nend", p.as_code

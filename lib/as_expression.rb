@@ -132,10 +132,11 @@ class Node
       end
       a.shift if not d
       expressions = a.map { |n| n.as_expression }
+      expressions.reject! { |e| e.nil? }
       if expressions.nitems == 0 then
         return 'nil'
       else
-        return expressions.reject { |e| e.nil? }.join('; ')
+        return expressions.join('; ')
       end
     end
   end

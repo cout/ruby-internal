@@ -13,7 +13,12 @@ class Node
 
   def as_code_impl(node, indent, *args)
     # default -- most code is just an expression
-    "#{'  '*indent}#{node.as_expression(*args)}"
+    expression = node.as_expression(*args)
+    if not expression.nil? then
+      return "#{'  '*indent}#{expression}"
+    else
+      return nil
+    end
   end
 
   class << self
@@ -36,7 +41,7 @@ class Node
       s << "#{'  '*indent}end"
       s
     else
-      node.as_expression
+      "#{'  '*indent}#{node.as_expression}"
     end
   end
 
@@ -46,7 +51,13 @@ class Node
       # ignore variable definitions
       a.shift
     end
-    a.map { |n| "#{n.as_code(indent)}" }.join("\n")
+    lines = a.map { |n| n.as_code(indent) }
+    lines.reject! { |e| e.nil? }
+    if lines.size == 0 then
+      return 'nil'
+    else
+      return lines.join("\n")
+    end
   end
 
   define_code(:ITER) do |node, indent|
@@ -82,8 +93,8 @@ class Node
   define_code(:BEGIN) do |node, indent|
     if node.body.class == Node::RESCUE or
        node.body.class == Node::ENSURE then
-      "#{'  '*indent}begin\n" +
-      "#{'  '*indent}#{node.body.as_code(indent+1, true)}\n" +
+      s = "#{'  '*indent}begin\n" +
+      "#{node.body.as_code(indent, true)}\n" +
       "#{'  '*indent}end"
     elsif node.body then
       "#{'  '*indent}begin\n" +
@@ -113,10 +124,10 @@ class Node
     begin_ensure = args[0] || false
     Node.begin_end(indent, begin_ensure) do |s, indent, begin_ensure|
       if node.head then
-        s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
+        s << "#{node.head.as_code(indent)}\n"
       end
-      s << "#{'  '*indent}ensure\n"
-      s << "#{'  '*indent}#{node.ensr.as_code(indent+1)}"
+      s << "#{'  '*(indent-1)}ensure\n"
+      s << "#{node.ensr.as_code(indent)}"
     end
   end
 
@@ -125,8 +136,8 @@ class Node
     Node.begin_end(indent, begin_rescue) do |s, indent, begin_rescue|
       if node.head then
         if begin_rescue then
-          s << "#{'  '*indent}#{node.head.as_code(indent+1)}\n"
-          s << "#{'  '*indent}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
+          s << "#{node.head.as_code(indent+1)}\n"
+          s << "#{'  '*(indent-1)}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
         else
           s << "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
         end
@@ -202,6 +213,15 @@ class Node
     "#{'  '*indent}def #{node.recv.as_expression}.#{node.mid}\n" +
     "#{'  '*indent}#{node.next.as_code(indent+1)}\n" +
     "#{'  '*indent}end"
+  end
+
+  define_code(:SCOPE) do |node, indent|
+    case node.next
+    when nil then ''
+    when Node::ARGS then 'nil'
+    when Node::BLOCK_ARG then 'nil'
+    else node.next.as_code(indent)
+    end
   end
 end
 
