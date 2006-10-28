@@ -94,7 +94,7 @@ class Node
     if node.body.class == Node::RESCUE or
        node.body.class == Node::ENSURE then
       s = "#{'  '*indent}begin\n" +
-      "#{node.body.as_code(indent, true)}\n" +
+      "#{node.body.as_code(indent+1, true)}\n" +
       "#{'  '*indent}end"
     elsif node.body then
       "#{'  '*indent}begin\n" +
@@ -112,7 +112,7 @@ class Node
       s << "#{'  '*indent}begin\n"
       indent += 1
     end
-    yield s, indent + 1, true
+    yield s, indent, true
     if not have_begin then
       indent -= 1
       s << "\n#{'  '*indent}end"
@@ -122,6 +122,7 @@ class Node
 
   define_code(:ENSURE) do |node, indent, *args|
     begin_ensure = args[0] || false
+    s = ''
     Node.begin_end(indent, begin_ensure) do |s, indent, begin_ensure|
       if node.head then
         s << "#{node.head.as_code(indent)}\n"
@@ -136,7 +137,7 @@ class Node
     Node.begin_end(indent, begin_rescue) do |s, indent, begin_rescue|
       if node.head then
         if begin_rescue then
-          s << "#{node.head.as_code(indent+1)}\n"
+          s << "#{node.head.as_code(indent)}\n"
           s << "#{'  '*(indent-1)}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
         else
           s << "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
