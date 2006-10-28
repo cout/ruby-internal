@@ -54,9 +54,9 @@ class Node
     lines = a.map { |n| n.as_code(indent) }
     lines.reject! { |e| e.nil? }
     if lines.size == 0 then
-      return 'nil'
+      "#{'  '*indent}nil"
     else
-      return lines.join("\n")
+      lines.join("\n")
     end
   end
 
@@ -218,8 +218,8 @@ class Node
   define_code(:SCOPE) do |node, indent|
     case node.next
     when nil then ''
-    when Node::ARGS then 'nil'
-    when Node::BLOCK_ARG then 'nil'
+    when Node::ARGS then "#{'  '*indent}nil"
+    when Node::BLOCK_ARG then "#{'  '*indent}nil"
     else node.next.as_code(indent)
     end
   end
