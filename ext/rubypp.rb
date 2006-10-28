@@ -83,7 +83,7 @@ if __FILE__ == $0 then
       success = true
     ensure
       if not success then
-        File.unlink(output_file)
+        File.unlink(output_file) rescue Errno::ENOENT
       end
     end
   end
