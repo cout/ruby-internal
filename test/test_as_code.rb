@@ -10,6 +10,11 @@ $stdout.sync = true
 $stderr.sync = true
 
 class TC_As_Code < Test::Unit::TestCase
+  MAJOR = Config::CONFIG['MAJOR'].to_i
+  MINOR = Config::CONFIG['MINOR'].to_i
+  TEENY = Config::CONFIG['TEENY'].to_i
+  RUBY_VERSION_CODE = MAJOR * 100 + MINOR * 10 + TEENY
+
   extend Test::Unit::Assertions
 
   EXPRESSION_SAMPLES.each do |name, code|
@@ -115,11 +120,17 @@ class TC_As_Code < Test::Unit::TestCase
 
   def test_method_begin_ensure_as_code
     m = method(:method_begin_ensure_as_code)
+    if RUBY_VERSION_CODE >= 190 then
+      ret = ''
+    else
+      ret = 'return '
+    end
+
     assert_equal <<-END.chomp, m.as_code(3)
       def method_begin_ensure_as_code(a, b, *rest, &block)
         begin
           (raise("Need more input!")) if (not a and not b)
-          return a + b
+          #{ret}a + b
         ensure
           puts("In ensure block")
         end
