@@ -2,6 +2,7 @@
 #
 
 require 'nodewrap'
+require 'pp'
 
 module Noex
   # Return a string representing the given integer as a noex value.

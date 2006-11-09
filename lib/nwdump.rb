@@ -37,13 +37,17 @@
 require 'nodepp'
 
 set_trace_func proc {
-  n = $ruby_eval_tree
-  if defined?($ruby_eval_tree_begin) and $ruby_eval_tree_begin then
-    $ruby_eval_tree_begin.pretty_print($stderr)
-  end
-  if n then
-    n.pretty_print($stderr)
-    exit
+  begin
+    n = $ruby_eval_tree
+    if defined?($ruby_eval_tree_begin) and $ruby_eval_tree_begin then
+      pp $ruby_eval_tree_begin, $stderr
+    end
+    if n then
+      PP.pp n, $stderr
+      exit!
+    end
+  rescue Exception
+    p $!, $!.backtrace
   end
 }
 
