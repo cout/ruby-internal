@@ -74,24 +74,28 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       node_elem_ref.sub!('id', 'cnt')
     end
 
+    if node_elem_name == "rval" then
+      # rval points to a value but is really a node
+      node_elem_ref.sub!('value', 'node')
+    end
+
     case node_elem_ref
-    when /\.node$/, /\.value/
+    when /\.node/
+      puts <<-END
+      if(n->nd_#{node_elem_name})
+      {
+        dump_node_to_hash((NODE *)n->nd_#{node_elem_name}, node_hash);
+        return node_id((NODE *)n->nd_#{node_elem_name});
+      }
+      else
+      {
+        return Qnil;
+      }
+      END
+    when /\.value$/
       puts <<-END
       switch(TYPE(n->nd_#{node_elem_name}))
       {
-        case T_NODE:
-          if(n->nd_#{node_elem_name})
-          {
-            dump_node_to_hash((NODE *)n->nd_#{node_elem_name}, node_hash);
-            return rb_assoc_new(
-                INT2NUM(((struct RBasic *)(n->nd_#{node_elem_name}))->flags),
-                node_id((NODE *)n->nd_#{node_elem_name}));
-          }
-          else
-          {
-            return rb_assoc_new(INT2NUM(T_NODE), Qnil);
-          }
-
         case T_CLASS:
         case T_MODULE:
         {
@@ -192,7 +196,29 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
     end
 
     case node_elem_ref
-    when /\.node$/, /\.value$/
+    when /\.node$/
+      puts <<-END
+      if(v == Qnil)
+      {
+        n->nd_#{node_elem_name} = 0;
+      }
+      else
+      {
+        VALUE nid = rb_hash_aref(id_hash, v);
+        if(RTEST(nid))
+        {
+          *(NODE **)(&n->nd_#{node_elem_name}) = id_to_node(nid);
+        }
+        else
+        {
+          NODE * new_node = NEW_NIL();
+          load_node_from_hash(new_node, v, node_hash, id_hash);
+          *(NODE **)(&n->#{node_elem_ref}) = new_node;
+        }
+      }
+      return;
+      END
+    when /\.value$/
       puts <<-END
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
@@ -202,29 +228,6 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       int flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
-        case T_NODE:
-        {
-          v = RARRAY_PTR(v)[1];
-          if(v == Qnil)
-          {
-            n->nd_#{node_elem_name} = 0;
-          }
-          else
-          {
-            VALUE nid = rb_hash_aref(id_hash, v);
-            if(RTEST(nid))
-            {
-              *(NODE **)(&n->nd_#{node_elem_name}) = id_to_node(nid);
-            }
-            else
-            {
-              NODE * new_node = NEW_NIL();
-              load_node_from_hash(new_node, v, node_hash, id_hash);
-              *(NODE **)(&n->#{node_elem_ref}) = new_node;
-            }
-          }
-          break;
-        }
         case T_CLASS:
         case T_MODULE:
         {

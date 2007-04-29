@@ -94,14 +94,17 @@ NODE_TYPE_DESCRIPS = [
   [ 'XSTR'        , 'LIT'   , 'NONE'  , 'NONE'  ], 
 ]
 if RUBY_VERSION_CODE < 180 then
+# (0, 180)
 NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'HEAD'  , 'NEXT'  , 'NONE'  ], 
 ]
 else
+# [180, oo)
 NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
 ]
 end
+# (0, oo)
 NODE_TYPE_DESCRIPS.concat [
   [ 'LIT'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
   [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
@@ -115,17 +118,19 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
-  [ 'CREF'        , 'HEAD'  , 'NEXT'  , 'BODY'  ], 
+  [ 'CREF'        , 'CLSS'  , 'NEXT'  , 'BODY'  ], 
   [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
 ]
 if RUBY_VERSION_CODE < 190 then
+# (0, 190)
 NODE_TYPE_DESCRIPS.concat [
   [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
 ]
 end
 if RUBY_VERSION_CODE < 180 then
+# (0, 180)
 NODE_TYPE_DESCRIPS.concat [
   [ 'CVAR2'       , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'RESTARGS'    , 'HEAD'  , 'NONE'  , 'NONE'  ], 
@@ -133,6 +138,7 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'MODULE'      , 'CNAME' , 'BODY'  , 'NONE'  ], 
 ]
 if RUBY_VERSION_CODE >= 170 then
+# [170, oo)
 NODE_TYPE_DESCRIPS.concat [
   [ 'RESTARY'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
   [ 'REXPAND'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
@@ -140,6 +146,7 @@ NODE_TYPE_DESCRIPS.concat [
 ]
 end
 else # RUBY_VERSION_CODE >= 180
+# [180, oo)
 NODE_TYPE_DESCRIPS.concat [
   [ 'CLASS'       , 'SUPER' , 'CPATH' , 'BODY'  ], 
   [ 'MODULE'      , 'CPATH' , 'BODY'  , 'NONE'  ], 
