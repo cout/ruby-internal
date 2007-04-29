@@ -14,9 +14,12 @@ static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_cUnboundProc;
+static VALUE rb_mMarshal;
+
+#if RUBY_VERSION_CODE < 186
 static VALUE rb_cMethod;
 static VALUE rb_cUnboundMethod;
-static VALUE rb_mMarshal;
+#endif
 
 #if RUBY_VERSION_CODE >= 180
 struct Class_Restorer
