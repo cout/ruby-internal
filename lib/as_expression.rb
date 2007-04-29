@@ -378,7 +378,7 @@ class Node
   else
 
     define_expression(:EVSTR) do |node|
-      "\#\{#{node.head}\}"
+      "\#\{#{node.lit}\}"
     end
 
   end
