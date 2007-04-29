@@ -16,7 +16,7 @@ VALUE rb_cNodeSubclass[NODE_LAST];
 static VALUE rb_cUnboundProc;
 static VALUE rb_mMarshal;
 
-#if RUBY_VERSION_CODE < 186
+#if RUBY_VERSION_CODE < 185
 static VALUE rb_cMethod;
 static VALUE rb_cUnboundMethod;
 #endif
@@ -1362,12 +1362,16 @@ void Init_nodewrap(void)
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */
+#if RUBY_VERSION_CODE < 185
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
+#endif
   rb_define_method(rb_cMethod, "receiver", method_receiver, 0);
   rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
 
   /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
+#if RUBY_VERSION_CODE < 185
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
+#endif
   rb_define_method(rb_cMethod, "method_id", method_id, 0);
   rb_define_method(rb_cUnboundMethod, "method_id", method_id, 0);
   rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
