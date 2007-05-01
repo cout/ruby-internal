@@ -10,6 +10,10 @@
 #include "node.h"
 #include "st.h"
 
+#if RUBY_RELEASE_CODE >= 20070427
+#define ruby_safe_level rb_safe_level()
+#endif
+
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
