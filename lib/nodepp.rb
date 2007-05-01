@@ -9,7 +9,7 @@ module Noex
   #
   def stringify(noex)
     Noex.constants.each do |constant|
-      return constant if const_get(constant) == noex
+      return constant.to_s if const_get(constant) == noex
     end
     return noex.to_s
   end
