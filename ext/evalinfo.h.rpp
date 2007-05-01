@@ -1,31 +1,45 @@
 #ifndef evalinfo__h_
 #define evalinfo__h_
 
+#include "ruby_version.h"
+
+#ifdef RUBY_HAS_YARV
+#include "yarvcore.h"
+#else
 #include "env.h"
+#endif
 
 #ruby <<END
   require 'rbconfig'
   require 'ruby_source_dir'
+  proc_c_location = "#{RUBY_SOURCE_DIR}/proc.c"
+  vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"
   eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
-  File.open(eval_c_location) do |eval_c|
-    write = false
-    stopwrite = false
-    while (line = eval_c.gets) != nil do
-      case line
-      when /^struct (METHOD|BLOCK)/
-        write = true
-        stopwrite = false
-      when /^\}/
-        stopwrite = true if write
-      end
-      puts line if write
-      if stopwrite then
-        stopwrite = false
-        write = false
-        puts ''
+
+  [ proc_c_location, vm_c_location, eval_c_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |eval_c|
+      write = false
+      stopwrite = false
+      while (line = eval_c.gets) != nil do
+        case line
+        when /^struct (METHOD|BLOCK)/
+          write = true
+          stopwrite = false
+        when /^\}/
+          stopwrite = true if write
+        end
+        puts line if write
+        if stopwrite then
+          stopwrite = false
+          write = false
+          puts ''
+        end
       end
     end
   end
+  nil
 END
 
 #endif

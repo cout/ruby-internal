@@ -517,6 +517,10 @@ static VALUE method_load(VALUE klass, VALUE str)
  */
 static VALUE proc_body(VALUE proc)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
   {
@@ -525,6 +529,7 @@ static VALUE proc_body(VALUE proc)
   }
   Data_Get_Struct(proc, struct BLOCK, b);
   return wrap_node(b->body);
+#endif
 }
 
 /*
@@ -532,6 +537,10 @@ static VALUE proc_body(VALUE proc)
  */
 static VALUE proc_var(VALUE proc)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
   {
@@ -553,6 +562,7 @@ static VALUE proc_var(VALUE proc)
   {
     return wrap_node(b->var);
   }
+#endif
 }
 
 /*
@@ -560,6 +570,10 @@ static VALUE proc_var(VALUE proc)
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   VALUE body, var, arr;
 
@@ -574,10 +588,15 @@ static VALUE proc_dump(VALUE self, VALUE limit)
   var = wrap_node(b->var);
   arr = rb_assoc_new(body, var);
   return marshal_dump(arr, limit);
+#endif
 }
 
 static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   /* Calling eval will do a security check */
   VALUE new_proc = rb_funcall(
       rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
@@ -587,6 +606,7 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
   b->var = var;
   RBASIC(new_proc)->klass = klass;
   return new_proc;
+#endif
 }
 
 /*
@@ -595,6 +615,10 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
  */
 static VALUE proc_load(VALUE klass, VALUE str)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   VALUE arr = marshal_load(str);
   NODE * body, * var;
 
@@ -609,6 +633,7 @@ static VALUE proc_load(VALUE klass, VALUE str)
   body = unwrap_node(RARRAY_PTR(arr)[0]);
   var = unwrap_node(RARRAY_PTR(arr)[1]);
   return create_proc(rb_cUnboundProc, Qnil, body, var);
+#endif
 }
 
 /*
@@ -616,12 +641,17 @@ static VALUE proc_load(VALUE klass, VALUE str)
  */
 static VALUE proc_unbind(VALUE self)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
   /* no need for a security check to unbind a proc -- though without the
    * ability to bind, this doesn't seem very useful.
    */
   return create_proc(rb_cUnboundProc, Qnil, b->body, b->var);
+#endif
 }
 
 /*
@@ -630,10 +660,15 @@ static VALUE proc_unbind(VALUE self)
  */
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
   /* create_proc will do a security check */
   return create_proc(rb_cProc, binding, b->body, b->var);
+#endif
 }
 
 /*
@@ -662,6 +697,10 @@ static VALUE unboundproc_binding(VALUE self)
  */
 static VALUE binding_body(VALUE binding)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
   {
@@ -670,6 +709,7 @@ static VALUE binding_body(VALUE binding)
   }
   Data_Get_Struct(binding, struct BLOCK, b);
   return wrap_node(b->body);
+#endif
 }
 
 /* ---------------------------------------------------------------------
@@ -682,6 +722,10 @@ static VALUE binding_body(VALUE binding)
  */
 static VALUE node_eval(VALUE node, VALUE self)
 {
+#ifdef RUBY_HAS_YARV
+  /* TODO */
+  return Qnil;
+#else
   /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
   NODE * n = unwrap_node(node);
   struct BLOCK * b;
@@ -697,6 +741,7 @@ static VALUE node_eval(VALUE node, VALUE self)
   Data_Get_Struct(proc, struct BLOCK, b);
   b->self = self;
   return rb_funcall(proc, rb_intern("call"), 0);
+#endif
 }
 
 /* ---------------------------------------------------------------------
