@@ -10,8 +10,10 @@
 #include "node.h"
 #include "st.h"
 
-#if RUBY_RELEASE_CODE >= 20070427
+#ifdef RUBY_HAS_YARV
 #define ruby_safe_level rb_safe_level()
+VALUE iseq_data_to_ary(rb_iseq_t * iseq);
+VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
 #endif
 
 static VALUE rb_cNode = Qnil;
@@ -324,7 +326,7 @@ static VALUE node_type_to_i(VALUE node_type)
 
 static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
 {
-  NODE * n;
+  NODE * n = 0;
   if(ruby_safe_level >= 2)
   {
     /* adding a method with the wrong node type can cause a crash */
@@ -332,7 +334,10 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
   }
   if(!rb_obj_is_kind_of(node, rb_cNode))
   {
-    rb_raise(rb_eTypeError, "Expected Node for 2nd parameter");
+    rb_raise(
+        rb_eTypeError,
+        "Expected Node for 2nd parameter, got %s",
+        rb_class2name(CLASS_OF(n)));
   }
   Data_Get_Struct(node, NODE, n);
   rb_add_method(klass, SYM2ID(method), n, NUM2INT(noex));
@@ -789,9 +794,21 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
   rb_hash_aset(node_hash, node_id(n), arr);
 }
 
-void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id_hash)
+void dump_node_or_iseq_to_hash(VALUE n, VALUE node_hash)
 {
-  VALUE arr = rb_hash_aref(node_hash, orig_node_id);
+#ifdef RUBY_HAS_YARV
+  if(TYPE(n) == T_DATA && CLASS_OF(n) == rb_cISeq)
+  {
+    dump_iseq_to_hash(n, node_hash);
+  }
+#endif
+
+  dump_node_to_hash((NODE *)n, node_hash);
+}
+
+NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE id_hash)
+{
+  NODE * n = NEW_NIL();
   VALUE s3, s2, s1, rb_nd_file, rb_flags;
   unsigned long flags;
   char *nd_file = 0;
@@ -799,11 +816,6 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   NODE tmp_node;
 
   nd_set_type(&tmp_node, NODE_NIL);
-
-  if(!RTEST(arr))
-  {
-    rb_raise(rb_eArgError, "Could not find node %d in hash", NUM2INT(orig_node_id));
-  }
 
   Check_Type(arr, T_ARRAY);
   s3 = rb_ary_pop(arr);
@@ -814,9 +826,6 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   flags = NUM2INT(rb_flags);
   tmp_node.flags = flags;
 
-  /* The id_hash is a temporary, so it is invalidated if an exception is
-   * raised.
-   */
   rb_hash_aset(id_hash, orig_node_id, node_id(n));
 
   descrip = node_type_descrip(nd_type(&tmp_node));
@@ -841,7 +850,30 @@ void load_node_from_hash(NODE * n, VALUE orig_node_id, VALUE node_hash, VALUE id
   memcpy(n, &tmp_node, sizeof(NODE));
   n->flags = flags;
   n->nd_file = nd_file;
+
+  return n;
 }
+
+
+VALUE load_node_or_iseq_from_hash(VALUE orig_node_id, VALUE node_hash, VALUE id_hash)
+{
+  VALUE data = rb_hash_aref(node_hash, orig_node_id);
+
+  if(!RTEST(data))
+  {
+    rb_raise(rb_eArgError, "Could not find node %d in hash", NUM2INT(orig_node_id));
+  }
+
+#ifdef RUBY_HAS_YARV
+  if(TYPE(data) == T_DATA)
+  {
+    return (VALUE)load_iseq_from_hash(data, orig_node_id, node_hash, id_hash);
+  }
+#endif
+
+  return (VALUE)load_node_from_hash(data, orig_node_id, node_hash, id_hash);
+}
+
 
 static VALUE node_to_hash(VALUE self)
 {
@@ -880,8 +912,9 @@ static VALUE node_dump(VALUE self, VALUE limit)
  */
 static VALUE node_load(VALUE klass, VALUE str)
 {
-  NODE * n = NEW_NIL();
   VALUE arr, node_hash, node_id, id_hash;
+  NODE * n;
+  VALUE data;
 
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
@@ -894,7 +927,8 @@ static VALUE node_load(VALUE klass, VALUE str)
   node_hash = rb_ary_pop(arr);
   node_id = rb_ary_pop(arr);
   id_hash = rb_hash_new();
-  load_node_from_hash(n, node_id, node_hash, id_hash);
+  data = rb_hash_aref(node_hash, node_id);
+  n = load_node_from_hash(data, node_id, node_hash, id_hash);
   /* TODO: Need a free function in this case */
   return wrap_node(n);
 }
@@ -1134,7 +1168,7 @@ static int add_method_iter(VALUE name, VALUE value, VALUE module)
 {
   NODE * n;
   rb_check_type(name, T_SYMBOL);
-  /* TODO: Check that this is a node */
+  rb_check_type(value, T_NODE);
   Data_Get_Struct(value, NODE, n);
   rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
   return ST_CONTINUE;
@@ -1243,6 +1277,43 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 {
   rb_mark_tbl(&class_restorer->m_tbl);
   rb_mark_tbl(&class_restorer->iv_tbl);
+}
+
+#endif
+
+/* ---------------------------------------------------------------------
+ * Methods for VM::InstructionSequence
+ * ---------------------------------------------------------------------
+ */
+
+#ifdef RUBY_HAS_YARV
+
+VALUE iseq_marshal_dump(VALUE self, VALUE limit)
+{
+  VALUE ary = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
+  return marshal_dump(ary, limit);
+}
+
+VALUE iseq_marshal_load(VALUE klass, VALUE str)
+{
+  VALUE arr = marshal_load(str);
+  return iseq_load(Qnil, arr, 0, Qnil);
+}
+
+void dump_iseq_to_hash(VALUE iseq, VALUE node_hash)
+{
+  if(RTEST(rb_hash_aref(node_hash, rb_obj_id(iseq))))
+  {
+    return;
+  }
+
+  rb_hash_aset(node_hash, rb_obj_id(iseq), iseq);
+}
+
+VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE id_hash)
+{
+  rb_hash_aset(id_hash, orig_node_id, rb_obj_id(iseq));
+  return iseq;
 }
 
 #endif
@@ -1507,5 +1578,10 @@ void Init_nodewrap(void)
   rb_define_method(rb_mKernel, "singleton?", is_singleton, 0);
   rb_define_method(rb_mKernel, "has_singleton?", has_singleton, 0);
   rb_define_method(rb_mKernel, "singleton_class", singleton_class, 0);
+
+#ifdef RUBY_HAS_YARV
+  rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
+  rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
+#endif
 }
 

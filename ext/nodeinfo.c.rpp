@@ -85,7 +85,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       puts <<-END
       if(n->nd_#{node_elem_name})
       {
-        dump_node_to_hash(n->nd_#{node_elem_name}, node_hash);
+        dump_node_or_iseq_to_hash((VALUE)n->nd_#{node_elem_name}, node_hash);
         return node_id(n->nd_#{node_elem_name});
       }
       else
@@ -218,9 +218,8 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
         }
         else
         {
-          NODE * new_node = NEW_NIL();
-          load_node_from_hash(new_node, v, node_hash, id_hash);
-          n->#{node_elem_ref} = new_node;
+          n->#{node_elem_ref} = (NODE *)load_node_or_iseq_from_hash(
+              v, node_hash, id_hash);
         }
       }
       return;
