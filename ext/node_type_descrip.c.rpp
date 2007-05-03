@@ -1,6 +1,5 @@
 #include "node_type_descrip.h"
 #include "version.h"
-#include "config.h"
 
 Node_Type_Descrip node_type_descrips_unsorted[] = {
 #ruby <<END
