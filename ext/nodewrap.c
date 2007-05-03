@@ -10,6 +10,8 @@
 #include "node.h"
 #include "st.h"
 
+#include <ctype.h>
+
 #ifdef RUBY_HAS_YARV
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
@@ -1434,6 +1436,30 @@ VALUE singleton_class(VALUE self)
 
 void Init_nodewrap(void)
 {
+  {
+    int actual_ruby_version_code = 0;
+    char const * s = ruby_version;
+
+    for(; *s != '\0'; ++s)
+    {
+      if(isdigit(*s))
+      {
+        actual_ruby_version_code *= 10;
+        actual_ruby_version_code += *s - '0';
+      }
+    }
+
+    if(actual_ruby_version_code != RUBY_VERSION_CODE)
+    {
+      rb_raise(
+          rb_eRuntimeError,
+          "This version of nodewrap was built with a different version of ruby "
+          "(built with %d, running on %d)",
+          RUBY_VERSION_CODE,
+          actual_ruby_version_code);
+    }
+  }
+
   VALUE rb_cBinding, rb_cModule, rb_mNoex;
 
   rb_cNode = rb_define_class("Node", rb_cObject);
