@@ -1,5 +1,6 @@
 #include "node_type_descrip.h"
 #include "version.h"
+#include "config.h"
 
 Node_Type_Descrip node_type_descrips_unsorted[] = {
 #ruby <<END
@@ -10,9 +11,21 @@ NODE_TYPE_DESCRIPS.each do |descrip|
   node2 = descrip.node2
   node3 = descrip.node3
 
+  if name == 'ALLOCA' then
+    puts <<-END
+#if defined(C_ALLOCA) || RUBY_VERSION_CODE >= 190
+    END
+  end
+
   puts <<-END
   { NODE_#{name}, NEN_#{node1}, NEN_#{node2}, NEN_#{node3}, "#{name}" },
   END
+
+  if name == 'ALLOCA' then
+    puts <<-END
+#endif
+    END
+  end
 end
 nil
 END

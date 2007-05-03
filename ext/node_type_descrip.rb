@@ -2,16 +2,6 @@ require 'rbconfig'
 require 'ruby_version_code'
 require 'ruby_source_dir'
 
-C_ALLOCA = false
-config_h_location = "#{RUBY_SOURCE_DIR}/config.h"
-File.open(config_h_location) do |config_h|
-  config_h.each_line do |line|
-    if line =~ /#define\s+C_ALLOCA\s+1/ then
-      C_ALLOCA = true
-    end
-  end
-end
-
 NODE_TYPE_DESCRIPS = [
   [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'CNT'   ], 
   [ 'BLOCK'       , 'HEAD'  , 'NEXT'  , 'NONE'  ], 
@@ -92,6 +82,7 @@ NODE_TYPE_DESCRIPS = [
   [ 'DSTR'        , 'LIT'   , 'NEXT'  , 'NONE'  ], 
   [ 'DXSTR'       , 'LIT'   , 'NEXT'  , 'NONE'  ], 
   [ 'XSTR'        , 'LIT'   , 'NONE'  , 'NONE'  ], 
+  [ 'ALLOCA'      , 'LIT'   , 'VALUE' , 'CNT'   ], 
 ]
 if RUBY_VERSION_CODE < 180 then
 # (0, 180)
@@ -152,11 +143,6 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'MODULE'      , 'CPATH' , 'BODY'  , 'NONE'  ], 
   [ 'DSYM'        , 'LIT'   , 'NEXT'  , 'NONE'  ],
   [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
-]
-end
-if C_ALLOCA then
-NODE_TYPE_DESCRIPS.concat [
-  [ 'ALLOCA'      , 'LIT'   , 'VALUE' , 'CNT'   ], 
 ]
 end
 NODE_TYPE_DESCRIPS.concat [

@@ -457,6 +457,7 @@ void define_node_subclass_methods()
 
 #ruby <<END
   NODE_TYPE_DESCRIPS.each do |descrip|
+
     case descrip.name
     when 'LAST'
       next
@@ -466,6 +467,13 @@ void define_node_subclass_methods()
       name = descrip.name
     end
     node_type = "rb_c#{name}"
+
+    if name == 'ALLOCA' then
+      puts <<-END
+#if defined(C_ALLOCA) || RUBY_VERSION_CODE >= 190
+      END
+    end
+
     puts <<-END
   {
     VALUE #{node_type} = rb_define_class_under(rb_cNode, "#{name}", rb_cNode);
@@ -477,17 +485,24 @@ void define_node_subclass_methods()
     [descrip.node1, descrip.node2, descrip.node3].each do |nen|
       next if nen == 'NONE'
       nen = nen.downcase
-      name = nen
-      name = 'first' if nen == '1st'
-      name = 'second' if nen == '2nd'
+      mname = nen
+      mname = 'first' if nen == '1st'
+      mname = 'second' if nen == '2nd'
       puts <<-END
-    rb_define_method(#{node_type}, "#{name}", node_#{nen}, 0);
-    rb_ary_push(members, rb_str_new2("#{name}"));
+    rb_define_method(#{node_type}, "#{mname}", node_#{nen}, 0);
+    rb_ary_push(members, rb_str_new2("#{mname}"));
       END
     end
     puts <<-END
   }
     END
+
+    if name == 'ALLOCA' then
+      puts <<-END
+#endif
+      END
+    end
+
   end
   nil
 END
