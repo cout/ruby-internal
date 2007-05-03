@@ -188,6 +188,9 @@ static VALUE lookup_module_proc = Qnil;
 
 #if RUBY_VERSION_CODE >= 180
 /*
+ * call-seq:
+ *   Node.allocate() => Node
+ *
  * Allocate a new node.
  */
 static VALUE node_allocate(VALUE klass)
@@ -198,6 +201,9 @@ static VALUE node_allocate(VALUE klass)
 #endif
 
 /*
+ * call-seq:
+ *   node.address() => Numeric
+ *
  * Returns a node's address.
  */
 static VALUE node_address(VALUE self)
@@ -208,6 +214,9 @@ static VALUE node_address(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   node.flags() => Numeric
+ *
  * Returns a node's flags.
  */
 static VALUE node_flags(VALUE self)
@@ -218,6 +227,9 @@ static VALUE node_flags(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   node.nd_file => String or nil
+ *
  * Returns the file the node is associated with
  */
 static VALUE node_nd_file(VALUE self)
@@ -235,6 +247,9 @@ static VALUE node_nd_file(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   node.nd_line => Numeric
+ *
  * Returns the line number the node is associated with.
  */
 static VALUE node_nd_line(VALUE self)
@@ -245,6 +260,9 @@ static VALUE node_nd_line(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   node.nd_type => NodeType
+ *
  * Returns a NodeType structure representing the type of the node.
  */
 static VALUE node_nd_type(VALUE self)
@@ -272,6 +290,9 @@ NODE * id_to_node(VALUE id)
 }
 
 /*
+ * call-seq:
+ *   node.members => Array of String
+ *
  * Return an array of strings containing the names of a node's
  * members.
  */
@@ -281,6 +302,9 @@ static VALUE node_members(VALUE node)
 }
 
 /*
+ * call-seq:
+ *   node[member] => Object
+ *
  * Return the given member of a node.
  */
 static VALUE node_bracket(VALUE node, VALUE member)
@@ -304,6 +328,9 @@ static VALUE node_bracket(VALUE node, VALUE member)
  */
 
 /*
+ * call-seq:
+ *   node_type.name => String
+ *
  * Returns the name of the node.
  */
 static VALUE node_type_to_s(VALUE node_type)
@@ -312,6 +339,9 @@ static VALUE node_type_to_s(VALUE node_type)
 }
 
 /*
+ * call-seq:
+ *   node_type.to_i => Numeric
+ *
  * Returns an integer representing integer type of a node.  This is the
  * value you would see for the type of the node if you were examining it
  * in gdb.
@@ -352,6 +382,9 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
  */
 
 /*
+ * call-seq:
+ *   method.receiver => Object
+ *
  * Given a Method, returns the Object to which it is bound.
  */
 static VALUE method_receiver(VALUE method)
@@ -362,6 +395,9 @@ static VALUE method_receiver(VALUE method)
 }
 
 /*
+ * call-seq:
+ *   method.method_id => Symbol
+ *
  * Given a Method, returns the Symbol of the method it represents.  If
  * the method is an alias for another method, returns the Symbol of the
  * new method, not the original.  If the method changes name, returns
@@ -375,6 +411,9 @@ static VALUE method_id(VALUE method)
 }
 
 /*
+ * call-seq:
+ *   method.method_oid => Symbol
+ *
  * Given a Method, returns the Symbol of the method it represents.  If
  * the method is an alias for another method, returns the Symbol of the
  * original method, not the alias.  If the original method changes name,
@@ -388,6 +427,9 @@ static VALUE method_oid(VALUE method)
 }
 
 /*
+ * call-seq:
+ *   method.origin_class => Class
+ *
  * Given a Method, returns the Class in which the method it represents
  * was defined.  If the method was defined in a base class and
  * Object#method is called on a derived instance of that base class,
@@ -405,6 +447,9 @@ static VALUE method_origin_class(VALUE method)
 }
 
 /*
+ * call-seq:
+ *   method.body => Node
+ *
  * Given a Method, returns the Node for that Method's body.  This can be
  * used to directly copy one class's method to another (using
  * add_method).
@@ -422,6 +467,9 @@ static VALUE method_body(VALUE method)
 }
 
 /*
+ * call-seq:
+ *   method.dump(limit) => String
+ *
  * Dump a Method and the object to which it is bound to a String.  The
  * Method's class will not be dumped, only the name of the class.
  *
@@ -463,6 +511,9 @@ static VALUE method_dump(VALUE self, VALUE limit)
 }
 
 /*
+ * call-seq:
+ *   Method.load(String) => Method
+ *
  * Load a Method from a String.
  */
 static VALUE method_load(VALUE klass, VALUE str)
@@ -520,6 +571,9 @@ static VALUE method_load(VALUE klass, VALUE str)
  */
 
 /*
+ * call-seq:
+ *   proc.body => Node
+ *
  * Returns the Proc's body Node.
  */
 static VALUE proc_body(VALUE proc)
@@ -540,6 +594,9 @@ static VALUE proc_body(VALUE proc)
 }
 
 /*
+ * call-seq:
+ *   proc.var => Node
+ *
  * Returns the Proc's argument Node.
  */
 static VALUE proc_var(VALUE proc)
@@ -573,6 +630,9 @@ static VALUE proc_var(VALUE proc)
 }
 
 /*
+ * call-seq:
+ *   proc.dump(limit) => String
+ *
  * Dump a Proc to a String.
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
@@ -617,6 +677,9 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 }
 
 /*
+ * call-seq:
+ *   Proc.load(str) => Proc
+ *
  * Load a Proc from a String.  When it is loaded, it will be an
  * UnboundProc.
  */
@@ -644,6 +707,9 @@ static VALUE proc_load(VALUE klass, VALUE str)
 }
 
 /*
+ * call-seq:
+ *   proc.unbind => UnboundProc
+ *
  * Create an UnboundProc from a Proc.
  */
 static VALUE proc_unbind(VALUE self)
@@ -662,6 +728,9 @@ static VALUE proc_unbind(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   unbound_proc.bind(Binding) => Proc
+ *
  * Bind an UnboundProc to a Binding.  Returns a Proc that has been bound
  * to the given binding.
  */
@@ -679,6 +748,9 @@ static VALUE unboundproc_bind(VALUE self, VALUE binding)
 }
 
 /*
+ * call-seq:
+ *   unbound_proc.call => raises TypeError
+ *
  * Raises a TypeError; UnboundProc objects cannot be called.
  */
 static VALUE unboundproc_call(VALUE self, VALUE args)
@@ -687,6 +759,9 @@ static VALUE unboundproc_call(VALUE self, VALUE args)
 }
 
 /*
+ * call-seq:
+ *   unbound_proc.binding => raises TypeError
+ *
  * Raises a TypeError; UnboundProc objects have no binding.
  */
 static VALUE unboundproc_binding(VALUE self)
@@ -700,6 +775,9 @@ static VALUE unboundproc_binding(VALUE self)
  */
 
 /*
+ * call-seq:
+ *   binding.body => Binding
+ *
  * Given a Binding, returns the Node for that Binding.
  */
 static VALUE binding_body(VALUE binding)
@@ -725,7 +803,10 @@ static VALUE binding_body(VALUE binding)
  */
 
 /*
- * Evaluate a node.
+ * call-seq:
+ *   node.eval(Object) => Object
+ *
+ * Evaluate a node with the given object as self and returns the result.
  */
 static VALUE node_eval(VALUE node, VALUE self)
 {
@@ -1070,6 +1151,9 @@ static VALUE class_variable_hash(VALUE module)
 }
 
 /*
+ * call-seq:
+ *   module.dump(limit) => String
+ *
  * Dump a module to a string.
  */
 static VALUE module_dump(VALUE self, VALUE limit)
@@ -1199,6 +1283,9 @@ static void add_class_variables(VALUE module, VALUE class_variables)
 }
 
 /*
+ * call-seq:
+ *   Module.load(String) => Module
+ *
  * Load a module from a string.
  */
 static VALUE module_load(VALUE klass, VALUE str)
@@ -1290,12 +1377,24 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 
 #ifdef RUBY_HAS_YARV
 
+/*
+ * call-seq:
+ *   iseq.dump(limit) => String
+ *
+ * Dumps VM::InstuctionSequence to a string (only available on YARV).
+ */
 VALUE iseq_marshal_dump(VALUE self, VALUE limit)
 {
   VALUE ary = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
   return marshal_dump(ary, limit);
 }
 
+/*
+ * call-seq:
+ *   VM::InstructionSequence.load(String) => VM::InstructionSequence
+ *
+ * Load a VM::InstuctionSequence from a string (only available on YARV).
+ */
 VALUE iseq_marshal_load(VALUE klass, VALUE str)
 {
   VALUE arr = marshal_load(str);
@@ -1385,6 +1484,9 @@ static void ruby_eval_tree_setter()
  */
 
 /*
+ * call-seq:
+ *   class.real_superclass => Class
+ *
  * Return the immediate superclass of a class or module.  This may be a
  * base class, a singleton class, or a module singleton.
  */
@@ -1395,6 +1497,9 @@ VALUE real_superclass(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   class.real_class => Class
+ *
  * Return the object's first immediate ancestor; this may be the
  * object's class, its singleton class, or a module singleton.
  */
@@ -1404,6 +1509,9 @@ VALUE real_class(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   class.singleton? => true or false
+ *
  * Return true if this object is a singleton (that is, it has the
  * FL_SINGLETON flag set).
  */
@@ -1413,6 +1521,9 @@ VALUE is_singleton(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   class.has_singleton? => true or false
+ *
  * Return true if this object has a singleton class.
  */
 VALUE has_singleton(VALUE self)
@@ -1421,6 +1532,9 @@ VALUE has_singleton(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   class.singleton_class => Class
+ *
  * Return the object's singleton class.  Creats a new singleton class
  * for the object if it does not have one.  See RCR#231.
  */
