@@ -1552,7 +1552,8 @@ void Init_nodewrap(void)
 {
   {
     int actual_ruby_version_code = 0;
-    char const * s = ruby_version;
+    VALUE ruby_version_str = rb_const_get(rb_cObject, rb_intern("RUBY_VERSION"));
+    char const * s = STR2CSTR(ruby_version_str);
 
     for(; *s != '\0'; ++s)
     {
