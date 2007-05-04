@@ -43,12 +43,12 @@ license.  For more information, please see the file COPYING.
 END
 end
 
-def copy_from_ruby_dir(src, output_dir)
+def copy_from_ruby_dir(src, dir, output_dir)
   File.copy(File.join(dir, src), output_dir) rescue Errno::ENOENT
 end
 
-copy_from_ruby_dir('COPYING', output_dir)
-copy_from_ruby_dir('GPL', output_dir)
-copy_from_ruby_dir('LEGAL', output_dir)
-copy_from_ruby_dir('LGPL', output_dir)
+copy_from_ruby_dir('COPYING', dir, output_dir)
+copy_from_ruby_dir('GPL', dir, output_dir)
+copy_from_ruby_dir('LEGAL', dir, output_dir)
+copy_from_ruby_dir('LGPL', dir, output_dir)
 
