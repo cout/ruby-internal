@@ -1,8 +1,11 @@
 wd = Dir.pwd()
 Dir.chdir('..')
-require 'install.rb'
-config = ConfigTable.load
-Dir.chdir(wd)
+begin
+  require 'install.rb'
+  config = ConfigTable.load
+ensure
+  Dir.chdir(wd)
+end
 
 RUBY_SOURCE_DIR = config['ruby-source-path']
 
