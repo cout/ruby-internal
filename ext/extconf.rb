@@ -1,11 +1,5 @@
 require 'mkmf'
 
-wd = Dir.pwd()
-Dir.chdir('..')
-require 'install.rb'
-install_config = ConfigTable.load
-Dir.chdir(wd)
-
 rb_files = Dir['*.rb']
 
 rpp_files = Dir['*.rpp']
@@ -24,7 +18,7 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 
-if install_config['ruby-source-path'] then
+if arg_config('ruby-source-path') then
 
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
