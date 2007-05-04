@@ -1,9 +1,5 @@
-require 'rbconfig'
-
-ruby_source_path = nil
-
 add_path_config(
   'ruby-source-path',
-  ruby_source_path,
+  nil,
   'path to the ruby source code')
 
