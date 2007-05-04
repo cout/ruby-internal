@@ -73,10 +73,7 @@ def puts(line)
   $preprocessor.puts(line)
 end
 
-if __FILE__ == $0 then
-  input_file = ARGV[0]
-  output_file = ARGV[1]
-
+def rubypp(input_file, output_file)
   input = input_file ? File.open(input_file) : $stdin
   output = output_file ? File.open(output_file, 'w') : $stdout
 
@@ -90,5 +87,11 @@ if __FILE__ == $0 then
       File.unlink(output_file) rescue Errno::ENOENT
     end
   end
+end
+
+if __FILE__ == $0 then
+  input_file = ARGV[0]
+  output_file = ARGV[1]
+  rubypp(input_file, output_file)
 end
 
