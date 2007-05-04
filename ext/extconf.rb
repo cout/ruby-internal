@@ -33,7 +33,7 @@ rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	$(ruby) rubypp.rb #{rpp_file} #{dest_file}
+	$(RUBY) rubypp.rb #{rpp_file} #{dest_file}
 END
 end
 
@@ -43,7 +43,7 @@ rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	@$(ruby) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
+	@$(RUBY) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
 END
 end
 
