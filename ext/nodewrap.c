@@ -1385,6 +1385,12 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
  */
 VALUE iseq_marshal_dump(VALUE self, VALUE limit)
 {
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't dump iseq");
+  }
+
   VALUE ary = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
   return marshal_dump(ary, limit);
 }
@@ -1397,6 +1403,13 @@ VALUE iseq_marshal_dump(VALUE self, VALUE limit)
  */
 VALUE iseq_marshal_load(VALUE klass, VALUE str)
 {
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't load iseq");
+  }
+
   VALUE arr = marshal_load(str);
   return iseq_load(Qnil, arr, 0, Qnil);
 }
