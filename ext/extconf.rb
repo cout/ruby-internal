@@ -1,5 +1,6 @@
 require 'mkmf'
 
+cmdline_ruby_source_path = arg_config('--ruby-source-path')
 configured_ruby_source_dir = nil
 begin
   require 'ruby_source_dir'
@@ -25,15 +26,21 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 
-if arg_config('ruby-source-path') and \
-   arg_config('ruby-source-path') != '' and \
-   not configured_ruby_source_dir then
+p cmdline_ruby_source_path
+p configured_ruby_source_dir
+
+# (nil and not configured => cached
+# '' => cached
+# not configured => cached
+
+if (not cmdline_ruby_source_path and not configured_ruby_source_dir) or \
+   cmdline_ruby_source_path == '' then
 
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	$(RUBY) rubypp.rb #{rpp_file} #{dest_file}
+	@$(RUBY) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
 END
 end
 
@@ -43,9 +50,10 @@ rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	@$(RUBY) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
+	$(RUBY) rubypp.rb #{rpp_file} #{dest_file}
 END
 end
+
 
 end
 
