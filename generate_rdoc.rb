@@ -23,6 +23,7 @@ def generate_rdoc
   rdoc_files.concat [ 'README' ]
   rdoc_files.concat list_files('lib', /\.rb$/) if File.exist?('lib')
   rdoc_files.concat list_files('ext', /\.c$/)  if File.exist?('ext')
+  rdoc_files.reject! { |file| file =~ %r{^ext/cached/} }
   r.document(rdoc_files)
 end
 
