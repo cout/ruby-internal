@@ -1,6 +1,6 @@
 require 'rbconfig'
 
-ruby_source_path = Config::CONFIG['srcdir']
+ruby_source_path = nil
 
 add_path_config(
   'ruby-source-path',
