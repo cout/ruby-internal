@@ -7,9 +7,10 @@ To build and run the tests:
   ruby install.rb config
   ruby install.rb setup
 
-Or, if you are on ruby 1.9, you'll need to pass a special command-line
-option in the config step so the build scripts can find ruby's source
-code:
+Or, if you are on ruby 1.9 (or another version of ruby that doesn't have
+pre-parsed ruby source included in the distribution), you'll need to
+pass a special command-line option in the config step so the build
+scripts can find ruby's source code:
   ruby install.rb config --ruby-source-path=/path/to/ruby
   ruby install.rb setup
 
