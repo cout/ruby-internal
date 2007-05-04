@@ -16,15 +16,15 @@ else
   if not File.exist?(ruby_source_path) or
      not File.directory?(ruby_source_path) or
      not File.exist?(ruby_h) then
-     $stderr.puts "ERROR: Could not find the ruby source code at #{path}"
+     $stderr.puts "ERROR: Could not find the ruby source code at #{ruby_source_path}"
      exit 1
   end
 
-  version_h = File.join(path, 'version.h')
-  if not File.exist?(path) or
-     not File.directory?(path) or
+  version_h = File.join(ruby_source_path, 'version.h')
+  if not File.exist?(ruby_source_path) or
+     not File.directory?(ruby_source_path) or
      not File.exist?(ruby_h) then
-     $stderr.puts "ERROR: Could not find version.h at #{path}"
+     $stderr.puts "ERROR: Could not find version.h at #{ruby_source_path}"
      exit 1
   end
 
