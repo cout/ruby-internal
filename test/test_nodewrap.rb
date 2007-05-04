@@ -210,7 +210,7 @@ class TC_Nodewrap < Test::Unit::TestCase
       m = o.method(:foo)
       n = m.body
       # puts "dumping first method"
-      pp o.method(:foo).body
+      # pp o.method(:foo).body
       d = Marshal.dump(n)
       n2 = Marshal.load(d)
 
@@ -240,7 +240,7 @@ class TC_Nodewrap < Test::Unit::TestCase
       # p b.next
       # p b.tbl
       # puts "dumping second method"
-      pp obj2.method(:foo).body
+      # pp obj2.method(:foo).body
       dup_result = nil
       dup_exc = nil
       begin
@@ -291,6 +291,6 @@ class TC_Nodewrap < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run
+  exit Test::Unit::AutoRunner.run(__FILE__)
 end
 
