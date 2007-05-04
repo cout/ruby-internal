@@ -1,6 +1,9 @@
 require 'run_tests'
 require 'generate_rdoc'
 
-run_tests()
+if @config['without-tests'] != 'yes' then
+  run_tests()
+end
+
 generate_rdoc()
 

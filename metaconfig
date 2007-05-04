@@ -3,3 +3,8 @@ add_path_config(
   nil,
   'path to the ruby source code')
 
+add_config(
+  'without-tests',
+  'yes/no',
+  'no',
+  'does not run tests')
