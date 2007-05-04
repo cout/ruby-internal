@@ -1,5 +1,12 @@
 require 'mkmf'
 
+configured_ruby_source_dir = nil
+begin
+  require 'ruby_source_dir'
+  configured_ruby_source_dir = RUBY_SOURCE_DIR
+rescue InstallError
+end
+
 rb_files = Dir['*.rb']
 
 rpp_files = Dir['*.rpp']
@@ -18,7 +25,9 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 
-if arg_config('ruby-source-path') then
+if arg_config('ruby-source-path') and \
+   arg_config('ruby-source-path') != '' and \
+   not configured_ruby_source_dir then
 
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
