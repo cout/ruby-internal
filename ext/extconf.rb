@@ -1,5 +1,10 @@
 require 'mkmf'
-require 'rbconfig'
+
+wd = Dir.pwd()
+Dir.chdir('..')
+require 'install.rb'
+install_config = ConfigTable.load
+Dir.chdir(wd)
 
 rb_files = Dir['*.rb']
 
@@ -18,12 +23,27 @@ $CFLAGS << ' -Wall -g'
 create_makefile('nodewrap')
 
 append_to_makefile = ''
+
+if install_config['ruby-source-path'] then
+
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	#{Config::CONFIG['RUBY_INSTALL_NAME']} rubypp.rb #{rpp_file} #{dest_file}
+	$(ruby) rubypp.rb #{rpp_file} #{dest_file}
 END
+end
+
+else
+
+rpp_files.each do |rpp_file|
+dest_file = rpp_file.sub(/\.rpp$/, '')
+append_to_makefile << <<END
+#{dest_file}: #{rpp_file} #{rb_files.join(' ')}
+	@$(ruby) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
+END
+end
+
 end
 
 append_to_makefile << <<END
