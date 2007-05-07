@@ -51,7 +51,5 @@ hierarchies from one Ruby process and load them into another.
   s.extensions = 'ext/extconf.rb'
 
   s.extra_rdoc_files = [ 'README' ]
-
-  spec.autorequire = 'nodewrap'
 end
 
