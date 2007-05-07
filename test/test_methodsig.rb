@@ -1,5 +1,11 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
+
+dir = File.dirname(__FILE__)
+$:.unshift(dir) if not $:.include?(dir)
+$:.unshift("#{dir}/../lib") if not $:.include?("#{dir}/../lib")
+$:.unshift("#{dir}/../ext") if not $:.include?("#{dir}/../ext")
+
 require 'nodewrap'
 require 'methodsig'
 

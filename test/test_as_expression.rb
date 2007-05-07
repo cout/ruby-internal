@@ -1,16 +1,18 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
+
+dir = File.dirname(__FILE__)
+$:.unshift(dir) if not $:.include?(dir)
+$:.unshift("#{dir}/../lib") if not $:.include?("#{dir}/../lib")
+$:.unshift("#{dir}/../ext") if not $:.include?("#{dir}/../ext")
+
 require 'nodewrap'
 require 'as_expression'
 
-dir = File.dirname(__FILE__)
-require "#{dir}/expression_samples"
+require "expression_samples"
 
 $stdout.sync = true
 $stderr.sync = true
-
-require 'pp'
-require 'nodepp'
 
 class TC_As_Expression < Test::Unit::TestCase
   extend Test::Unit::Assertions

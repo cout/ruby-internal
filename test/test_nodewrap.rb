@@ -1,12 +1,16 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
-require 'nodewrap'
 
+dir = File.dirname(__FILE__)
+$:.unshift(dir) if not $:.include?(dir)
+$:.unshift("#{dir}/../lib") if not $:.include?("#{dir}/../lib")
+$:.unshift("#{dir}/../ext") if not $:.include?("#{dir}/../ext")
+
+require 'nodewrap'
 require 'pp'
 require 'nodepp'
 
-dir = File.dirname(__FILE__)
-require "#{dir}/node_samples"
+require "node_samples"
 
 $stdout.sync = true
 $stderr.sync = true
