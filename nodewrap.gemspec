@@ -46,7 +46,7 @@ hierarchies from one Ruby process and load them into another.
   ]
   s.files = patterns.collect { |p| Dir.glob(p) }.flatten
 
-  s.test_files = Dir.glob('test/*.rb')
+  s.test_files = Dir.glob('test/test_*.rb')
 
   s.extensions = 'ext/extconf.rb'
 
