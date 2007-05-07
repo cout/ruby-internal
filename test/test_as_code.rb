@@ -35,7 +35,6 @@ class TC_As_Code < Test::Unit::TestCase
       if exc_orig and exc_new then
         assert_equal(exc_orig.message, exc_new.message)
       end
-      # puts result_orig
       assert_equal(result_orig, result_new)
     }
     define_method "test_#{name}", p
