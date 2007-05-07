@@ -11,6 +11,15 @@ require "#{dir}/node_samples"
 $stdout.sync = true
 $stderr.sync = true
 
+# Instance methods defined in Class get returned by
+# rb_class_instance_methods, though they are not in the class's method
+# table.  Having this here ensures that we don't accidentally try to
+# dump methods that aren't in the class we are trying to dump.
+class Class
+  def xyzzy
+  end
+end
+
 class TC_Nodewrap < Test::Unit::TestCase
   module Foo
     def foo(n=1)

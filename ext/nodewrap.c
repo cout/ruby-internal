@@ -1030,53 +1030,19 @@ static VALUE module_instance_allocate(VALUE klass)
 }
 #endif
 
-static VALUE generate_method_hash(VALUE module, VALUE method_list)
+static int add_to_method_hash(ID id, NODE * body, VALUE methods)
 {
-  VALUE methods = rb_hash_new();
-  size_t j;
-  ID id;
-  union {
-    NODE * node;
-    st_data_t * data;
-  } body;
-  char const * s;
-  VALUE v;
+  VALUE v = wrap_node(body);
+  rb_hash_aset(methods, ID2SYM(id), v);
 
-  for(j = 0; j < RARRAY_LEN(method_list); ++j)
-  {
-    s = STR2CSTR(RARRAY_PTR(method_list)[j]);
-    id = rb_intern(s);
-    if(   id == rb_intern("new")
-       || id == rb_intern("allocate")
-       || id == rb_intern("superclass"))
-    {
-      /* Don't dump any of these methods, since they are probably
-       * written in C and aren't really members of the class.  I don't
-       * know why I get these methods when I call
-       * rb_class_instance_methods on a singleton class, but I do.
-       */
-      continue;
-    }
-    if(!st_lookup(RCLASS(module)->m_tbl, id, body.data))
-    {
-      rb_raise(
-          rb_eArgError,
-          "module has method %s but I couldn't find it!",
-          s);
-    }
-    v = wrap_node(body.node);
-    rb_hash_aset(methods, ID2SYM(id), v);
-  }
-
-  return methods;
+  return ST_CONTINUE;
 }
 
 static VALUE instance_method_hash(VALUE module)
 {
-  VALUE args[] = { Qfalse };
-  VALUE instance_method_list =
-    rb_class_instance_methods(1, args, module);
-  return generate_method_hash(module, instance_method_list);
+  VALUE methods = rb_hash_new();
+  st_foreach(RCLASS(module)->m_tbl, add_to_method_hash, (st_data_t)methods);
+  return methods;
 }
 
 static VALUE included_modules_list(VALUE module)
