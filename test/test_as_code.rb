@@ -35,6 +35,7 @@ class TC_As_Code < Test::Unit::TestCase
       if exc_orig and exc_new then
         assert_equal(exc_orig.message, exc_new.message)
       end
+      # puts result_orig
       assert_equal(result_orig, result_new)
     }
     define_method "test_#{name}", p
@@ -212,7 +213,7 @@ end
 
 if __FILE__ == $0 then
   if Test::Unit.const_defined?(:AutoRunner) then
-    exit Test::Unit::AutoRunner.run(__FILE__)
+    exit Test::Unit::AutoRunner.run
   else
     if ARGV.empty? then
       suite = TC_As_Code.suite

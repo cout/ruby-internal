@@ -304,6 +304,6 @@ class TC_Nodewrap < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run(__FILE__)
+  exit Test::Unit::AutoRunner.run
 end
 

@@ -176,7 +176,7 @@ end
 
 if __FILE__ == $0 then
   if Test::Unit.const_defined?(:AutoRunner) then
-    exit Test::Unit::AutoRunner.run(__FILE__)
+    exit Test::Unit::AutoRunner.run
   else
     if ARGV.empty? then
       suite = TC_As_Expression.suite
