@@ -1041,7 +1041,15 @@ static int add_to_method_hash(ID id, NODE * body, VALUE methods)
 static VALUE instance_method_hash(VALUE module)
 {
   VALUE methods = rb_hash_new();
-  st_foreach(RCLASS(module)->m_tbl, add_to_method_hash, (st_data_t)methods);
+  st_foreach(
+      RCLASS(module)->m_tbl,
+      add_to_method_hash,
+#ifdef ST_DATA_T_DEFINED
+      (st_data_t)methods
+#else
+      methods
+#endif
+      );
   return methods;
 }
 
@@ -1349,7 +1357,7 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
  *
  * Dumps VM::InstuctionSequence to a string (only available on YARV).
  */
-VALUE iseq_marshal_dump(VALUE self, VALUE limit)
+static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
 {
   if(ruby_safe_level >= 4)
   {
@@ -1358,6 +1366,7 @@ VALUE iseq_marshal_dump(VALUE self, VALUE limit)
   }
 
   VALUE ary = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
+
   return marshal_dump(ary, limit);
 }
 
@@ -1367,7 +1376,7 @@ VALUE iseq_marshal_dump(VALUE self, VALUE limit)
  *
  * Load a VM::InstuctionSequence from a string (only available on YARV).
  */
-VALUE iseq_marshal_load(VALUE klass, VALUE str)
+static VALUE iseq_marshal_load(VALUE klass, VALUE str)
 {
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
@@ -1458,7 +1467,7 @@ static void ruby_eval_tree_setter()
 }
 
 /* ---------------------------------------------------------------------
- * Methods for dumping class tree
+ * Methods for printing class tree
  * ---------------------------------------------------------------------
  */
 
