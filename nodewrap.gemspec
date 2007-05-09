@@ -42,7 +42,6 @@ hierarchies from one Ruby process and load them into another.
     'README',
     'TODO',
     'metaconfig',
-    'ruby.supp',
   ]
   s.files = patterns.collect { |p| Dir.glob(p) }.flatten
 
