@@ -17,15 +17,10 @@ File.open(File.join(dir, 'version.h')) do |version_h|
   end
 end
 
-require "#{dir}/rbconfig"
-$".push('rbconfig.rb')
-c = Config::CONFIG
-ruby_version = [c['MAJOR'], c['MINOR'], c['TEENY']].join('.')
-
 RUBY_SOURCE_DIR = dir
 $".push('ruby_source_dir.rb')
 
-output_dir = "cached/ruby-#{ruby_version}"
+output_dir = "cached/ruby-#{RUBY_VERSION}"
 Dir.mkdir("cached") rescue Errno::EEXIST
 Dir.mkdir(output_dir) rescue Errno::EEXIST
 
@@ -38,7 +33,7 @@ end
 File.open(File.join(output_dir, 'README'), 'w') do |readme|
   readme.puts <<END
 The files in this directory have been generated from the ruby source
-code, version #{ruby_version}, which are licensed under the Ruby
+code, version #{RUBY_VERSION}, which are licensed under the Ruby
 license.  For more information, please see the file COPYING.
 END
 end

@@ -1,7 +1,6 @@
 #include "classpath.h"
 
 #ruby <<END
-require 'rbconfig'
 require 'ruby_source_dir'
 
 marshal_c_location = "#{RUBY_SOURCE_DIR}/marshal.c"

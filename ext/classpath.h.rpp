@@ -4,7 +4,6 @@
 #include "ruby.h"
 
 #ruby <<END
-require 'rbconfig'
 require 'ruby_source_dir'
 
 defn = nil

@@ -1,4 +1,3 @@
-require 'rbconfig'
 require 'ruby_source_dir'
 
 NODE_H_LOCATION = "#{RUBY_SOURCE_DIR}/node.h"

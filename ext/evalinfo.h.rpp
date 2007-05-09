@@ -10,7 +10,6 @@
 #endif
 
 #ruby <<END
-  require 'rbconfig'
   require 'ruby_source_dir'
   proc_c_location = "#{RUBY_SOURCE_DIR}/proc.c"
   vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"

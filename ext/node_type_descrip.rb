@@ -1,4 +1,3 @@
-require 'rbconfig'
 require 'ruby_version_code'
 require 'ruby_source_dir'
 
