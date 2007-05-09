@@ -26,9 +26,6 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 
-p cmdline_ruby_source_path
-p configured_ruby_source_dir
-
 # (nil and not configured => cached
 # '' => cached
 # not configured => cached
