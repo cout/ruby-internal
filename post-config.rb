@@ -3,7 +3,7 @@ ruby_source_path = @config['ruby-source-path']
 if ruby_source_path.nil? then
 
   cached_dir = "ext/cached/ruby-#{RUBY_VERSION}"
-  if File.exists?(cached_dir) then
+  if File.exist?(cached_dir) then
     puts "Ruby source path not specified; using generated files from #{cached_dir}"
   else
     $stderr.puts "ERROR: Source code for the ruby interpreter could not be found (perhaps you forgot --ruby-source-path?)"
