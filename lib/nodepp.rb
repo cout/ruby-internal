@@ -28,6 +28,17 @@ class Node
       value = self[member]
       if Node === value then
         value.tree(s, prefix + (last ? '  ' : '| '))
+      elsif Object.const_defined?(:VM) and
+            VM.const_defined?(:InstructionSequence) and
+            VM::InstructionSequence === value then
+        s << "<ISeq:#{value.self.name}@#{value.self.filename}>\n"
+        d = value.disasm
+        lines = d.split("\n")
+        lines.each_with_index do |line, idx|
+          next if idx == 0
+          last_line = (idx == lines.size-1)
+          s << "#{prefix}#{last ? '  ' : '| '}#{(last_line ? '+-' : '|-')}#{line}\n"
+        end
       elsif member == 'noex' then
         s << Noex.stringify(value) + "\n"
       else

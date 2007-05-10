@@ -1351,6 +1351,51 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 
 #ifdef RUBY_HAS_YARV
 
+/* From iseq.c */
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
+}   
+
+/* call-seq:
+ *   iseq.self => VM::InstructionSequence
+ *
+ * Returns the self member of the instruction sequence.
+ */
+static VALUE iseq_self(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return iseqdat->self;
+}
+
+/* call-seq:
+ *   iseq.name => String
+ *
+ * Returns the name of the instruction sequence.
+ */
+static VALUE iseq_name(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return iseqdat->name;
+}
+
+/* call-seq:
+ *   iseq.filename => String
+ *
+ * Returns the filename of the instruction sequence.
+ */
+static VALUE iseq_filename(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return iseqdat->filename;
+}
+
 /*
  * call-seq:
  *   iseq.dump(limit) => String
@@ -1709,6 +1754,11 @@ void Init_nodewrap(void)
   rb_define_method(rb_mKernel, "singleton_class", singleton_class, 0);
 
 #ifdef RUBY_HAS_YARV
+  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject) */
+  /* For rdoc: rb_cISeq = rb_define_class_under(rb_cVM, "InstructionSequence", rb_cObject) */
+  rb_define_method(rb_cISeq, "self", iseq_self, 0);
+  rb_define_method(rb_cISeq, "name", iseq_name, 0);
+  rb_define_method(rb_cISeq, "filename", iseq_filename, 0);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
 #endif
