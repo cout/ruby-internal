@@ -444,10 +444,9 @@ static VALUE add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
   iseqdat->klass = klass;
   iseqdat->defined_method_id = SYM2ID(id);
   n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
-  goto add_node;
-#endif
 
 add_node:
+#endif
   /* TODO: if noex is NOEX_MODFUNC, add this method as a module function
    * (that is, both as an instance and singleton method)
    */
