@@ -41,7 +41,8 @@ end
 
 if __FILE__ == $0 then
   require 'timeout'
-  result = timeout(600) { run_tests() }
+  result = nil
+  timeout(600) { result = run_tests() }
   exit(result.error_count + result.failure_count)
 end
 
