@@ -35,10 +35,12 @@ class Node
         d = value.disasm
         lines = d.split("\n")
         lines.each_with_index do |line, idx|
-          next if idx == 0
+          if line =~ /^== disasm: (.*?)=/ then line = $1; end
+          next if line =~ /^\|-----/
           last_line = (idx == lines.size-1)
           s << "#{prefix}#{last ? '  ' : '| '}#{(last_line ? '+-' : '|-')}#{line}\n"
         end
+        # p value.local_table
       elsif member == 'noex' then
         s << Noex.stringify(value) + "\n"
       else
