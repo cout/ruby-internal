@@ -40,7 +40,8 @@ def run_tests
 end
 
 if __FILE__ == $0 then
-  result = run_tests()
+  require 'timeout'
+  result = timeout(600) { run_tests() }
   exit(result.error_count + result.failure_count)
 end
 
