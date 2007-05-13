@@ -49,6 +49,11 @@ typedef void st_data_t;
 
 static VALUE wrapped_nodes = Qnil;
 
+/* ---------------------------------------------------------------------
+ * Node helper functions
+ * ---------------------------------------------------------------------
+ */
+
 static void wrapped_nodes_end_proc(VALUE data)
 {
   wrapped_nodes = Qnil;
@@ -134,6 +139,32 @@ NODE * unwrap_node(VALUE r)
     return n;
   }
 }
+
+/* ---------------------------------------------------------------------
+ * Instruction sequence helper functions
+ * ---------------------------------------------------------------------
+ */
+
+#ifdef RUBY_HAS_YARV
+/* From iseq.c */
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  if(!rb_obj_is_kind_of(val, rb_cISeq))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected VM::InstructionSequence, but got %s",
+        rb_class2name(CLASS_OF(val)));
+  }
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
+}
+#endif
 
 /* ---------------------------------------------------------------------
  * Marshalling
@@ -356,14 +387,39 @@ static VALUE node_type_to_i(VALUE node_type)
  * ---------------------------------------------------------------------
  */
 
-static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
+/*
+ * call-seq:
+ *   class.add_method(id, node or iseq, noex) #=> nil
+ *
+ * Adds the method as an instance method to the given class.
+ *
+ * To add a singleton method to a class, add the method to its singleton
+ * class.
+ */
+static VALUE add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
 {
   NODE * n = 0;
+
   if(ruby_safe_level >= 2)
   {
     /* adding a method with the wrong node type can cause a crash */
     rb_raise(rb_eSecurityError, "Insecure: can't add method");
   }
+
+#ifdef RUBY_HAS_YARV
+  if(rb_obj_is_kind_of(node, rb_cISeq))
+  {
+    rb_iseq_t *iseqdat = iseq_check(node);
+    /* TODO: any restrictions on what kinds of iseqs we can add here?
+     */
+    iseqdat->cref_stack = NEW_BLOCK(klass); /* TODO */
+    iseqdat->klass = klass;
+    iseqdat->defined_method_id = SYM2ID(id);
+    n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
+    goto add_node;
+  }
+#endif
+
   if(!rb_obj_is_kind_of(node, rb_cNode))
   {
     rb_raise(
@@ -371,8 +427,31 @@ static VALUE add_method(VALUE klass, VALUE method, VALUE node, VALUE noex)
         "Expected Node for 2nd parameter, got %s",
         rb_class2name(CLASS_OF(n)));
   }
+
   Data_Get_Struct(node, NODE, n);
-  rb_add_method(klass, SYM2ID(method), n, NUM2INT(noex));
+
+#ifdef RUBY_HAS_YARV
+  if(nd_type(n) != NODE_METHOD)
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected METHOD node, got %s",
+        rb_class2name(CLASS_OF(n)));
+  }
+
+  rb_iseq_t *iseqdat = iseq_check((VALUE)n->nd_body);
+  iseqdat->cref_stack = NEW_BLOCK(klass); /* TODO */
+  iseqdat->klass = klass;
+  iseqdat->defined_method_id = SYM2ID(id);
+  n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
+  goto add_node;
+#endif
+
+add_node:
+  /* TODO: if noex is NOEX_MODFUNC, add this method as a module function
+   * (that is, both as an instance and singleton method)
+   */
+  rb_add_method(klass, SYM2ID(id), n, NUM2INT(noex));
   return Qnil;
 }
 
@@ -1351,18 +1430,6 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 
 #ifdef RUBY_HAS_YARV
 
-/* From iseq.c */
-static rb_iseq_t *
-iseq_check(VALUE val)
-{
-  rb_iseq_t *iseq;
-  GetISeqPtr(val, iseq);
-  if (!iseq->name) {
-    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
-  }
-  return iseq;
-}   
-
 /* call-seq:
  *   iseq.self => VM::InstructionSequence
  *
@@ -1396,6 +1463,26 @@ static VALUE iseq_filename(VALUE self)
   return iseqdat->filename;
 }
 
+/* call-seq:
+ *   iseq.local_table => String
+ *
+ * Returns the sequence's local table.
+ */
+static VALUE iseq_local_table(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  VALUE ary = rb_ary_new();
+  int j;
+
+  for(j = 0; j < iseqdat->local_table_size; ++j)
+  {
+    printf("%x\n", iseqdat->local_table[j]);
+    rb_ary_push(ary, ID2SYM(iseqdat->local_table[j]));
+  }
+
+  return ary;
+}
+
 /*
  * call-seq:
  *   iseq.dump(limit) => String
@@ -1404,15 +1491,17 @@ static VALUE iseq_filename(VALUE self)
  */
 static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
 {
+  VALUE arr;
+
   if(ruby_safe_level >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump iseq");
   }
 
-  VALUE ary = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
+  arr = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
 
-  return marshal_dump(ary, limit);
+  return marshal_dump(arr, limit);
 }
 
 /*
@@ -1423,6 +1512,8 @@ static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
  */
 static VALUE iseq_marshal_load(VALUE klass, VALUE str)
 {
+  VALUE arr;
+
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
   {
@@ -1430,7 +1521,7 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
     rb_raise(rb_eSecurityError, "Insecure: can't load iseq");
   }
 
-  VALUE arr = marshal_load(str);
+  arr = marshal_load(str);
   return iseq_load(Qnil, arr, 0, Qnil);
 }
 
@@ -1759,6 +1850,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
   rb_define_method(rb_cISeq, "filename", iseq_filename, 0);
+  rb_define_method(rb_cISeq, "local_table", iseq_local_table, 0);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
 #endif
