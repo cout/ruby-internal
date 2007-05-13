@@ -2,7 +2,6 @@ require 'ruby_version_code'
 require 'ruby_source_dir'
 
 NODE_TYPE_DESCRIPS = [
-  [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'CNT'   ], 
   [ 'BLOCK'       , 'HEAD'  , 'NEXT'  , 'NONE'  ], 
   [ 'POSTEXE'     , 'NONE'  , 'NONE'  , 'NONE'  ], 
   [ 'BEGIN'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
@@ -82,6 +81,20 @@ NODE_TYPE_DESCRIPS = [
   [ 'DXSTR'       , 'LIT'   , 'NEXT'  , 'NONE'  ], 
   [ 'XSTR'        , 'LIT'   , 'NONE'  , 'NONE'  ], 
   [ 'ALLOCA'      , 'LIT'   , 'VALUE' , 'CNT'   ], 
+  [ 'LIT'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
+  [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
+  [ 'DEFN'        , 'DEFN'  , 'MID'   , 'NOEX'  ], 
+  [ 'DEFS'        , 'DEFN'  , 'RECV'  , 'MID'   ], 
+  [ 'UNDEF'       , 'MID'   , 'NONE'  , 'NONE'  ], 
+  [ 'ALIAS'       , '1ST'   , '2ND'   , 'NONE'  ], 
+  [ 'VALIAS'      , '1ST'   , '2ND'   , 'NONE'  ], 
+  [ 'SCLASS'      , 'RECV'  , 'BODY'  , 'NONE'  ], 
+  [ 'DEFINED'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
+  [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
+  [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
+  [ 'CREF'        , 'CLSS'  , 'NEXT'  , 'BODY'  ], 
+  [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
+  [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
 ]
 if RUBY_VERSION_CODE < 180 then
 # (0, 180)
@@ -94,29 +107,20 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
 ]
 end
-# (0, oo)
-NODE_TYPE_DESCRIPS.concat [
-  [ 'LIT'         , 'LIT'   , 'NONE'  , 'NONE'  ], 
-  [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
-  [ 'DEFN'        , 'DEFN'  , 'MID'   , 'NOEX'  ], 
-  [ 'DEFS'        , 'DEFN'  , 'RECV'  , 'MID'   ], 
-  [ 'UNDEF'       , 'MID'   , 'NONE'  , 'NONE'  ], 
-  [ 'ALIAS'       , '1ST'   , '2ND'   , 'NONE'  ], 
-  [ 'VALIAS'      , '1ST'   , '2ND'   , 'NONE'  ], 
-  [ 'SCLASS'      , 'RECV'  , 'BODY'  , 'NONE'  ], 
-  [ 'DEFINED'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
-  [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
-  [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
-  [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
-  [ 'CREF'        , 'CLSS'  , 'NEXT'  , 'BODY'  ], 
-  [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
-  [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
-]
 if RUBY_VERSION_CODE < 190 then
 # (0, 190)
 NODE_TYPE_DESCRIPS.concat [
   [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
+  [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'NONE'  ], 
+  [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
+]
+else
+# [190, oo)
+NODE_TYPE_DESCRIPS.concat [
+# [ 'METHOD'      , 'BODY'  , 'CLSS'  , 'NOEX'  ], 
+  [ 'METHOD'      , 'BODY'  , 'NONE'  , 'NOEX'  ], 
+  [ 'FBODY'       , 'BODY'  , 'OID'   , 'CNT'  ], 
 ]
 end
 if RUBY_VERSION_CODE < 180 then
@@ -144,9 +148,13 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
 ]
 end
+
+
+# *** MUST BE LAST ***
 NODE_TYPE_DESCRIPS.concat [
   [ 'LAST'        , 'NONE'  , 'NONE'  , 'NONE'  ], 
 ]
+
 
 Node_Type_Descrip = Struct.new(:name, :node1, :node2, :node3)
 
