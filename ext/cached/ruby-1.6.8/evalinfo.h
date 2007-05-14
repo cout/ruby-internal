@@ -32,6 +32,25 @@ struct BLOCK {
     struct BLOCK *prev;
 };
 
+static void
+compile_error(at)
+    const char *at;
+{
+    VALUE str;
+
+    ruby_nerrs = 0;
+    str = rb_str_new2("compile error");
+    if (at) {
+	rb_str_cat2(str, " in ");
+	rb_str_cat2(str, at);
+    }
+    rb_str_cat(str, "\n", 1);
+    if (!NIL_P(ruby_errinfo)) {
+	rb_str_concat(str, ruby_errinfo);
+    }
+    rb_exc_raise(rb_exc_new3(rb_eSyntaxError, str));
+}
+
 struct METHOD {
     VALUE klass, oklass;
     VALUE recv;
