@@ -1048,6 +1048,67 @@ static VALUE node_to_hash(NODE * n)
 }
 
 /*
+ * call-seq:
+ *   Node.compile_string(str) => Node
+ *
+ * Compile a string into a node.
+ */
+static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
+{
+  NODE * node;
+  VALUE str = Qnil, file = Qnil, line = Qnil;
+
+  rb_scan_args(argc, argv, "12", &str, &file, &line);
+
+  file = NIL_P(file) ? rb_str_new2("(compiled)") : file;
+  line = NIL_P(line) ? INT2NUM(1) : line;
+
+  node = rb_compile_string(STR2CSTR(file), str, NUM2INT(line));
+
+  if(ruby_nerrs > 0)
+  {
+#ifdef RUBY_HAS_YARV
+    ruby_nerrs = 0;
+    rb_exc_raise(GET_THREAD()->errinfo);
+#else
+    compile_error(0);
+#endif
+  }
+
+  return wrap_node(node);
+}
+
+#ifdef RUBY_HAS_YARV
+/*
+ * call-seq:
+ *   node.bytecode_compile => VM::InstructionSequence
+ *
+ * Compile a parsed node tree into a bytecode sequence.
+ */
+static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
+{
+  NODE * node = unwrap_node(self);
+  VALUE opt = Qnil;
+  rb_compile_option_t option;
+
+  rb_scan_args(argc, argv, "01", &opt);
+  make_compile_option(&option, opt);
+
+  return rb_iseq_new_with_opt(
+      node,
+      rb_str_new2("<main>"),
+      rb_str_new2(node->nd_file),
+      Qfalse,
+      ISEQ_TYPE_TOP,
+      &option);
+}
+
+#endif
+
+/*
+ * call-seq:
+ *   node._dump => String
+ *
  * Dump a node.
  */
 static VALUE node_dump(VALUE self, VALUE limit)
@@ -1071,6 +1132,9 @@ static VALUE node_dump(VALUE self, VALUE limit)
 }
 
 /*
+ * call-seq:
+ *   Node._load(str) => Node
+ *
  * Load a dumped node.
  */
 static VALUE node_load(VALUE klass, VALUE str)
@@ -1915,6 +1979,10 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "members", node_members, 0);
   rb_define_method(rb_cNode, "eval", node_eval, 1);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
+  rb_define_singleton_method(rb_cNode, "compile_string", node_compile_string, -1);
+#ifdef RUBY_HAS_YARV
+  rb_define_method(rb_cNode, "bytecode_compile", node_bytecode_compile, -1);
+#endif
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
 

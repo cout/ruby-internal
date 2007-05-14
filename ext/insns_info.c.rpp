@@ -4,6 +4,7 @@
   require 'ruby_source_dir'
   insns_location = "#{RUBY_SOURCE_DIR}/insns.inc"
   insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"
+  iseq_c_location = "#{RUBY_SOURCE_DIR}/iseq.c"
 
   INSTRUCTION_NAMES = []
   record_instruction_names = false
@@ -22,6 +23,31 @@
         end
         if line =~ /static.*insn_name_info.*=/ then
           record_instruction_names = true
+        end
+      end
+    end
+  end
+
+  write = false
+
+  [ iseq_c_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |input|
+      while (line = input.gets) != nil do
+        line.chomp!
+        case line
+        when /^make_compile_option\(/
+          puts 'void'
+          write = true
+        when /^static.*COMPILE_OPTION_DEFAULT.*=/
+          write = true
+        when /^static.*COMPILE_OPTION_FALSE;/
+          puts line
+        end
+        puts line if write
+        if line =~ /^\}/ then
+          write = false
         end
       end
     end
@@ -66,7 +92,7 @@ INSTRUCTION_NAMES.each_with_index do |name, index|
  */
 static VALUE insn_#{name}_length(VALUE self)
 {
-  return NUM2LONG(insn_len(#{index}));
+  return LONG2NUM(insn_len(#{index}));
 }
 
 /*

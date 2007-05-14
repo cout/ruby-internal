@@ -9,6 +9,7 @@
   require 'ruby_source_dir'
   insns_location = "#{RUBY_SOURCE_DIR}/insns.inc"
   insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"
+  iseq_c_location = "#{RUBY_SOURCE_DIR}/iseq.c"
 
   [ insns_location, insns_info_location ].each do |file|
     next if not File.exist?(file)
@@ -16,6 +17,20 @@
     File.open(file) do |input|
       while (line = input.gets) != nil do
         puts line
+      end
+    end
+  end
+
+  [ iseq_c_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |input|
+      while (line = input.gets) != nil do
+        line.chomp!
+        if line =~ /^make_compile_option/ then
+          puts 'void'
+          puts "#{line};"
+        end
       end
     end
   end

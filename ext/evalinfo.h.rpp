@@ -26,6 +26,10 @@
         when /^struct (METHOD|BLOCK)/
           write = true
           stopwrite = false
+        when /^compile_error/
+          puts 'static void'
+          write = true
+          stopwrite = false
         when /^\}/
           stopwrite = true if write
         end
