@@ -135,12 +135,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       puts <<-END
       if(n->nd_#{node_elem_name} == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for #{node_elem_name} (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_#{node_elem_name});
+      else
+      {
+        return ID2SYM(n->nd_#{node_elem_name});
+      }
       END
     when /\.(argc|state|cnt)$/
       puts <<-END
@@ -168,6 +168,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       END
     when /\.(cfunc)$/
       puts <<-END
+      /* rb_funcall(rb_cObject, rb_intern("pp"), wrap_node(n), 0); */
       rb_raise(rb_eArgError, "Cannot dump #{$1}");
       END
     end
@@ -260,7 +261,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       END
     when /\.id$/
       puts <<-END
-      n->nd_#{node_elem_name} = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_#{node_elem_name} = 0;
+      }
+      else
+      {
+        n->nd_#{node_elem_name} = SYM2ID(v);
+      }
       return;
       END
     when /\.(argc|state|cnt)$/
