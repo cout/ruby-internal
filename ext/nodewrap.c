@@ -1557,16 +1557,13 @@ static VALUE iseq_each(VALUE self)
 {
   rb_iseq_t *iseqdat = iseq_check(self);
   VALUE * seq;
-  VALUE args;
 
   for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->size; ++seq)
   {
     int insn = *seq;
     int op_type_idx;
     int len = insn_len(insn);
-
-    args = rb_ary_new();
-    rb_ary_push(args, INT2NUM(insn));
+    VALUE args = rb_ary_new();
 
     for(op_type_idx = 0; op_type_idx < len-1; ++op_type_idx)
     {
@@ -1592,6 +1589,26 @@ static VALUE iseq_each(VALUE self)
             instruction_class[insn]));
   }
 
+  return Qnil;
+}
+
+/* call-seq:
+ *   iseq.insn_line(n) => Integer
+ *
+ * Returns the line number of the nth instruction in the sequence.
+ */
+static VALUE iseq_insn_line(VALUE self, VALUE n)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  unsigned long pos = NUM2LONG(n);
+  unsigned long i, size = iseqdat->insn_info_size;
+  struct insn_info_struct *iiary = iseqdat->insn_info_tbl;
+
+  for (i = 0; i < size; i++) {
+      if (iiary[i].position == pos) {
+          return INT2NUM(iiary[i].line_no);
+      }
+  }
   return Qnil;
 }
 
@@ -1712,70 +1729,11 @@ VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE
 #ifdef RUBY_HAS_YARV
 
 
-static ID operand_type_name_of(int operand_type)
-{
-  char const * retval = "????";
-
-  switch(operand_type)
-  {
-    case TS_ISEQ: retval = "iseq"; break;
-    case TS_GENTRY: retval = "gentry"; break;
-    case TS_OFFSET: retval = "operand"; break;
-    case TS_DINDEX: retval = "dindex"; break;
-    case TS_VARIABLE: retval = "variable"; break;
-    case TS_CDHASH: retval = "cdhash"; break;
-    case TS_IC: retval = "ic"; break;
-    case TS_ID: retval = "id"; break;
-    case TS_VALUE: retval = "value"; break;
-    case TS_LINDEX: retval = "lindex"; break;
-    case TS_NUM: retval = "num"; break;
-  }
-
-  return rb_intern(retval);
-}
-
 static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
 {
-  VALUE n;
-  VALUE operands;
-  int insn;
-  VALUE operand_types;
-  char * s;
-
-  rb_scan_args(argc, argv, "1*", &n, &operands);
-  insn = NUM2INT(n);
-
-  if(insn < 0 || insn >= YARV_MAX_INSTRUCTION_SIZE)
-  {
-    rb_raise(rb_eArgError, "Instruction out of range: %d", insn);
-  }
-
-  operand_types = rb_ary_new();
-  for(s = insn_op_types(insn); *s != '\0'; ++s)
-  {
-    rb_ary_push(operand_types, ID2SYM(operand_type_name_of(*s)));
-  }
-
-  rb_ivar_set(self, rb_intern("@instruction"), n);
-  rb_ivar_set(self, rb_intern("@name"), ID2SYM(rb_intern(insn_name_info[insn])));
-  rb_ivar_set(self, rb_intern("@operand_types"), operand_types);
+  VALUE operands = rb_ary_new4(argc, argv);
   rb_ivar_set(self, rb_intern("@operands"), operands);
   return Qnil;
-}
-
-static VALUE instruction_to_i(VALUE self)
-{
-  return rb_ivar_get(self, rb_intern("@instruction"));
-}
-
-static VALUE instruction_name(VALUE self)
-{
-  return rb_ivar_get(self, rb_intern("@name"));
-}
-
-static VALUE instruction_operand_types(VALUE self)
-{
-  return rb_ivar_get(self, rb_intern("@operand_types"));
 }
 
 static VALUE instruction_operands(VALUE self)
@@ -2099,15 +2057,13 @@ void Init_nodewrap(void)
   rb_define_method(rb_cISeq, "arg_block", iseq_arg_block, 0);
   rb_define_method(rb_cISeq, "arg_opt_table", iseq_arg_opt_table, 0);
   rb_define_method(rb_cISeq, "each", iseq_each, 0);
+  rb_define_method(rb_cISeq, "insn_line", iseq_insn_line, 1);
   rb_include_module(rb_cISeq, rb_mEnumerable);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
 
   rb_cInstruction = rb_define_class_under(rb_cVM, "Instruction", rb_cObject);
   rb_define_method(rb_cInstruction, "initialize", instruction_initialize, -1);
-  rb_define_method(rb_cInstruction, "to_i", instruction_to_i, 0);
-  rb_define_method(rb_cInstruction, "name", instruction_name, 0);
-  rb_define_method(rb_cInstruction, "operand_types", instruction_operand_types, 0);
   rb_define_method(rb_cInstruction, "operands", instruction_operands, 0);
   rb_undef_method(rb_cInstruction, "new");
 

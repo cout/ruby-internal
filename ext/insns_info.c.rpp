@@ -1,0 +1,114 @@
+#include "insns_info.h"
+
+#ruby <<END
+  require 'ruby_source_dir'
+  insns_location = "#{RUBY_SOURCE_DIR}/insns.inc"
+  insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"
+
+  INSTRUCTION_NAMES = []
+  record_instruction_names = false
+
+  [ insns_location, insns_info_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |input|
+      while (line = input.gets) != nil do
+        line.chomp!
+        if line =~ /^\}/ then
+          record_instruction_names = false
+        end
+        if record_instruction_names then
+          INSTRUCTION_NAMES.push(line.chomp(',').gsub(/"/, '').lstrip.upcase)
+        end
+        if line =~ /static.*insn_name_info.*=/ then
+          record_instruction_names = true
+        end
+      end
+    end
+  end
+  nil
+END
+
+VALUE instruction_class[YARV_MAX_INSTRUCTION_SIZE];
+
+static ID operand_type_name_of(int operand_type)
+{
+  char const * retval = "????";
+
+  switch(operand_type)
+  {
+    case TS_ISEQ: retval = "iseq"; break;
+    case TS_GENTRY: retval = "gentry"; break;
+    case TS_OFFSET: retval = "operand"; break;
+    case TS_DINDEX: retval = "dindex"; break;
+    case TS_VARIABLE: retval = "variable"; break;
+    case TS_CDHASH: retval = "cdhash"; break;
+    case TS_IC: retval = "ic"; break;
+    case TS_ID: retval = "id"; break;
+    case TS_VALUE: retval = "value"; break;
+    case TS_LINDEX: retval = "lindex"; break;
+    case TS_NUM: retval = "num"; break;
+  }
+
+  return rb_intern(retval);
+}
+
+#ruby <<END
+INSTRUCTION_NAMES.each_with_index do |name, index|
+# 1 #<VM::Instruction::TRACE:0x402d991c @length=2, @operands=[1],
+#   @instruction=45, @operand_types=[:num], @name=:trace>
+  puts <<-END
+static VALUE insn_#{name}_length(VALUE self)
+{
+  return NUM2LONG(insn_len(#{index}));
+}
+
+static VALUE insn_#{name}_to_i(VALUE self)
+{
+  return NUM2LONG(#{index});
+}
+
+static VALUE insn_#{name}_operand_types(VALUE self)
+{
+  VALUE operand_types = rb_ary_new();
+  char * s;
+
+  for(s = insn_op_types(#{index}); *s != '\\0'; ++s)
+  {
+    rb_ary_push(operand_types, ID2SYM(operand_type_name_of(*s)));
+  }
+
+  return operand_types;
+}
+
+static VALUE insn_#{name}_name(VALUE self)
+{
+  return rb_intern("#{name}");
+}
+
+  END
+end
+nil
+END
+
+void define_instruction_subclasses(VALUE rb_cInstruction)
+{
+  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
+  /* For rdoc: rb_cInstruction = rb_define_class_under(rb_cVM, "Instruction", rb_cObject); */
+
+#ruby <<END
+  INSTRUCTION_NAMES.each_with_index do |name, index|
+    puts <<-END
+  {
+    VALUE rb_cInstruction_#{name} = instruction_class[#{index}] = rb_define_class_under(rb_cInstruction, "#{name}", rb_cInstruction);
+    rb_define_method(rb_cInstruction_#{name}, "length", insn_#{name}_length, 0);
+    rb_define_method(rb_cInstruction_#{name}, "to_i", insn_#{name}_to_i, 0);
+    rb_define_method(rb_cInstruction_#{name}, "operand_types", insn_#{name}_operand_types, 0);
+    rb_define_method(rb_cInstruction_#{name}, "name", insn_#{name}_name, 0);
+  }
+    END
+  end
+  nil
+END
+}
+
