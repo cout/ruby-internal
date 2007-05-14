@@ -83,12 +83,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_AID:
       if(n->nd_aid == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for aid (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_aid);
+      else
+      {
+        return ID2SYM(n->nd_aid);
+      }
     case NEN_ALEN:
       {
       return LONG2NUM((long)n->nd_alen);
@@ -132,6 +132,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       return LONG2NUM((long)n->nd_cflag);
       }
     case NEN_CFNC:
+      /* rb_funcall(rb_cObject, rb_intern("pp"), wrap_node(n), 0); */
       rb_raise(rb_eArgError, "Cannot dump cfunc");
     case NEN_CLSS:
       switch(TYPE(n->nd_clss))
@@ -357,30 +358,30 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_MID:
       if(n->nd_mid == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for mid (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_mid);
+      else
+      {
+        return ID2SYM(n->nd_mid);
+      }
     case NEN_MODL:
       if(n->nd_modl == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for modl (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_modl);
+      else
+      {
+        return ID2SYM(n->nd_modl);
+      }
     case NEN_NEW:
       if(n->nd_new == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for new (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_new);
+      else
+      {
+        return ID2SYM(n->nd_new);
+      }
     case NEN_NEXT:
       if(n->nd_next)
       {
@@ -402,12 +403,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_OLD:
       if(n->nd_old == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for old (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_old);
+      else
+      {
+        return ID2SYM(n->nd_old);
+      }
     case NEN_OPT:
       if(n->nd_opt)
       {
@@ -515,12 +516,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_TAG:
       if(n->nd_tag == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for tag (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_tag);
+      else
+      {
+        return ID2SYM(n->nd_tag);
+      }
     case NEN_TBL:
       {
       VALUE v = variable_names(n->nd_tbl);
@@ -585,12 +586,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_VID:
       if(n->nd_vid == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for vid (node type=%d)",
-            nd_type(n));
+        return Qnil;
       }
-      return ID2SYM(n->nd_vid);
+      else
+      {
+        return ID2SYM(n->nd_vid);
+      }
   }
   rb_raise(rb_eArgError, "Invalid Node_Elem_Name %d", nen);
 }
@@ -645,7 +646,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_AID:
     {
-      n->nd_aid = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_aid = 0;
+      }
+      else
+      {
+        n->nd_aid = SYM2ID(v);
+      }
       return;
       }
     case NEN_ALEN:
@@ -1054,17 +1062,38 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_MID:
     {
-      n->nd_mid = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_mid = 0;
+      }
+      else
+      {
+        n->nd_mid = SYM2ID(v);
+      }
       return;
       }
     case NEN_MODL:
     {
-      n->nd_modl = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_modl = 0;
+      }
+      else
+      {
+        n->nd_modl = SYM2ID(v);
+      }
       return;
       }
     case NEN_NEW:
     {
-      n->nd_new = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_new = 0;
+      }
+      else
+      {
+        n->nd_new = SYM2ID(v);
+      }
       return;
       }
     case NEN_NEXT:
@@ -1100,7 +1129,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_OLD:
     {
-      n->nd_old = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_old = 0;
+      }
+      else
+      {
+        n->nd_old = SYM2ID(v);
+      }
       return;
       }
     case NEN_OPT:
@@ -1275,7 +1311,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_TAG:
     {
-      n->nd_tag = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_tag = 0;
+      }
+      else
+      {
+        n->nd_tag = SYM2ID(v);
+      }
       return;
       }
     case NEN_TBL:
@@ -1391,7 +1434,14 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_VID:
     {
-      n->nd_vid = SYM2ID(v);
+      if(NIL_P(v))
+      {
+        n->nd_vid = 0;
+      }
+      else
+      {
+        n->nd_vid = SYM2ID(v);
+      }
       return;
       }
   }
@@ -2051,19 +2101,6 @@ void define_node_subclass_methods()
   VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node"));
   VALUE members;
 
-  {
-    VALUE rb_cMETHOD = rb_define_class_under(rb_cNode, "METHOD", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_METHOD] = rb_cMETHOD;
-    rb_iv_set(rb_cMETHOD, "__member__", members);
-    rb_define_singleton_method(rb_cMETHOD, "members", node_s_members, 0);
-    rb_define_method(rb_cMETHOD, "noex", node_noex, 0);
-    rb_ary_push(members, rb_str_new2("noex"));
-    rb_define_method(rb_cMETHOD, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-    rb_define_method(rb_cMETHOD, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
-  }
   {
     VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);
     members = rb_ary_new();
@@ -2903,15 +2940,6 @@ void define_node_subclass_methods()
   }
 #endif
   {
-    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
-    rb_iv_set(rb_cEVSTR, "__member__", members);
-    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
-    rb_define_method(rb_cEVSTR, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-  }
-  {
     VALUE rb_cLIT = rb_define_class_under(rb_cNode, "LIT", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_LIT] = rb_cLIT;
@@ -3033,19 +3061,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("argc"));
   }
   {
-    VALUE rb_cFBODY = rb_define_class_under(rb_cNode, "FBODY", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_FBODY] = rb_cFBODY;
-    rb_iv_set(rb_cFBODY, "__member__", members);
-    rb_define_singleton_method(rb_cFBODY, "members", node_s_members, 0);
-    rb_define_method(rb_cFBODY, "orig", node_orig, 0);
-    rb_ary_push(members, rb_str_new2("orig"));
-    rb_define_method(rb_cFBODY, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-    rb_define_method(rb_cFBODY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-  }
-  {
     VALUE rb_cCREF = rb_define_class_under(rb_cNode, "CREF", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_CREF] = rb_cCREF;
@@ -3079,6 +3094,15 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("tval"));
   }
   {
+    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
+    rb_iv_set(rb_cEVSTR, "__member__", members);
+    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
+    rb_define_method(rb_cEVSTR, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
+  {
     VALUE rb_cDMETHOD = rb_define_class_under(rb_cNode, "DMETHOD", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_DMETHOD] = rb_cDMETHOD;
@@ -3097,6 +3121,30 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("nth"));
     rb_define_method(rb_cNEWLINE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+  }
+  {
+    VALUE rb_cMETHOD = rb_define_class_under(rb_cNode, "METHOD", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_METHOD] = rb_cMETHOD;
+    rb_iv_set(rb_cMETHOD, "__member__", members);
+    rb_define_singleton_method(rb_cMETHOD, "members", node_s_members, 0);
+    rb_define_method(rb_cMETHOD, "noex", node_noex, 0);
+    rb_ary_push(members, rb_str_new2("noex"));
+    rb_define_method(rb_cMETHOD, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
+  {
+    VALUE rb_cFBODY = rb_define_class_under(rb_cNode, "FBODY", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_FBODY] = rb_cFBODY;
+    rb_iv_set(rb_cFBODY, "__member__", members);
+    rb_define_singleton_method(rb_cFBODY, "members", node_s_members, 0);
+    rb_define_method(rb_cFBODY, "orig", node_orig, 0);
+    rb_ary_push(members, rb_str_new2("orig"));
+    rb_define_method(rb_cFBODY, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
+    rb_define_method(rb_cFBODY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
   {
     VALUE rb_cCLASS = rb_define_class_under(rb_cNode, "CLASS", rb_cNode);

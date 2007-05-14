@@ -3,6 +3,7 @@
 #include "nodewrap.h"
 #include "node_type_descrip.h"
 #include "builtins.h"
+#include "insns_info.h"
 
 #include "ruby.h"
 #include "version.h"
@@ -16,18 +17,19 @@
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
-VALUE rb_cModulePlaceholder;
+static VALUE rb_cInstruction = Qnil;
+static VALUE rb_cModulePlaceholder = Qnil;
 #endif
 
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
-static VALUE rb_cUnboundProc;
-static VALUE rb_mMarshal;
+static VALUE rb_cUnboundProc = Qnil;
+static VALUE rb_mMarshal = Qnil;
 
 #if RUBY_VERSION_CODE < 185
-static VALUE rb_cMethod;
-static VALUE rb_cUnboundMethod;
+static VALUE rb_cMethod = Qnil;
+static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
 #if RUBY_VERSION_CODE >= 180
@@ -39,7 +41,7 @@ struct Class_Restorer
   int thread_critical;
 };
 
-static VALUE rb_cClass_Restorer;
+static VALUE rb_cClass_Restorer = Qnil;
 
 static void mark_class_restorer(struct Class_Restorer * class_restorer);
 #endif
@@ -1546,6 +1548,53 @@ static VALUE iseq_arg_opt_table(VALUE self)
   return ary;
 }
 
+/* call-seq:
+ *   iseq.each(&block) => nil
+ *
+ * Yields each instruction in the sequence.
+ */
+static VALUE iseq_each(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  VALUE * seq;
+  VALUE args;
+
+  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->size; ++seq)
+  {
+    int insn = *seq;
+    int op_type_idx;
+    int len = insn_len(insn);
+
+    args = rb_ary_new();
+    rb_ary_push(args, INT2NUM(insn));
+
+    for(op_type_idx = 0; op_type_idx < len-1; ++op_type_idx)
+    {
+      switch(insn_op_type(insn, op_type_idx))
+      {
+        case TS_VALUE:
+          rb_ary_push(args, *++seq);
+          break;
+
+        case TS_LINDEX:
+        case TS_DINDEX:
+        case TS_NUM:
+          rb_ary_push(args, INT2FIX(*++seq));
+          break;
+
+        /* TODO: many more op types... */
+      }
+    }
+
+    rb_yield(rb_class_new_instance(
+            RARRAY(args)->len,
+            RARRAY(args)->ptr,
+            instruction_class[insn]));
+  }
+
+  return Qnil;
+}
+
 /* The putobject instruction takes a VALUE as a parameter.  But if this
  * value is a class, we'll end up trying to dump the class!  That's
  * probably not what we want, so we use a placeholder instead.
@@ -1651,6 +1700,87 @@ VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE
 {
   rb_hash_aset(id_hash, orig_node_id, rb_obj_id(iseq));
   return iseq;
+}
+
+#endif
+
+/* ---------------------------------------------------------------------
+ * Methods for VM::Instruction
+ * ---------------------------------------------------------------------
+ */
+
+#ifdef RUBY_HAS_YARV
+
+
+static ID operand_type_name_of(int operand_type)
+{
+  char const * retval = "????";
+
+  switch(operand_type)
+  {
+    case TS_ISEQ: retval = "iseq"; break;
+    case TS_GENTRY: retval = "gentry"; break;
+    case TS_OFFSET: retval = "operand"; break;
+    case TS_DINDEX: retval = "dindex"; break;
+    case TS_VARIABLE: retval = "variable"; break;
+    case TS_CDHASH: retval = "cdhash"; break;
+    case TS_IC: retval = "ic"; break;
+    case TS_ID: retval = "id"; break;
+    case TS_VALUE: retval = "value"; break;
+    case TS_LINDEX: retval = "lindex"; break;
+    case TS_NUM: retval = "num"; break;
+  }
+
+  return rb_intern(retval);
+}
+
+static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
+{
+  VALUE n;
+  VALUE operands;
+  int insn;
+  VALUE operand_types;
+  char * s;
+
+  rb_scan_args(argc, argv, "1*", &n, &operands);
+  insn = NUM2INT(n);
+
+  if(insn < 0 || insn >= YARV_MAX_INSTRUCTION_SIZE)
+  {
+    rb_raise(rb_eArgError, "Instruction out of range: %d", insn);
+  }
+
+  operand_types = rb_ary_new();
+  for(s = insn_op_types(insn); *s != '\0'; ++s)
+  {
+    rb_ary_push(operand_types, ID2SYM(operand_type_name_of(*s)));
+  }
+
+  rb_ivar_set(self, rb_intern("@instruction"), n);
+  rb_ivar_set(self, rb_intern("@name"), ID2SYM(rb_intern(insn_name_info[insn])));
+  rb_ivar_set(self, rb_intern("@operand_types"), operand_types);
+  rb_ivar_set(self, rb_intern("@operands"), operands);
+  return Qnil;
+}
+
+static VALUE instruction_to_i(VALUE self)
+{
+  return rb_ivar_get(self, rb_intern("@instruction"));
+}
+
+static VALUE instruction_name(VALUE self)
+{
+  return rb_ivar_get(self, rb_intern("@name"));
+}
+
+static VALUE instruction_operand_types(VALUE self)
+{
+  return rb_ivar_get(self, rb_intern("@operand_types"));
+}
+
+static VALUE instruction_operands(VALUE self)
+{
+  return rb_ivar_get(self, rb_intern("@operands"));
 }
 
 #endif
@@ -1786,6 +1916,8 @@ VALUE singleton_class(VALUE self)
 
 void Init_nodewrap(void)
 {
+  VALUE rb_cBinding, rb_cModule, rb_mNoex;
+
   {
     int actual_ruby_version_code = 0;
     VALUE ruby_version_str = rb_const_get(rb_cObject, rb_intern("RUBY_VERSION"));
@@ -1810,8 +1942,6 @@ void Init_nodewrap(void)
           actual_ruby_version_code);
     }
   }
-
-  VALUE rb_cBinding, rb_cModule, rb_mNoex;
 
   rb_cNode = rb_define_class("Node", rb_cObject);
 
@@ -1957,7 +2087,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_mKernel, "singleton_class", singleton_class, 0);
 
 #ifdef RUBY_HAS_YARV
-  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject) */
+  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
   /* For rdoc: rb_cISeq = rb_define_class_under(rb_cVM, "InstructionSequence", rb_cObject) */
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
@@ -1968,8 +2098,20 @@ void Init_nodewrap(void)
   rb_define_method(rb_cISeq, "arg_rest", iseq_arg_rest, 0);
   rb_define_method(rb_cISeq, "arg_block", iseq_arg_block, 0);
   rb_define_method(rb_cISeq, "arg_opt_table", iseq_arg_opt_table, 0);
+  rb_define_method(rb_cISeq, "each", iseq_each, 0);
+  rb_include_module(rb_cISeq, rb_mEnumerable);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
+
+  rb_cInstruction = rb_define_class_under(rb_cVM, "Instruction", rb_cObject);
+  rb_define_method(rb_cInstruction, "initialize", instruction_initialize, -1);
+  rb_define_method(rb_cInstruction, "to_i", instruction_to_i, 0);
+  rb_define_method(rb_cInstruction, "name", instruction_name, 0);
+  rb_define_method(rb_cInstruction, "operand_types", instruction_operand_types, 0);
+  rb_define_method(rb_cInstruction, "operands", instruction_operands, 0);
+  rb_undef_method(rb_cInstruction, "new");
+
+  define_instruction_subclasses(rb_cInstruction);
 
   rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
 #endif
