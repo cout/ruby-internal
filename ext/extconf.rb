@@ -54,8 +54,9 @@ end
 
 end
 
+generated_headers = generated_files.select { |x| x =~ /\.h$/ }
 append_to_makefile << <<END
-$(OBJS): #{generated_files.join(' ')}
+$(OBJS): #{generated_headers.join(' ')}
 clean: clean_generated_files
 clean_generated_files:
 	@$(RM) #{generated_files.join(' ')}
