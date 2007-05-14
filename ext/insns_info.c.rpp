@@ -58,16 +58,34 @@ INSTRUCTION_NAMES.each_with_index do |name, index|
 # 1 #<VM::Instruction::TRACE:0x402d991c @length=2, @operands=[1],
 #   @instruction=45, @operand_types=[:num], @name=:trace>
   puts <<-END
+/*
+ * call-seq:
+ *   insn.length => Integer
+ *
+ * Returns the length of the instruction.
+ */
 static VALUE insn_#{name}_length(VALUE self)
 {
   return NUM2LONG(insn_len(#{index}));
 }
 
+/*
+ * call-seq:
+ *   insn.to_i => Integer
+ *
+ * Returns the numeric instruction number.
+ */
 static VALUE insn_#{name}_to_i(VALUE self)
 {
   return NUM2LONG(#{index});
 }
 
+/*
+ * call-seq:
+ *   insn.operand_types => Array of Symbol
+ *
+ * Returns an array containing the types of the operands.
+ */
 static VALUE insn_#{name}_operand_types(VALUE self)
 {
   VALUE operand_types = rb_ary_new();
@@ -81,6 +99,12 @@ static VALUE insn_#{name}_operand_types(VALUE self)
   return operand_types;
 }
 
+/*
+ * call-seq:
+ *   insn.name => Symbol
+ *
+ * Returns the name of the instruction.
+ */
 static VALUE insn_#{name}_name(VALUE self)
 {
   return rb_intern("#{name}");
