@@ -1475,8 +1475,72 @@ static VALUE iseq_local_table(VALUE self)
 
   for(j = 0; j < iseqdat->local_table_size; ++j)
   {
-    printf("%x\n", iseqdat->local_table[j]);
     rb_ary_push(ary, ID2SYM(iseqdat->local_table[j]));
+  }
+
+  return ary;
+}
+
+/* call-seq:
+ *   iseq.argc => String
+ *
+ * Returns the number of non-optional arguments.
+ */
+static VALUE iseq_argc(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return INT2NUM(iseqdat->argc);
+}
+
+/* call-seq:
+ *   iseq.arg_simple => true or false
+ *
+ * Returns true if this sequence takes only simple (non-rest, non-opt,
+ * non-block) args.
+ */
+static VALUE iseq_arg_simple(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return iseqdat->arg_simple ? Qtrue : Qfalse;
+}
+
+/* call-seq:
+ *   iseq.arg_rest => true or false
+ *
+ * Returns the index of the rest (*x) arg.
+ */
+static VALUE iseq_arg_rest(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return INT2NUM(iseqdat->arg_rest);
+}
+
+/* call-seq:
+ *   iseq.arg_block => true or false
+ *
+ * Returns the index of the block (&x) arg.
+ */
+static VALUE iseq_arg_block(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  return INT2NUM(iseqdat->arg_block);
+}
+
+/* call-seq:
+ *   iseq.arg_opt_table => true or false
+ *
+ * Returns optional argument table, which contains instruction sequences
+ * for each of the optional arguments.
+ */
+static VALUE iseq_arg_opt_table(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  VALUE ary = rb_ary_new();
+  int j;
+
+  for(j = 0; j < iseqdat->arg_opts; ++j)
+  {
+    rb_ary_push(ary, iseqdat->arg_opt_tbl[j]);
   }
 
   return ary;
@@ -1899,6 +1963,11 @@ void Init_nodewrap(void)
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
   rb_define_method(rb_cISeq, "filename", iseq_filename, 0);
   rb_define_method(rb_cISeq, "local_table", iseq_local_table, 0);
+  rb_define_method(rb_cISeq, "argc", iseq_argc, 0);
+  rb_define_method(rb_cISeq, "arg_simple", iseq_arg_simple, 0);
+  rb_define_method(rb_cISeq, "arg_rest", iseq_arg_rest, 0);
+  rb_define_method(rb_cISeq, "arg_block", iseq_arg_block, 0);
+  rb_define_method(rb_cISeq, "arg_opt_table", iseq_arg_opt_table, 0);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
 
