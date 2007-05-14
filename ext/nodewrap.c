@@ -16,6 +16,7 @@
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
+VALUE rb_cModulePlaceholder;
 #endif
 
 static VALUE rb_cNode = Qnil;
@@ -193,7 +194,7 @@ VALUE marshal_load(VALUE obj)
 static char const * lookup_module_str = 
   "proc { |name|\n"
   "  o = Object\n"
-  "  name.split('::').each do |subname|\n"
+  "  name.to_s.split('::').each do |subname|\n"
   "    if subname == '<Singleton>' then\n"
   "      o = o.singleton_class\n"
   "    else\n"
@@ -960,7 +961,7 @@ void dump_node_or_iseq_to_hash(VALUE n, VALUE node_hash)
 #ifdef RUBY_HAS_YARV
   if(TYPE(n) == T_DATA && CLASS_OF(n) == rb_cISeq)
   {
-    dump_iseq_to_hash(n, node_hash);
+    return dump_iseq_to_hash(n, node_hash);
   }
 #endif
 
@@ -1036,11 +1037,9 @@ VALUE load_node_or_iseq_from_hash(VALUE orig_node_id, VALUE node_hash, VALUE id_
 }
 
 
-static VALUE node_to_hash(VALUE self)
+static VALUE node_to_hash(NODE * n)
 {
-  NODE * n;
   VALUE node_hash;
-  Data_Get_Struct(self, NODE, n);
   node_hash = rb_hash_new();
   dump_node_to_hash(n, node_hash);
   return node_hash;
@@ -1060,12 +1059,13 @@ static VALUE node_dump(VALUE self, VALUE limit)
     rb_raise(rb_eSecurityError, "Insecure: can't dump node");
   }
 
-  node_hash = node_to_hash(self);
-  arr = rb_ary_new();
   Data_Get_Struct(self, NODE, n);
+  node_hash = node_to_hash(n);
+  arr = rb_ary_new();
   rb_ary_push(arr, node_id(n));
   rb_ary_push(arr, node_hash);
-  return marshal_dump(arr, limit);
+  VALUE s =  marshal_dump(arr, limit);
+  return s;
 }
 
 /*
@@ -1482,6 +1482,52 @@ static VALUE iseq_local_table(VALUE self)
   return ary;
 }
 
+/* The putobject instruction takes a VALUE as a parameter.  But if this
+ * value is a class, we'll end up trying to dump the class!  That's
+ * probably not what we want, so we use a placeholder instead.
+ */
+void convert_modules_to_placeholders(VALUE array)
+{
+  int j;
+
+  for(j = 0; j < RARRAY(array)->len; ++j)
+  {
+    VALUE v = RARRAY(array)->ptr[j];
+    if(TYPE(v) == T_ARRAY)
+    {
+      convert_modules_to_placeholders(v);
+    }
+    else if(TYPE(v) == T_MODULE || TYPE(v) == T_CLASS)
+    {
+      VALUE p = rb_class_new_instance(0, 0, rb_cModulePlaceholder);
+      VALUE sym = rb_mod_name(p);
+      rb_ivar_set(p, rb_intern("name"), sym);
+      RARRAY(array)->ptr[j] = p;
+    }
+  }
+}
+
+void convert_placeholders_to_modules(VALUE array)
+{
+  int j;
+
+  for(j = 0; j < RARRAY(array)->len; ++j)
+  {
+    VALUE v = RARRAY(array)->ptr[j];
+    if(TYPE(v) == T_ARRAY)
+    {
+      convert_placeholders_to_modules(v);
+    }
+    else if(CLASS_OF(v) == rb_cModulePlaceholder)
+    {
+      VALUE sym = rb_ivar_get(v, rb_intern("name"));
+      VALUE klass = 
+        rb_funcall(lookup_module_proc, rb_intern("call"), 1, sym);
+      RARRAY(array)->ptr[j] = klass;
+    }
+  }
+}
+
 /*
  * call-seq:
  *   iseq.dump(limit) => String
@@ -1499,6 +1545,7 @@ static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
   }
 
   arr = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
+  convert_modules_to_placeholders(arr);
 
   return marshal_dump(arr, limit);
 }
@@ -1521,6 +1568,8 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
   }
 
   arr = marshal_load(str);
+  convert_placeholders_to_modules(arr);
+
   return iseq_load(Qnil, arr, 0, Qnil);
 }
 
@@ -1852,6 +1901,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cISeq, "local_table", iseq_local_table, 0);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
+
+  rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
 #endif
 }
 
