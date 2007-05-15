@@ -5,29 +5,7 @@ module Nodewrap
 module ByteDecoder
 
 class Expression
-  def initialize(op, *args)
-    @op = op
-    @args = args
-  end
-
-  attr_reader :op
-  attr_reader :args
-
-  def to_s
-    case @op
-    when :+, :*, :-, :/
-      return "#{fmt(@args[0])} #{@op} #{fmt(@args[1])}"
-    when :send
-      has_receiver = @args[1]
-      receiver = @args[2]
-      receiver_str = has_receiver \
-        ? "#{receiver}." \
-        : nil
-      args = @args[3..-1].map { |x| x.to_s }
-      return "#{receiver_str}#{@args[0]}(#{args.join(', ')})"
-    when :self
-      return "self"
-    end
+  def initialize
   end
 
   def fmt(arg)
@@ -44,25 +22,62 @@ class Expression
     end
   end
 
-  def precedence
-    case @op
-    when :self
-      return 1
-    when :send
-      has_receiver = @args[1]
-      if has_receiver then
-        receiver = @args[2]
-        if receiver.respond_to?(:precedence) then
-          return receiver.precedence
+  class Infix < Expression
+    def initialize(op, lhs, rhs)
+      @op = op
+      @lhs = lhs
+      @rhs = rhs
+    end
+
+    def to_s
+      return "#{fmt(@lhs)} #{@op} #{fmt(@rhs)}"
+    end
+
+    def precedence
+      case @op
+      when :*, :/
+        return 2
+      when :+, :-
+        return 3
+      else
+        raise ArgumentError, "Unknown op: #{@op}"
+      end
+    end
+  end
+
+  class Send < Expression
+    def initialize(id, has_receiver, receiver, *args)
+      @id = id
+      @has_receiver = has_receiver
+      @receiver = receiver
+      @args = args
+    end
+
+    def to_s
+      receiver_str = @has_receiver \
+        ? "#{@receiver}." \
+        : nil
+      args = @args.map { |x| x.to_s }
+      return "#{receiver_str}#{@id}(#{args.join(', ')})"
+    end
+
+    def precedence
+      if @has_receiver then
+        if @receiver.respond_to?(:precedence) then
+          return @receiver.precedence
         end
       end
       return 1
-    when :*, :/
-      return 2
-    when :+, :-
-      return 3
-    else
-      raise "Unknown op: #{@op}"
+    end
+  end
+
+  class Self < Expression
+    def to_s
+      return "self"
+    end
+
+    def precedence
+      return 1
     end
   end
 end
@@ -85,7 +100,7 @@ class VM
       def push_expression(stack)
         rhs = stack.pop
         lhs = stack.pop
-        stack.push Expression.new(:+, lhs, rhs)
+        stack.push Expression::Infix.new(:+, lhs, rhs)
       end
     end
 
@@ -93,7 +108,7 @@ class VM
       def push_expression(stack)
         rhs = stack.pop
         lhs = stack.pop
-        stack.push Expression.new(:*, lhs, rhs)
+        stack.push Expression::Infix.new(:*, lhs, rhs)
       end
     end
 
@@ -123,13 +138,13 @@ class VM
         end
         has_receiver = @operands[3] != 8 # TODO
         receiver = stack.pop
-        stack.push Expression.new(:send, id, has_receiver, receiver, *args)
+        stack.push Expression::Send.new(id, has_receiver, receiver, *args)
       end
     end
 
     class PUTSELF
       def push_expression(stack)
-        stack.push Expression.new(:self)
+        stack.push Expression::Self.new
       end
     end
   end
