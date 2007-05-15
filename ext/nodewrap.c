@@ -517,7 +517,7 @@ static VALUE module_remove_features(VALUE module, VALUE uninclude)
     {
       RCLASS(prev)->super = RCLASS(mod)->super;
       rb_clear_cache();
-      return;
+      return module;
     }
 
     if(BUILTIN_TYPE(mod) == T_CLASS)
@@ -530,7 +530,7 @@ static VALUE module_remove_features(VALUE module, VALUE uninclude)
   }
 
   rb_raise(rb_eArgError, "Could not find included module");
-  return Qnil;
+  return module;
 }
 
 static VALUE module_unincluded(VALUE module, VALUE uninclude)
