@@ -1,4 +1,7 @@
 #include "insns_info.h"
+#include "ruby_version.h"
+
+#ifdef RUBY_HAS_YARV
 
 #ruby <<END
   require 'ruby_source_dir'
@@ -202,4 +205,6 @@ void define_instruction_subclasses(VALUE rb_cInstruction)
   nil
 END
 }
+
+#endif
 

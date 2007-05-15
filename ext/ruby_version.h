@@ -1,6 +1,7 @@
 #ifndef RUBY_VERSION_H
 #define RUBY_VERSION_H
 
+#include "ruby.h"
 #include "version.h"
 
 /* TODO: Not the best way to check this */

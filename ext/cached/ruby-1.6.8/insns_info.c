@@ -1,4 +1,7 @@
 #include "insns_info.h"
+#include "ruby_version.h"
+
+#ifdef RUBY_HAS_YARV
 
 
 VALUE instruction_class[YARV_MAX_INSTRUCTION_SIZE];
@@ -32,4 +35,6 @@ void define_instruction_subclasses(VALUE rb_cInstruction)
   /* For rdoc: rb_cInstruction = rb_define_class_under(rb_cVM, "Instruction", rb_cObject); */
 
 }
+
+#endif
 
