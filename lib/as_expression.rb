@@ -603,7 +603,7 @@ class Method
   # consistent with Proc.
   def as_expression
     sig = self.signature
-    if self.body.nd_type.name = 'METHOD' then
+    if self.body.respond_to?(:body) then
       # YARV
       body = self.body.body.as_expression
     else
