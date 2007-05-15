@@ -4,6 +4,7 @@
   require 'ruby_source_dir'
   insns_location = "#{RUBY_SOURCE_DIR}/insns.inc"
   insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"
+  insns_def_location = "#{RUBY_SOURCE_DIR}/insns.def"
   iseq_c_location = "#{RUBY_SOURCE_DIR}/iseq.c"
 
   INSTRUCTION_NAMES = []
@@ -19,7 +20,8 @@
           record_instruction_names = false
         end
         if record_instruction_names then
-          INSTRUCTION_NAMES.push(line.chomp(',').gsub(/"/, '').lstrip.upcase)
+          name = line.chomp(',').gsub(/"/, '').lstrip.upcase
+          INSTRUCTION_NAMES.push(name) if name != ''
         end
         if line =~ /static.*insn_name_info.*=/ then
           record_instruction_names = true
@@ -52,6 +54,28 @@
       end
     end
   end
+
+  INSTRUCTION_OPERAND_NAMES = {}
+
+  [ insns_def_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |input|
+      while (line = input.gets) != nil do
+        line.chomp!
+        case line
+        when /^DEFINE_INSN/
+          name = input.gets.chomp
+          operand_line = input.gets.chomp
+          operand_line.gsub!(/\((.*)\)/, '\1')
+          operands = operand_line.split(',')
+          operand_names = operands.map { |x| x.split[1] }
+          INSTRUCTION_OPERAND_NAMES[name] = operand_names
+        end
+      end
+    end
+  end
+
   nil
 END
 
@@ -81,6 +105,8 @@ static ID operand_type_name_of(int operand_type)
 
 #ruby <<END
 INSTRUCTION_NAMES.each_with_index do |name, index|
+  $operand_names = INSTRUCTION_OPERAND_NAMES[name.downcase]
+
 # 1 #<VM::Instruction::TRACE:0x402d991c @length=2, @operands=[1],
 #   @instruction=45, @operand_types=[:num], @name=:trace>
   puts <<-END
@@ -136,6 +162,20 @@ static VALUE insn_#{name}_name(VALUE self)
   return rb_intern("#{name}");
 }
 
+/*
+ * call-seq:
+ *   insn.name => Symbol
+ *
+ * Returns the name of the operands for this instruction.
+ */
+static VALUE insn_#{name}_operand_names(VALUE self)
+{
+  VALUE v[] = {
+    #{$operand_names.map { |x| "ID2SYM(rb_intern(\"#{x}\"))" }.join(', ')}
+  };
+  return rb_ary_new4(#{$operand_names.size}, v);
+}
+
   END
 end
 nil
@@ -154,6 +194,7 @@ void define_instruction_subclasses(VALUE rb_cInstruction)
     rb_define_method(rb_cInstruction_#{name}, "length", insn_#{name}_length, 0);
     rb_define_method(rb_cInstruction_#{name}, "to_i", insn_#{name}_to_i, 0);
     rb_define_method(rb_cInstruction_#{name}, "operand_types", insn_#{name}_operand_types, 0);
+    rb_define_method(rb_cInstruction_#{name}, "operand_names", insn_#{name}_operand_names, 0);
     rb_define_method(rb_cInstruction_#{name}, "name", insn_#{name}_name, 0);
   }
     END

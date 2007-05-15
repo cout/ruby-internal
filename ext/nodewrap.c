@@ -1643,7 +1643,44 @@ static VALUE iseq_each(VALUE self)
           rb_ary_push(args, INT2FIX(*++seq));
           break;
 
-        /* TODO: many more op types... */
+        case TS_ISEQ:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+          break;
+
+        case TS_GENTRY:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+          break;
+
+        case TS_OFFSET:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+
+        case TS_VARIABLE:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+          break;
+
+        case TS_CDHASH:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+          break;
+
+        case TS_IC:
+          ++seq;
+          rb_ary_push(args, Qnil);
+          /* TODO */
+          break;
+
+        case TS_ID:
+          rb_ary_push(args, ID2SYM(*++seq));
+          break;
       }
     }
 

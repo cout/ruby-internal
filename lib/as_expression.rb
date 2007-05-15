@@ -4,6 +4,23 @@ require 'procsig'
 require 'node_to_a'
 require 'rbconfig'
 
+if Object.const_defined?(:VM) and
+   VM.const_defined?(:InstructionSequence) then
+  require 'bytedecoder'
+
+  class VM
+    class InstructionSequence
+      def as_expression
+        stack = []
+        self.each do |i|
+          i.push_expression(stack)
+        end
+        return stack[-1].to_s
+      end
+    end
+  end
+end
+
 class Node
   public
 
