@@ -603,7 +603,13 @@ class Method
   # consistent with Proc.
   def as_expression
     sig = self.signature
-    body = self.body.as_expression
+    if self.body.nd_type.name = 'METHOD' then
+      # YARV
+      body = self.body.body.as_expression
+    else
+      # pre-YARV
+      body = self.body.as_expression
+    end
     return "def #{sig.name}(#{sig.param_list}); #{body}; end"
   end
 end
