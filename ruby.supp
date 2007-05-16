@@ -99,3 +99,27 @@
   Memcheck:Addr4
   fun:rb_yield_0
 }
+
+{
+  is_pointer_to_heap(Cond)
+  Memcheck:Cond
+  fun:is_pointer_to_heap
+}
+
+{
+  rb_special_const_p(Cond)
+  Memcheck:Cond
+  fun:rb_special_const_p
+}
+
+{
+  gc_sweep(Cond)
+  Memcheck:Cond
+  fun:gc_sweep
+}
+
+{
+  th_make_env_each(Cond)
+  Memcheck:Cond
+  fun:th_make_env_each
+}
