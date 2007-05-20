@@ -834,12 +834,23 @@ static VALUE proc_dump(VALUE self, VALUE limit)
 #endif
 }
 
+#ifdef RUBY_HAS_YARV
+
+static VALUE create_proc(VALUE klass, VALUE binding, rb_iseq_t * iseq)
+{
+  VALUE new_proc = rb_funcall(
+      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+  rb_proc_t * p;
+  GetProcPtr(new_proc, p);
+  p->block.iseq = iseq;
+  RBASIC(new_proc)->klass = klass;
+  return new_proc;
+}
+
+#else
+
 static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 {
-#ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
-#else
   /* Calling eval will do a security check */
   VALUE new_proc = rb_funcall(
       rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
@@ -849,8 +860,9 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
   b->var = var;
   RBASIC(new_proc)->klass = klass;
   return new_proc;
-#endif
 }
+
+#endif
 
 /*
  * call-seq:
@@ -891,8 +903,10 @@ static VALUE proc_load(VALUE klass, VALUE str)
 static VALUE proc_unbind(VALUE self)
 {
 #ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
+  VALUE u;
+  rb_proc_t * p, * np;
+  GetProcPtr(self, p);
+  return create_proc(rb_cUnboundProc, Qnil, p->block.iseq);
 #else
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
@@ -913,8 +927,10 @@ static VALUE proc_unbind(VALUE self)
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
 #ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
+  VALUE u;
+  rb_proc_t * p, * np;
+  GetProcPtr(self, p);
+  return create_proc(rb_cProc, binding, p->block.iseq);
 #else
   struct BLOCK * b;
   Data_Get_Struct(self, struct BLOCK, b);
