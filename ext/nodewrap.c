@@ -14,6 +14,7 @@
 #include <ctype.h>
 
 #ifdef RUBY_HAS_YARV
+#include "eval_intern.h"
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
@@ -390,6 +391,19 @@ static VALUE node_type_to_i(VALUE node_type)
  * ---------------------------------------------------------------------
  */
 
+#ifdef RUBY_HAS_YARV
+
+static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
+{
+  rb_thread_t * th = GET_THREAD();
+  rb_control_frame_t * cfp = th_get_ruby_level_cfp(th, th->cfp);
+  iseqdat->cref_stack = NEW_BLOCK(klass);
+  iseqdat->cref_stack->nd_visi = noex;
+  iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */
+}
+
+#endif
+
 /*
  * call-seq:
  *   class.add_method(id, node or iseq, noex) #=> nil
@@ -415,7 +429,7 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
     rb_iseq_t *iseqdat = iseq_check(node);
     /* TODO: any restrictions on what kinds of iseqs we can add here?
      */
-    iseqdat->cref_stack = NEW_BLOCK(klass); /* TODO */
+    set_cref_stack(iseqdat, klass, noex);
     iseqdat->klass = klass;
     iseqdat->defined_method_id = SYM2ID(id);
     n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
@@ -443,7 +457,7 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
   }
 
   rb_iseq_t *iseqdat = iseq_check((VALUE)n->nd_body);
-  iseqdat->cref_stack = NEW_BLOCK(klass); /* TODO */
+  set_cref_stack(iseqdat, klass, noex);
   iseqdat->klass = klass;
   iseqdat->defined_method_id = SYM2ID(id);
   n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
@@ -2169,7 +2183,7 @@ void Init_nodewrap(void)
   rb_global_variable(&lookup_module_proc);
 
 #if RUBY_VERSION_CODE >= 180
-  rb_cClass_Restorer = rb_class_new(rb_cObject);
+  rb_cClass_Restorer = rb_class_new_instance(0, 0, rb_cClass);
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
   rb_global_variable(&rb_cClass_Restorer);
   rb_define_method(rb_cModule, "_dump", module_dump, 1);

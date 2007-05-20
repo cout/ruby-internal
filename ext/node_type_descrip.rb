@@ -118,8 +118,7 @@ NODE_TYPE_DESCRIPS.concat [
 else
 # [190, oo)
 NODE_TYPE_DESCRIPS.concat [
-# [ 'METHOD'      , 'BODY'  , 'CLSS'  , 'NOEX'  ], 
-  [ 'METHOD'      , 'BODY'  , 'NONE'  , 'NOEX'  ], 
+  [ 'METHOD'      , 'BODY'  , 'CLSS'  , 'NOEX'  ], 
   [ 'FBODY'       , 'BODY'  , 'OID'   , 'CNT'  ], 
 ]
 end
