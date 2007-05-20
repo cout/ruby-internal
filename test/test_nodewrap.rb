@@ -62,7 +62,14 @@ class TC_Nodewrap < Test::Unit::TestCase
   def test_method_node
     m = method(:foo)
     n = m.body
-    assert_equal Node::SCOPE, n.class
+    if Object.const_defined?(:VM) and
+       VM.const_defined?(:InstructionSequence) then
+      # YARV
+      assert_equal Node::METHOD, n.class
+    else
+      # pre-YARV
+      assert_equal Node::SCOPE, n.class
+    end
   end
 
   def test_add_method
@@ -229,6 +236,9 @@ class TC_Nodewrap < Test::Unit::TestCase
 
       klass2 = Class.new(TestClassBase)
       klass2.class_eval do
+        # for testing cvar
+        # (can't be in base class due to change in 1.9 of class var lookup)
+        @@a = 42
         add_method(:foo, n2, Noex::PUBLIC)
       end
       obj1 = o
