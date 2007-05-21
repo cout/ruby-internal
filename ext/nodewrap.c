@@ -813,25 +813,34 @@ static VALUE proc_var(VALUE proc)
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
 {
-#ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
-#else
-  struct BLOCK * b;
-  VALUE body, var, arr;
-
   if(ruby_safe_level >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump proc");
   }
 
-  Data_Get_Struct(self, struct BLOCK, b);
-  body = wrap_node(b->body);
-  var = wrap_node(b->var);
-  arr = rb_assoc_new(body, var);
-  return marshal_dump(arr, limit);
+  {
+#ifdef RUBY_HAS_YARV
+    rb_proc_t * p;
+    VALUE iseq;
+    rb_iseq_t * iseqdat;
+    GetProcPtr(self, p);
+    iseq = p->block.iseq->self;
+    iseqdat = iseq_check(iseq);
+    iseqdat->type = ISEQ_TYPE_TOP; /* TODO: is this right? */
+    VALUE str = marshal_dump(iseq, limit);
+    return str;
+#else
+    struct BLOCK * b;
+    VALUE body, var, arr;
+
+    Data_Get_Struct(self, struct BLOCK, b);
+    body = wrap_node(b->body);
+    var = wrap_node(b->var);
+    arr = rb_assoc_new(body, var);
+    return marshal_dump(arr, limit);
 #endif
+  }
 }
 
 #ifdef RUBY_HAS_YARV
@@ -866,16 +875,16 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 
 /*
  * call-seq:
- *   Proc.load(str) => Proc
+ *   Proc.load(str) => UnboundProc
  *
  * Load a Proc from a String.  When it is loaded, it will be an
- * UnboundProc.
+ * UnboundProc, until it is bound to a Binding with UnboundProc#bind.
  */
 static VALUE proc_load(VALUE klass, VALUE str)
 {
 #ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
+  VALUE iseq = marshal_load(str);
+  return create_proc(rb_cUnboundProc, Qnil, iseq_check(iseq));
 #else
   VALUE arr = marshal_load(str);
   NODE * body, * var;
@@ -903,8 +912,7 @@ static VALUE proc_load(VALUE klass, VALUE str)
 static VALUE proc_unbind(VALUE self)
 {
 #ifdef RUBY_HAS_YARV
-  VALUE u;
-  rb_proc_t * p, * np;
+  rb_proc_t * p;
   GetProcPtr(self, p);
   return create_proc(rb_cUnboundProc, Qnil, p->block.iseq);
 #else
@@ -927,8 +935,7 @@ static VALUE proc_unbind(VALUE self)
 static VALUE unboundproc_bind(VALUE self, VALUE binding)
 {
 #ifdef RUBY_HAS_YARV
-  VALUE u;
-  rb_proc_t * p, * np;
+  rb_proc_t * p;
   GetProcPtr(self, p);
   return create_proc(rb_cProc, binding, p->block.iseq);
 #else
@@ -1912,7 +1919,8 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
   arr = marshal_load(str);
   convert_placeholders_to_modules(arr);
 
-  return iseq_load(Qnil, arr, 0, Qnil);
+  VALUE iseq = iseq_load(Qnil, arr, 0, Qnil);
+  return iseq;
 }
 
 void dump_iseq_to_hash(VALUE iseq, VALUE node_hash)
