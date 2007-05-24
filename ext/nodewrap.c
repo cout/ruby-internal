@@ -751,12 +751,16 @@ static VALUE method_load(VALUE klass, VALUE str)
  *   proc.body => Node
  *
  * Returns the Proc's body Node.
+ *
+ * On YARV, this will return the instruction sequence for the proc's
+ * block.
  */
-static VALUE proc_body(VALUE proc)
+static VALUE proc_body(VALUE self)
 {
 #ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
+  rb_proc_t * p;
+  GetProcPtr(self, p);
+  return p->block.iseq->self;
 #else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
@@ -764,30 +768,29 @@ static VALUE proc_body(VALUE proc)
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get proc body");
   }
-  Data_Get_Struct(proc, struct BLOCK, b);
+  Data_Get_Struct(self, struct BLOCK, b);
   return wrap_node(b->body);
 #endif
 }
 
+#ifndef RUBY_HAS_YARV
 /*
  * call-seq:
  *   proc.var => Node
  *
  * Returns the Proc's argument Node.
+ *
+ * This method is undefined on YARV.
  */
-static VALUE proc_var(VALUE proc)
+static VALUE proc_var(VALUE self)
 {
-#ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
-#else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get proc var");
   }
-  Data_Get_Struct(proc, struct BLOCK, b);
+  Data_Get_Struct(self, struct BLOCK, b);
   if(b->var == (NODE*)1)
   {
     /* no parameter || */
@@ -802,8 +805,8 @@ static VALUE proc_var(VALUE proc)
   {
     return wrap_node(b->var);
   }
-#endif
 }
+#endif
 
 /*
  * call-seq:
@@ -977,13 +980,18 @@ static VALUE unboundproc_binding(VALUE self)
  * call-seq:
  *   binding.body => Binding
  *
- * Given a Binding, returns the Node for that Binding.
+ * Given a Binding, returns the Node for that Binding's body.
+ *
+ * On YARV, this will returning the Binding's instruction sequence.
  */
-static VALUE binding_body(VALUE binding)
+static VALUE binding_body(VALUE self)
 {
 #ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
+  rb_binding_t * binding;
+  rb_env_t * env;
+  GetBindingPtr(self, binding);
+  GetEnvPtr(binding->env, env);
+  return env->block.iseq->self;
 #else
   struct BLOCK * b;
   if(ruby_safe_level >= 4)
@@ -991,7 +999,7 @@ static VALUE binding_body(VALUE binding)
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get binding body");
   }
-  Data_Get_Struct(binding, struct BLOCK, b);
+  Data_Get_Struct(self, struct BLOCK, b);
   return wrap_node(b->body);
 #endif
 }
@@ -1009,14 +1017,7 @@ static VALUE binding_body(VALUE binding)
  */
 static VALUE node_eval(VALUE node, VALUE self)
 {
-#ifdef RUBY_HAS_YARV
-  /* TODO */
-  return Qnil;
-#else
-  /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
   NODE * n = unwrap_node(node);
-  struct BLOCK * b;
-  VALUE proc;
 
   if(ruby_safe_level >= 2)
   {
@@ -1024,10 +1025,19 @@ static VALUE node_eval(VALUE node, VALUE self)
     rb_raise(rb_eSecurityError, "Insecure: can't add method");
   }
 
-  proc = create_proc(rb_cProc, Qnil, n, 0);
-  Data_Get_Struct(proc, struct BLOCK, b);
-  b->self = self;
-  return rb_funcall(proc, rb_intern("call"), 0);
+#ifdef RUBY_HAS_YARV
+  return yarvcore_eval_parsed(n, "(eval)");
+#else
+  {
+    /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
+    struct BLOCK * b;
+    VALUE proc;
+
+    proc = create_proc(rb_cProc, Qnil, n, 0);
+    Data_Get_Struct(proc, struct BLOCK, b);
+    b->self = self;
+    return rb_funcall(proc, rb_intern("call"), 0);
+  }
 #endif
 }
 
@@ -2157,7 +2167,9 @@ void Init_nodewrap(void)
 
   /* For rdoc: rb_cProc = rb_define_class("Proc", rb_cObject) */
   rb_define_method(rb_cProc, "body", proc_body, 0);
+#ifndef RUBY_HAS_YARV
   rb_define_method(rb_cProc, "var", proc_var, 0);
+#endif
   rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
   rb_define_method(rb_cProc, "_dump", proc_dump, 1);
   rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
