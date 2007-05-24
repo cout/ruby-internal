@@ -2208,7 +2208,6 @@ void Init_nodewrap(void)
 
 #if RUBY_VERSION_CODE >= 180
   rb_cClass_Restorer = rb_class_new(rb_cObject);
-#endif
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
   rb_global_variable(&rb_cClass_Restorer);
   rb_define_method(rb_cModule, "_dump", module_dump, 1);
