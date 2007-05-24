@@ -33,7 +33,7 @@ static VALUE rb_cMethod = Qnil;
 static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE > 180
 struct Class_Restorer
 {
   VALUE klass;
@@ -1428,7 +1428,7 @@ static VALUE module_dump(VALUE self, VALUE limit)
 
   str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE > 180
   {
     /* On Ruby 1.8, there is a check in marshal_dump() to ensure that
      * the object being dumped has no modifications to its singleton
@@ -1580,7 +1580,7 @@ static VALUE module_load(VALUE klass, VALUE str)
   return module;
 }
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE > 180
 
 static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
 {
@@ -2206,7 +2206,7 @@ void Init_nodewrap(void)
   lookup_module_proc = rb_eval_string(lookup_module_str);
   rb_global_variable(&lookup_module_proc);
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE > 180
   rb_cClass_Restorer = rb_class_new_instance(0, 0, rb_cClass);
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
   rb_global_variable(&rb_cClass_Restorer);
