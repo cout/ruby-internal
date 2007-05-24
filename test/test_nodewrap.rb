@@ -55,8 +55,15 @@ class TC_Nodewrap < Test::Unit::TestCase
   end
 
   def test_node_eval
-    p = proc { 1 + 1 }
-    assert_equal p.call, p.body.eval(self)
+    node = Node.compile_string('1 + 1')
+    assert_equal 2, node.eval(self)
+  end
+
+  if not Object.const_defined?(:VM) then
+    define_method(:test_proc_body) do
+      p = proc { 1 + 1 }
+      assert_equal p.call, p.body.eval(self)
+    end
   end
 
   def test_method_node
@@ -286,7 +293,9 @@ class TC_Nodewrap < Test::Unit::TestCase
         }
       END_DEF
 
+      #puts "dumping"
       d = Marshal.dump(p_orig)
+      #puts "loading"
       u = Marshal.load(d)
       p_new = u.bind(binding)
 
@@ -309,7 +318,7 @@ class TC_Nodewrap < Test::Unit::TestCase
       assert_equal orig_exc, dup_exc
       assert_equal orig_result, dup_result
     }
-    # define_method "test_dump_proc_#{node_name}", p
+    define_method "test_dump_proc_#{node_name}", p
   end
 end
 
