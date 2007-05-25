@@ -13,7 +13,7 @@ if Object.const_defined?(:VM) and
       def as_expression
         stack = []
         self.each do |i|
-          i.push_expression(stack)
+          i.push_expression(stack, local_table())
         end
         return stack[-1].to_s
       end
