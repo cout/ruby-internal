@@ -11,11 +11,10 @@ if Object.const_defined?(:VM) and
   class VM
     class InstructionSequence
       def as_expression
-        stack = []
-        self.each do |i|
-          i.push_expression(stack, local_table())
-        end
-        return stack[-1].to_s
+        env = Nodewrap::ByteDecoder::Environment.new(local_table())
+        self.bytedecode(env)
+        expressions = env.expressions + [ env.stack[-1] ]
+        return expressions.join('; ')
       end
     end
   end

@@ -2,7 +2,37 @@ require 'nodewrap'
 
 module Nodewrap
 
+# A module for decoding YARV bytecode.
+#
+# This is actually pretty cool.  It's actually a miniature VM, where the
+# result of evaluating an expression is itself another expression.  This
+# turns out to be much simpler than a full ruby VM, but I think one
+# could use this as a base for building one.
+#
+# Example usage:
+#   env = Nodewrap::ByteDecoder::Environment.new(is.local_table)
+#   is = VM::InstructionSequence.new('1 + 1')
+#   is.bytedecode(env)
+#   env.expressions.each do |expr|
+#     puts expr
+#   end
+#   puts stack[-1]
+#
 module ByteDecoder
+
+class Environment
+  attr_reader :stack
+  attr_reader :expressions
+  attr_reader :local_table
+  attr_accessor :last
+
+  def initialize(local_table)
+    @stack = []
+    @expressions = []
+    @local_table = local_table
+    @last = nil
+  end
+end
 
 class Expression
   def initialize
@@ -35,10 +65,13 @@ class Expression
 
     def precedence
       case @op
-      when :*, :/
+      when :*, :/, :%
         return 2
       when :+, :-
         return 3
+      when :<<, :>>
+      when :>, :>=, :<, :<=, :==, :===
+        return 5
       else
         raise ArgumentError, "Unknown op: #{@op}"
       end
@@ -46,9 +79,13 @@ class Expression
   end
 
   class Send < Expression
+    attr_reader :is_assignment
+
     def initialize(id, has_receiver, has_parens, receiver, *args)
       @id = id
+      @is_assignment = id.to_s[-1] == ?=
       @has_receiver = has_receiver
+      @has_parens = has_parens
       @receiver = receiver
       @args = args
     end
@@ -58,9 +95,13 @@ class Expression
         ? "#{@receiver}." \
         : nil
       args = @args.map { |x| x.to_s }
-      open_paren = @has_parens ? '(' : ''
-      close_paren = @has_parens ? ')' : ''
-      return "#{receiver_str}#{@id}#{open_paren}#{args.join(', ')}#{close_paren}"
+      if @is_assignment and args.size == 1 then
+        return "#{receiver_str}#{@id.to_s[0..-2]} = #{args[0]}"
+      else
+        open = @has_parens ? '(' : ''
+        close = @has_parens ? ')' : ''
+        return "#{receiver_str}#{@id}#{open}#{args.join(', ')}#{close}"
+      end
     end
 
     def precedence
@@ -220,41 +261,45 @@ class VM
     include Nodewrap::ByteDecoder
 
     class PUTOBJECT
-      def push_expression(stack, local_table)
-        stack.push self.operands[0]
+      def bytedecode(env)
+        env.stack.push self.operands[0]
       end
     end
 
     INFIX_OPCODES = {
-      OPT_PLUS => :+,
-      OPT_MULT => :*,
-      OPT_DIV  => :/,
-      OPT_EQ   => :==,
-      OPT_GT   => :>,
-      OPT_GE   => :>=,
-      OPT_LT   => :<,
-      OPT_LE   => :<=,
+      OPT_PLUS  => :+,
+      OPT_MINUS => :+,
+      OPT_MULT  => :*,
+      OPT_DIV   => :/,
+      OPT_MOD   => :%,
+      OPT_LTLT  => :>>,
+      # OPT_GTGT  => :<<,
+      OPT_EQ    => :==,
+      OPT_GT    => :>,
+      OPT_GE    => :>=,
+      OPT_LT    => :<,
+      OPT_LE    => :<=,
     }
 
-    INFIX_OPERATORS = INFIX_OPCODES.values
+    INFIX_OPERATORS = INFIX_OPCODES.values + [ :===, :<< ]
 
     INFIX_OPCODES.each do |klass, op|
       klass.class_eval do
-        define_method(:push_expression) do |stack, local_table|
-          rhs = stack.pop
-          lhs = stack.pop
-          stack.push Expression::Infix.new(op, lhs, rhs)
+        define_method(:bytedecode) do |env|
+          rhs = env.stack.pop
+          lhs = env.stack.pop
+          env.stack.push Expression::Infix.new(op, lhs, rhs)
         end
       end
     end
 
     class TRACE
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
     class LEAVE
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
@@ -266,27 +311,27 @@ class VM
 
     LITERAL_OPCODES.each do |klass|
       klass.class_eval do
-        define_method(:push_expression) do |stack, local_table|
-          stack.push @operands[0]
+        define_method(:bytedecode) do |env|
+          env.stack.push @operands[0]
         end
       end
     end
 
     class SEND
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         id = @operands[0]
         num_args = @operands[1]
         args = []
         num_args.times do
-          args.unshift stack.pop
+          args.unshift env.stack.pop
         end
         has_receiver = !flag_set(VM::CALL_FCALL_BIT)
         has_parens = !flag_set(VM::CALL_VCALL_BIT)
-        receiver = stack.pop
+        receiver = env.stack.pop
         if INFIX_OPERATORS.include?(id) then
-          stack.push Expression::Infix.new(id, args[0], args[1])
+          env.stack.push Expression::Infix.new(id, receiver, args[0])
         else
-          stack.push Expression::Send.new(
+          env.stack.push Expression::Send.new(
               id, has_receiver, has_parens, receiver, *args)
         end
       end
@@ -298,38 +343,38 @@ class VM
     end
 
     class PUTSELF
-      def push_expression(stack, local_table)
-        stack.push Expression::Self.new
+      def bytedecode(env)
+        env.stack.push Expression::Self.new
       end
     end
 
     class NEWHASH
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         i = @operands[0]
         args = []
         while i > 0 do
-          args.unshift stack.pop
+          args.unshift env.stack.pop
           i -= 1
         end
-        stack.push Expression::Hash.new(args)
+        env.stack.push Expression::Hash.new(args)
       end
     end
 
     class NEWARRAY
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         i = @operands[0]
         args = []
         while i > 0 do
-          args.unshift stack.pop
+          args.unshift env.stack.pop
           i -= 1
         end
-        stack.push Expression::Array.new(args)
+        env.stack.push Expression::Array.new(args)
       end
     end
 
     class DEFINED
-      def push_expression(stack, local_table)
-        stack.push Expression::Defined.new(@operands[1])
+      def bytedecode(env)
+        env.stack.push Expression::Defined.new(@operands[1])
       end
     end
 
@@ -342,62 +387,62 @@ class VM
 
     VARIABLE_OPCODES.each do |klass|
       klass.class_eval do
-        define_method(:push_expression) do |stack, local_table|
-          stack.push Expression::Variable.new(@operands[0])
+        define_method(:bytedecode) do |env|
+          env.stack.push Expression::Variable.new(@operands[0])
         end
       end
     end
 
     class GETSPECIAL
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         type = @operands[1] >> 1
-        stack.push Expression::Variable.new("$#{type.chr}")
+        env.stack.push Expression::Variable.new("$#{type.chr}")
       end
     end
 
     class GETINLINECACHE
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
     class SETINLINECACHE
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
     class NOP
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
     class TOSTRING
-      def push_expression(stack, local_table)
+      def bytedecode(env)
       end
     end
 
     class CONCATSTRINGS
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         i = @operands[0]
         args = []
         while i > 0 do
-          args.unshift stack.pop
+          args.unshift env.stack.pop
           i -= 1
         end
-        stack.push Expression::ConcatStrings.new(args)
+        env.stack.push Expression::ConcatStrings.new(args)
       end
     end
 
     class TOREGEXP
-      def push_expression(stack, local_table)
-        stack.push Expression::ToRegexp.new(stack.pop)
+      def bytedecode(env)
+        env.stack.push Expression::ToRegexp.new(env.stack.pop)
       end
     end
 
     class DUP
-      def push_expression(stack, local_table)
-        arg = stack.pop
-        stack.push arg
-        stack.push arg
+      def bytedecode(env)
+        arg = env.stack.pop
+        env.stack.push arg
+        env.stack.push arg
       end
     end
 
@@ -406,44 +451,69 @@ class VM
       # afaict -- so I'm not really sure what to do with the result.
       # Maybe I need to keep track of certain expressions off the stack,
       # somehow.  I don't know.
-      def push_expression(stack, local_table)
-        name = local_table[local_table.size - @operands[0] + 1]
-        value = stack.pop
-        stack.push Expression::Assignment.new(name, value)
+      def bytedecode(env)
+        idx = env.local_table.size - @operands[0] + 1
+        name = env.local_table[idx]
+        value = env.stack.pop
+        env.stack.push Expression::Assignment.new(name, value)
       end
     end
 
     class GETLOCAL
-      def push_expression(stack, local_table)
-        name = local_table[local_table.size - @operands[0] + 1]
-        stack.push Expression::Variable.new(name)
+      def bytedecode(env)
+        idx = env.local_table.size - @operands[0] + 1
+        name = env.local_table[idx]
+        env.stack.push Expression::Variable.new(name)
       end
     end
 
     class SETN
       # set nth stack entry to stack top
-      def push_expression(stack, local_table)
+      def bytedecode(env)
         n = @operands[0]
-        p stack
-        stack[-n] = stack.pop
-        p stack
+        dest = -(n+1)
+        if env.stack[dest].is_a?(Expression) then
+          env.expressions.push env.stack[dest]
+        end
+        env.stack[dest] = env.stack[-1]
       end
     end
 
     class POP
-      def push_expression(stack, local_table)
-        stack.pop
+      def bytedecode(env)
+        top = env.stack[-1]
+        if top.is_a?(Expression) then
+          if top.is_a?(Expression::Send) and top.is_assignment then
+            # special case - the return value from the assignment gets
+            # thrown away and the result is the rhs
+            env.stack.delete_at(-2)
+          end
+          env.expressions.push top
+        end
+        env.stack.pop
+      end
+    end
+  end
+
+  class InstructionSequence
+    def bytedecode(env)
+      self.each do |instruction|
+        instruction.bytedecode(env)
       end
     end
   end
 end
 
 if __FILE__ == $0 then
+  # def foo; !a; end
+  def foo; a << b; end
+  # def foo; a === b; end
+  # def foo; []; end
   # def foo; foo.bar = 42; end
   # def foo; h = {}; h.default = true; h; end
   # def foo; @FOO; end
   # def foo; $FOO; end
-  def foo; /foo#{bar}/; end
+  # def foo; /foo#{bar}/; end
   # def foo; foo = 1; bar=2; baz=3 end
   # def foo; "foo#{bar}"; end
   # def foo; $`; end
@@ -459,18 +529,21 @@ if __FILE__ == $0 then
   is = n.body
   puts is.disasm
 
-  stack = []
+  env = Nodewrap::ByteDecoder::Environment.new(is.local_table)
   s = ''
   # puts "local_table = #{is.local_table.inspect}"
   is.each do |i|
     # p i.operand_types, i.operand_names
     p i #, i.operand_types, i.operand_names
-    i.push_expression(stack, is.local_table)
-    # p stack
+    i.bytedecode(env)
+    # p env.stack
+    # p env.stack.map { |x| x.to_s }
+    # puts
   end
 
-  stack.each do |expr|
+  env.expressions.each do |expr|
     puts expr.to_s
   end
+  puts env.stack[-1].to_s
 end
 
