@@ -2310,6 +2310,15 @@ void Init_nodewrap(void)
   define_instruction_subclasses(rb_cInstruction);
 
   rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
+
+  rb_define_const(rb_cVM, "CALL_ARGS_SPLAT_BIT", INT2NUM(VM_CALL_ARGS_SPLAT_BIT));
+  rb_define_const(rb_cVM, "CALL_ARGS_BLOCKARG_BIT", INT2NUM(VM_CALL_ARGS_BLOCKARG_BIT));
+  rb_define_const(rb_cVM, "CALL_FCALL_BIT", INT2NUM(VM_CALL_FCALL_BIT));
+  rb_define_const(rb_cVM, "CALL_VCALL_BIT", INT2NUM(VM_CALL_VCALL_BIT));
+  rb_define_const(rb_cVM, "CALL_TAILCALL_BIT", INT2NUM(VM_CALL_TAILCALL_BIT));
+  rb_define_const(rb_cVM, "CALL_TAILRECURSION_BIT", INT2NUM(VM_CALL_TAILRECURSION_BIT));
+  rb_define_const(rb_cVM, "CALL_SUPER_BIT", INT2NUM(VM_CALL_SUPER_BIT));
+  rb_define_const(rb_cVM, "CALL_SEND_BIT", INT2NUM(VM_CALL_SEND_BIT));
 #endif
 }
 
