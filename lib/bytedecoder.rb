@@ -46,7 +46,7 @@ class Expression
   end
 
   class Send < Expression
-    def initialize(id, has_receiver, receiver, *args)
+    def initialize(id, has_receiver, has_parens, receiver, *args)
       @id = id
       @has_receiver = has_receiver
       @receiver = receiver
@@ -58,7 +58,9 @@ class Expression
         ? "#{@receiver}." \
         : nil
       args = @args.map { |x| x.to_s }
-      return "#{receiver_str}#{@id}(#{args.join(', ')})"
+      open_paren = @has_parens ? '(' : ''
+      close_paren = @has_parens ? ')' : ''
+      return "#{receiver_str}#{@id}#{open_paren}#{args.join(', ')}#{close_paren}"
     end
 
     def precedence
@@ -278,13 +280,20 @@ class VM
         num_args.times do
           args.unshift stack.pop
         end
-        has_receiver = @operands[3] & 8 != 8 # TODO: magic numbers are bad
+        has_receiver = flag_set(VM::CALL_FCALL_BIT)
+        has_parens = !flag_set(VM::CALL_VCALL_BIT)
         receiver = stack.pop
         if INFIX_OPERATORS.include?(id) then
           stack.push Expression::Infix.new(id, args[0], args[1])
         else
-          stack.push Expression::Send.new(id, has_receiver, receiver, *args)
+          stack.push Expression::Send.new(
+              id, has_receiver, has_parens, receiver, *args)
         end
+      end
+
+      def flag_set(flag)
+        flags = @operands[3]
+        return flags & flag != flag
       end
     end
 
@@ -401,6 +410,13 @@ class VM
         name = local_table[local_table.size - @operands[0] + 1]
         value = stack.pop
         stack.push Expression::Assignment.new(name, value)
+      end
+    end
+
+    class GETLOCAL
+      def push_expression(stack, local_table)
+        name = local_table[local_table.size - @operands[0] + 1]
+        stack.push Expression::Variable.new(name)
       end
     end
 
