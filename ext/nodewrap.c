@@ -1787,6 +1787,7 @@ static VALUE iseq_each(VALUE self)
           ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
+          break;
 
         case TS_VARIABLE:
           ++seq;
