@@ -280,7 +280,7 @@ class VM
         num_args.times do
           args.unshift stack.pop
         end
-        has_receiver = flag_set(VM::CALL_FCALL_BIT)
+        has_receiver = !flag_set(VM::CALL_FCALL_BIT)
         has_parens = !flag_set(VM::CALL_VCALL_BIT)
         receiver = stack.pop
         if INFIX_OPERATORS.include?(id) then
@@ -293,7 +293,7 @@ class VM
 
       def flag_set(flag)
         flags = @operands[3]
-        return flags & flag != flag
+        return flags & flag == flag
       end
     end
 
@@ -440,10 +440,10 @@ end
 
 if __FILE__ == $0 then
   # def foo; foo.bar = 42; end
-  def foo; h = {}; h.default = true; h; end
+  # def foo; h = {}; h.default = true; h; end
   # def foo; @FOO; end
   # def foo; $FOO; end
-  # def foo; /foo#{bar}/; end
+  def foo; /foo#{bar}/; end
   # def foo; foo = 1; bar=2; baz=3 end
   # def foo; "foo#{bar}"; end
   # def foo; $`; end
