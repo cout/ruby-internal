@@ -13,7 +13,7 @@ if Object.const_defined?(:VM) and
       def as_expression
         env = Nodewrap::ByteDecoder::Environment.new(local_table())
         self.bytedecode(env)
-        expressions = env.expressions + [ env.stack[-1] ]
+        expressions = env.expressions + env.stack
         return expressions.join('; ')
       end
     end

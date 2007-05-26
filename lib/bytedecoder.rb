@@ -128,13 +128,14 @@ class Expression
   class Send < Expression
     attr_reader :is_assignment
 
-    def initialize(id, has_receiver, has_parens, receiver, block, *args)
+    def initialize(id, has_receiver, has_parens, receiver, block, splat_last, *args)
       @id = id
       @is_assignment = id.to_s[-1] == ?=
       @has_receiver = has_receiver
       @has_parens = has_parens
       @receiver = receiver
       @block = block
+      @splat_last = splat_last
       @args = args
     end
 
@@ -144,6 +145,9 @@ class Expression
         ? "#{@receiver}." \
         : nil
       args = @args.map { |x| x.to_s }
+      if @splat_last then
+        args[-1] = "*#{@args[-1]}"
+      end
       if @is_assignment and args.size == 1 then
         s = "#{receiver_str}#{@id.to_s[0..-2]} = #{args[0]}"
       else
@@ -154,7 +158,7 @@ class Expression
       if @block then
         env = Environment.new(@block.local_table)
         @block.bytedecode(env)
-        expressions = (env.expressions + [ env.stack[-1] ]).map { |x| x.to_s }
+        expressions = (env.expressions + env.stack).map { |x| x.to_s }
         s << " { #{expressions.join('; ')} }"
       end
       return s
@@ -444,6 +448,7 @@ class VM
         end
         has_receiver = !flag_set(VM::CALL_FCALL_BIT)
         has_parens = !flag_set(VM::CALL_VCALL_BIT)
+        splat_last = flag_set(VM::CALL_ARGS_SPLAT_BIT)
         receiver = env.stack.pop
         block = @operands[2]
         if INFIX_OPERATORS.include?(id) and args.size == 1 then
@@ -452,7 +457,7 @@ class VM
           env.stack.push Expression::Prefix.new(id, receiver)
         else
           env.stack.push Expression::Send.new(
-              id, has_receiver, has_parens, receiver, block, *args)
+              id, has_receiver, has_parens, receiver, block, splat_last, *args)
         end
       end
 
@@ -498,16 +503,32 @@ class VM
       end
     end
 
-    VARIABLE_OPCODES = [
+    GET_VARIABLE_OPCODES = [
       GETCLASSVARIABLE,
       GETINSTANCEVARIABLE,
       GETGLOBAL,
     ]
 
-    VARIABLE_OPCODES.each do |klass|
+    GET_VARIABLE_OPCODES.each do |klass|
       klass.class_eval do
         define_method(:bytedecode) do |env|
           env.stack.push Expression::Variable.new(@operands[0])
+        end
+      end
+    end
+
+    SET_VARIABLE_OPCODES = [
+      SETCLASSVARIABLE,
+      SETINSTANCEVARIABLE,
+      SETGLOBAL,
+    ]
+
+    SET_VARIABLE_OPCODES.each do |klass|
+      klass.class_eval do
+        define_method(:bytedecode) do |env|
+          value = env.stack.pop
+          env.stack.delete_at(-1) # TODO: dup'd value.. is this right?
+          env.stack.push Expression::Assignment.new(@operands[0], value)
         end
       end
     end
@@ -599,6 +620,14 @@ class VM
       end
     end
 
+    class GETDYNAMIC
+      def bytedecode(env)
+        idx = env.local_table.size - @operands[0] + 1
+        name = env.local_table[-idx]
+        env.stack.push Expression::Variable.new(name)
+      end
+    end
+
     class SETN
       # set nth stack entry to stack top
       def bytedecode(env)
@@ -638,7 +667,7 @@ class VM
   class InstructionSequence
     def bytedecode(env)
       self.each do |instruction|
-        p instruction
+        # p instruction
         instruction.bytedecode(env)
       end
     end
@@ -646,6 +675,10 @@ class VM
 end
 
 if __FILE__ == $0 then
+  def foo; @@foo = 1; end
+  # def foo; a = [2, 3]; foo(1, *a); end
+  # def foo; not true; end
+  # def foo; catch(:foo) { throw :foo; 42 }; end
   # def foo; a ? b : c; end
   # def foo; loop { a = 1; break }; end
   # def foo; ::BAR; end
@@ -695,9 +728,8 @@ if __FILE__ == $0 then
     # puts
   end
 
-  env.expressions.each do |expr|
+  (env.expressions + env.stack).each do |expr|
     puts expr.to_s
   end
-  puts env.stack[-1].to_s
 end
 
