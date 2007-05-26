@@ -1845,9 +1845,18 @@ static VALUE iseq_each(VALUE self)
           break;
 
         case TS_ISEQ:
-          rb_ary_push(args, Qnil);
-          /* TODO */
+        {
+          rb_iseq_t * iseq = (rb_iseq_t *)*seq;
+          if(iseq)
+          {
+            rb_ary_push(args, iseq->self);
+          }
+          else
+          {
+            rb_ary_push(args, Qnil);
+          }
           break;
+        }
 
         case TS_GENTRY:
           rb_ary_push(args, Qnil);

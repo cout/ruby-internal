@@ -109,27 +109,36 @@ class Expression
   class Send < Expression
     attr_reader :is_assignment
 
-    def initialize(id, has_receiver, has_parens, receiver, *args)
+    def initialize(id, has_receiver, has_parens, receiver, block, *args)
       @id = id
       @is_assignment = id.to_s[-1] == ?=
       @has_receiver = has_receiver
       @has_parens = has_parens
       @receiver = receiver
+      @block = block
       @args = args
     end
 
     def to_s
+      s = ''
       receiver_str = @has_receiver \
         ? "#{@receiver}." \
         : nil
       args = @args.map { |x| x.to_s }
       if @is_assignment and args.size == 1 then
-        return "#{receiver_str}#{@id.to_s[0..-2]} = #{args[0]}"
+        s = "#{receiver_str}#{@id.to_s[0..-2]} = #{args[0]}"
       else
         open = @has_parens ? '(' : ''
         close = @has_parens ? ')' : ''
-        return "#{receiver_str}#{@id}#{open}#{args.join(', ')}#{close}"
+        s = "#{receiver_str}#{@id}#{open}#{args.join(', ')}#{close}"
       end
+      if @block then
+        env = Environment.new(@block.local_table)
+        @block.bytedecode(env)
+        expressions = (env.expressions + [ env.stack[-1] ]).map { |x| x.to_s }
+        s << " { #{expressions.join('; ')} }"
+      end
+      return s
     end
 
     def precedence
@@ -394,13 +403,14 @@ class VM
         has_receiver = !flag_set(VM::CALL_FCALL_BIT)
         has_parens = !flag_set(VM::CALL_VCALL_BIT)
         receiver = env.stack.pop
+        block = @operands[2]
         if INFIX_OPERATORS.include?(id) and args.size == 1 then
           env.stack.push Expression::Infix.new(id, receiver, args[0])
         elsif PREFIX_OPERATORS.include?(id) and args.size == 0 then
           env.stack.push Expression::Prefix.new(id, receiver)
         else
           env.stack.push Expression::Send.new(
-              id, has_receiver, has_parens, receiver, *args)
+              id, has_receiver, has_parens, receiver, block, *args)
         end
       end
 
@@ -522,10 +532,6 @@ class VM
     end
 
     class SETLOCAL
-      # TODO: SETLOCAL doesn't really push anything back onto the stack,
-      # afaict -- so I'm not really sure what to do with the result.
-      # Maybe I need to keep track of certain expressions off the stack,
-      # somehow.  I don't know.
       def bytedecode(env)
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[idx]
@@ -539,6 +545,15 @@ class VM
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[idx]
         env.stack.push Expression::Variable.new(name)
+      end
+    end
+
+    class SETDYNAMIC
+      def bytedecode(env)
+        idx = env.local_table.size - @operands[0] + 1
+        name = env.local_table[-idx]
+        value = env.stack.pop
+        env.stack.push Expression::Assignment.new(name, value)
       end
     end
 
@@ -568,11 +583,18 @@ class VM
         env.stack.pop
       end
     end
+
+    class THROW
+      def bytedecode(env)
+        env.stack.pop
+      end
+    end
   end
 
   class InstructionSequence
     def bytedecode(env)
       self.each do |instruction|
+        p instruction
         instruction.bytedecode(env)
       end
     end
@@ -580,7 +602,8 @@ class VM
 end
 
 if __FILE__ == $0 then
-  def foo; ::BAR; end
+  def foo; loop { a = 1; break }; end
+  # def foo; ::BAR; end
   # def foo; a != b; end
   # def foo; 1 - 2; end
   # def foo; +a; end
@@ -613,9 +636,15 @@ if __FILE__ == $0 then
   # puts "local_table = #{is.local_table.inspect}"
   is.each do |i|
     # p i.operand_types, i.operand_names
-    p i #, i.operand_types, i.operand_names
+    # p i #, i.operand_types, i.operand_names
+    print i.class, ' '
+    a = []
+    i.operand_names.each_with_index do |name, idx|
+      a << "#{name}(#{i.operand_types[idx]})=#{i.operands[idx].inspect}"
+    end
+    puts a.join(', ')
     i.bytedecode(env)
-    p env.stack
+    # p env.stack
     # p env.stack.map { |x| x.to_s }
     # puts
   end
