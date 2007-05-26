@@ -52,6 +52,25 @@ class Expression
     end
   end
 
+  class Literal < Expression
+    attr_reader :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def to_s
+      case @value
+      when Regexp then "/#{@value.inspect[1..-2]}/"
+      else; return @value.inspect
+      end
+    end
+
+    def precedence
+      return 1
+    end
+  end
+
   class Infix < Expression
     attr_reader :op
     attr_reader :lhs
@@ -261,8 +280,11 @@ class Expression
       s = "\""
       @args.each do |arg|
         case arg
-        when String
-          s << arg
+        when Literal
+          case arg.value
+          when String then s << arg.value
+          else; s << arg.to_s
+          end
         else
           s << "\#{#{arg.to_s}}"
         end
@@ -300,9 +322,29 @@ class Expression
       when ConcatStrings
         string = @value.to_s
         unstring = string[1..-2]
+        p @value, string, unstring
         return Regexp.compile(unstring).inspect
       else
         return Regexp.compile(@value.to_s).inspect
+      end
+    end
+
+    def precedence
+      return 1
+    end
+  end
+
+  class Throw < Expression
+    def initialize(value)
+      @value = value
+    end
+
+    def to_s
+      # TODO: not all throws are breaks...
+      if @value then
+        return "break #{@value}"
+      else
+        return "break"
       end
     end
 
@@ -322,7 +364,7 @@ class VM
 
     class PUTOBJECT
       def bytedecode(env)
-        env.stack.push self.operands[0]
+        env.stack.push Expression::Literal.new(self.operands[0])
       end
     end
 
@@ -387,7 +429,7 @@ class VM
     LITERAL_OPCODES.each do |klass|
       klass.class_eval do
         define_method(:bytedecode) do |env|
-          env.stack.push @operands[0]
+          env.stack.push Expression::Literal.new(@operands[0])
         end
       end
     end
@@ -586,7 +628,9 @@ class VM
 
     class THROW
       def bytedecode(env)
-        env.stack.pop
+        value = env.stack.pop
+        env.expressions.push env.stack.pop
+        env.stack.push Expression::Throw.new(value)
       end
     end
   end
@@ -602,7 +646,8 @@ class VM
 end
 
 if __FILE__ == $0 then
-  def foo; loop { a = 1; break }; end
+  # def foo; a ? b : c; end
+  # def foo; loop { a = 1; break }; end
   # def foo; ::BAR; end
   # def foo; a != b; end
   # def foo; 1 - 2; end
@@ -616,6 +661,7 @@ if __FILE__ == $0 then
   # def foo; @FOO; end
   # def foo; $FOO; end
   # def foo; /foo#{bar}/; end
+  # def foo; /foo/; end
   # def foo; foo = 1; bar=2; baz=3 end
   # def foo; "foo#{bar}"; end
   # def foo; $`; end
