@@ -53,6 +53,10 @@ class Expression
   end
 
   class Infix < Expression
+    attr_reader :op
+    attr_reader :lhs
+    attr_reader :rhs
+
     def initialize(op, lhs, rhs)
       @op = op
       @lhs = lhs
@@ -70,11 +74,35 @@ class Expression
       when :+, :-
         return 3
       when :<<, :>>
+        return 4
       when :>, :>=, :<, :<=, :==, :===
         return 5
       else
         raise ArgumentError, "Unknown op: #{@op}"
       end
+    end
+  end
+
+  class Prefix < Expression
+    def initialize(op, expr)
+      @op = op
+      @expr = expr
+    end
+
+    def to_s
+      op = @op.to_s
+      op.chop! if op[-1] == ?@
+      if @op == :"!" and @expr.is_a?(Infix) and @expr.op == :== then
+        return "#{@expr.fmt(@expr.lhs)} != #{@expr.fmt(@expr.rhs)}"
+      elsif self.precedence < @expr.precedence then
+        return "#{op}(#{@expr})"
+      else
+        return "#{op}#{@expr}"
+      end
+    end
+
+    def precedence
+      return 1
     end
   end
 
@@ -192,6 +220,29 @@ class Expression
     end
   end
 
+  class Constant < Expression
+    def initialize(klass, name)
+      @klass = klass
+      @name = name
+    end
+
+    def to_s
+      if @klass then
+        if @klass == Object then
+          return "::#{@name}"
+        else
+          return "#{@klass}::#{@name}"
+        end
+      else
+        return "#{@name}"
+      end
+    end
+
+    def precedence
+      return 1
+    end
+  end
+
   class ConcatStrings < Expression
     def initialize(args)
       @args = args
@@ -268,7 +319,7 @@ class VM
 
     INFIX_OPCODES = {
       OPT_PLUS  => :+,
-      OPT_MINUS => :+,
+      OPT_MINUS => :-,
       OPT_MULT  => :*,
       OPT_DIV   => :/,
       OPT_MOD   => :%,
@@ -289,6 +340,21 @@ class VM
           rhs = env.stack.pop
           lhs = env.stack.pop
           env.stack.push Expression::Infix.new(op, lhs, rhs)
+        end
+      end
+    end
+
+    PREFIX_OPCODES = {
+      PUTNOT => :"!",
+    }
+
+    PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
+
+    PREFIX_OPCODES.each do |klass, op|
+      klass.class_eval do
+        define_method(:bytedecode) do |env|
+          expr = env.stack.pop
+          env.stack.push Expression::Prefix.new(op, expr)
         end
       end
     end
@@ -328,8 +394,10 @@ class VM
         has_receiver = !flag_set(VM::CALL_FCALL_BIT)
         has_parens = !flag_set(VM::CALL_VCALL_BIT)
         receiver = env.stack.pop
-        if INFIX_OPERATORS.include?(id) then
+        if INFIX_OPERATORS.include?(id) and args.size == 1 then
           env.stack.push Expression::Infix.new(id, receiver, args[0])
+        elsif PREFIX_OPERATORS.include?(id) and args.size == 0 then
+          env.stack.push Expression::Prefix.new(id, receiver)
         else
           env.stack.push Expression::Send.new(
               id, has_receiver, has_parens, receiver, *args)
@@ -381,7 +449,6 @@ class VM
     VARIABLE_OPCODES = [
       GETCLASSVARIABLE,
       GETINSTANCEVARIABLE,
-      GETCONSTANT,
       GETGLOBAL,
     ]
 
@@ -390,6 +457,13 @@ class VM
         define_method(:bytedecode) do |env|
           env.stack.push Expression::Variable.new(@operands[0])
         end
+      end
+    end
+
+    class GETCONSTANT
+      def bytedecode(env)
+        klass = env.stack.pop
+        env.stack.push Expression::Constant.new(klass, @operands[0])
       end
     end
 
@@ -402,6 +476,7 @@ class VM
 
     class GETINLINECACHE
       def bytedecode(env)
+        env.stack.push nil
       end
     end
 
@@ -505,8 +580,12 @@ class VM
 end
 
 if __FILE__ == $0 then
+  def foo; ::BAR; end
+  # def foo; a != b; end
+  # def foo; 1 - 2; end
+  # def foo; +a; end
   # def foo; !a; end
-  def foo; a << b; end
+  # def foo; a << b; end
   # def foo; a === b; end
   # def foo; []; end
   # def foo; foo.bar = 42; end
@@ -536,7 +615,7 @@ if __FILE__ == $0 then
     # p i.operand_types, i.operand_names
     p i #, i.operand_types, i.operand_names
     i.bytedecode(env)
-    # p env.stack
+    p env.stack
     # p env.stack.map { |x| x.to_s }
     # puts
   end
