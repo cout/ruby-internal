@@ -20,6 +20,7 @@ VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
 static VALUE rb_cInstruction = Qnil;
 static VALUE rb_cModulePlaceholder = Qnil;
+static VALUE rb_cInlineCache = Qnil;
 #endif
 
 static VALUE rb_cNode = Qnil;
@@ -91,7 +92,7 @@ static void free_node(
   rb_funcall(wrapped_nodes, rb_intern("delete"), 1, LONG2NUM((long)data / 4));
 }
 
-VALUE wrap_node(NODE * n)
+VALUE wrap_node_as(NODE * n, VALUE klass)
 {
   VALUE node_id;
 
@@ -114,12 +115,21 @@ VALUE wrap_node(NODE * n)
   }
   else
   {
-    VALUE node = Data_Wrap_Struct(
-        rb_cNodeSubclass[nd_type(n)], mark_node, free_node, n);
+    VALUE node = Data_Wrap_Struct(klass, mark_node, free_node, n);
     VALUE node_id = rb_obj_id(node);
     rb_hash_aset(wrapped_nodes, LONG2FIX((long)n / 4), node_id);
     return node;
   }
+}
+
+VALUE wrap_node(NODE * n)
+{
+  if(!n)
+  {
+    return Qnil;
+  }
+
+  return wrap_node_as(n, rb_cNodeSubclass[nd_type(n)]);
 }
 
 NODE * unwrap_node(VALUE r)
@@ -348,6 +358,69 @@ static VALUE node_bracket(VALUE node, VALUE member)
     ? SYM2ID(member)
     : rb_intern(STR2CSTR(member));
   return rb_funcall(node, id, 0);
+}
+
+#if RUBY_VERSION_CODE < 190
+static VALUE node_inspect_protect(VALUE node)
+#else
+static VALUE node_inspect_protect(VALUE node, VALUE dummy, int recur)
+#endif
+{
+  VALUE str = rb_str_new2("#<");
+  rb_str_cat2(str, rb_class2name(CLASS_OF(node)));
+  rb_str_cat2(str, " ");
+  VALUE members = node_members(node);
+  int j;
+
+
+  for(j = 0; j < RARRAY(members)->len; ++j)
+  {
+    VALUE name = RARRAY(members)->ptr[j];
+    VALUE value = node_bracket(node, name);
+    rb_str_append(str, name);
+    rb_str_cat2(str, "=");
+    if(TYPE(value) == T_NODE)
+    {
+      rb_str_append(str, rb_funcall(value, rb_intern("to_s"), 0));
+    }
+    else
+    {
+      rb_str_append(str, rb_funcall(value, rb_intern("inspect"), 0));
+    }
+    if(j != RARRAY(members)->len - 1)
+    {
+      rb_str_cat2(str, ", ");
+    }
+  }
+
+  rb_str_cat2(str, ">");
+
+  return str;
+}
+
+/*
+ * call-seq:
+ *   node.inspect => String
+ *
+ * Returns a string representation of the node's data.
+ */
+static VALUE node_inspect(VALUE node)
+{
+#if RUBY_VERSION_CODE < 190
+  if(rb_inspecting_p(node))
+  {
+    str = rb_str_new2("#<");
+    rb_str_append(str, rb_class2name(CLASS_OF(node)));
+    rb_str_cat2(str, ":...>");
+    return str;
+  }
+  else
+  {
+    return rb_protect_inspect(node_inspect_protect, node, 0);
+  }
+#else
+  return rb_exec_recursive(node_inspect_protect, node, 0);
+#endif
 }
 
 /* ---------------------------------------------------------------------
@@ -1026,7 +1099,7 @@ static VALUE node_eval(VALUE node, VALUE self)
   }
 
 #ifdef RUBY_HAS_YARV
-  return yarvcore_eval_parsed(n, "(eval)");
+  return yarvcore_eval_parsed(n, rb_str_new2("(eval)"));
 #else
   {
     /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
@@ -1750,65 +1823,62 @@ static VALUE iseq_each(VALUE self)
   rb_iseq_t *iseqdat = iseq_check(self);
   VALUE * seq;
 
-  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->size; ++seq)
+  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->size; )
   {
-    int insn = *seq;
+    VALUE insn = *seq++;
     int op_type_idx;
     int len = insn_len(insn);
     VALUE args = rb_ary_new();
 
-    for(op_type_idx = 0; op_type_idx < len-1; ++op_type_idx)
+    for(op_type_idx = 0; op_type_idx < len-1; ++op_type_idx, ++seq)
     {
       switch(insn_op_type(insn, op_type_idx))
       {
         case TS_VALUE:
-          rb_ary_push(args, *++seq);
+          rb_ary_push(args, *seq);
           break;
 
         case TS_LINDEX:
         case TS_DINDEX:
         case TS_NUM:
-          rb_ary_push(args, INT2FIX(*++seq));
+          rb_ary_push(args, INT2FIX(*seq));
           break;
 
         case TS_ISEQ:
-          ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
           break;
 
         case TS_GENTRY:
-          ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
           break;
 
         case TS_OFFSET:
-          ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
           break;
 
         case TS_VARIABLE:
-          ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
           break;
 
         case TS_CDHASH:
-          ++seq;
           rb_ary_push(args, Qnil);
           /* TODO */
           break;
 
         case TS_IC:
-          ++seq;
-          rb_ary_push(args, Qnil);
-          /* TODO */
+        {
+          NODE * ic = (NODE *)*seq;
+          ic->ic_klass = 0; /* TODO */
+          rb_ary_push(args, wrap_node_as(ic, rb_cInlineCache));
           break;
+        }
 
         case TS_ID:
-          rb_ary_push(args, ID2SYM(*++seq));
+          rb_ary_push(args, ID2SYM(*seq));
           break;
       }
     }
@@ -1973,6 +2043,29 @@ static VALUE instruction_operands(VALUE self)
 }
 
 #endif
+
+/* ---------------------------------------------------------------------
+ * Methods for VM::InlineCache
+ * ---------------------------------------------------------------------
+ */
+
+static VALUE inline_cache_klass(VALUE self)
+{
+  /* TODO: returning the real value can crash the interpreter */
+  return Qnil;
+}
+
+static VALUE inline_cache_value(VALUE self)
+{
+  IC inline_cache = unwrap_node(self);
+  return inline_cache->ic_value;
+}
+
+static VALUE inline_cache_vmstat(VALUE self)
+{
+  IC inline_cache = unwrap_node(self);
+  return INT2NUM(inline_cache->ic_vmstat);
+}
 
 /* ---------------------------------------------------------------------
  * Eval tree
@@ -2146,6 +2239,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "members", node_members, 0);
   rb_define_method(rb_cNode, "eval", node_eval, 1);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
+  rb_define_method(rb_cNode, "inspect", node_inspect, 0);
   rb_define_singleton_method(rb_cNode, "compile_string", node_compile_string, -1);
 #ifdef RUBY_HAS_YARV
   rb_define_method(rb_cNode, "bytecode_compile", node_bytecode_compile, -1);
@@ -2319,6 +2413,17 @@ void Init_nodewrap(void)
   rb_define_const(rb_cVM, "CALL_TAILRECURSION_BIT", INT2NUM(VM_CALL_TAILRECURSION_BIT));
   rb_define_const(rb_cVM, "CALL_SUPER_BIT", INT2NUM(VM_CALL_SUPER_BIT));
   rb_define_const(rb_cVM, "CALL_SEND_BIT", INT2NUM(VM_CALL_SEND_BIT));
+
+  rb_cInlineCache = rb_define_class_under(rb_cVM, "InlineCache", rb_cNode);
+  rb_define_method(rb_cInlineCache, "klass", inline_cache_klass, 0);
+  rb_define_method(rb_cInlineCache, "value", inline_cache_value, 0);
+  rb_define_method(rb_cInlineCache, "vmstat", inline_cache_vmstat, 0);
+  VALUE inline_cache_members = rb_ary_new();
+  rb_ary_push(inline_cache_members, rb_str_new2("klass"));
+  rb_ary_push(inline_cache_members, rb_str_new2("value"));
+  rb_ary_push(inline_cache_members, rb_str_new2("vmstat"));
+  rb_iv_set(rb_cInlineCache, "__member__", inline_cache_members);
+  rb_define_singleton_method(rb_cInlineCache, "members", node_s_members, 0);
 #endif
 }
 
