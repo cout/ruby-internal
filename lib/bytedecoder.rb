@@ -25,17 +25,36 @@ class Environment
   attr_reader :expressions
   attr_reader :local_table
   attr_accessor :last
+  attr_reader :seq
 
   def initialize(local_table)
     @stack = []
     @expressions = []
     @local_table = local_table
     @last = nil
+    @seq = 0
+  end
+
+  def advance
+    @seq += 1
+  end
+
+  def remember(expression)
+    if not expression.is_a?(Expression::Literal) then
+      @expressions << expression
+    end
   end
 end
 
 class Expression
-  def initialize
+  attr_reader :seq
+
+  def initialize(seq)
+    @seq = seq
+  end
+
+  def <=>(rhs)
+    return @seq <=> rhs.seq
   end
 
   def fmt(arg)
@@ -55,7 +74,8 @@ class Expression
   class Literal < Expression
     attr_reader :value
 
-    def initialize(value)
+    def initialize(seq, value)
+      super(seq)
       @value = value
     end
 
@@ -76,7 +96,8 @@ class Expression
     attr_reader :lhs
     attr_reader :rhs
 
-    def initialize(op, lhs, rhs)
+    def initialize(seq, op, lhs, rhs)
+      super(seq)
       @op = op
       @lhs = lhs
       @rhs = rhs
@@ -103,7 +124,8 @@ class Expression
   end
 
   class Prefix < Expression
-    def initialize(op, expr)
+    def initialize(seq, op, expr)
+      super(seq)
       @op = op
       @expr = expr
     end
@@ -128,7 +150,8 @@ class Expression
   class Send < Expression
     attr_reader :is_assignment
 
-    def initialize(id, has_receiver, has_parens, receiver, block, splat_last, *args)
+    def initialize(seq, id, has_receiver, has_parens, receiver, block, splat_last, *args)
+      super(seq)
       @id = id
       @is_assignment = id.to_s[-1] == ?=
       @has_receiver = has_receiver
@@ -156,10 +179,17 @@ class Expression
         s = "#{receiver_str}#{@id}#{open}#{args.join(', ')}#{close}"
       end
       if @block then
+        # TODO: this code is duplicated elsewhere
         env = Environment.new(@block.local_table)
         @block.bytedecode(env)
-        expressions = (env.expressions + env.stack).map { |x| x.to_s }
-        s << " { #{expressions.join('; ')} }"
+        expressions = (env.expressions + env.stack).sort.map { |x| x.to_s }
+        if expressions.length == 1 and
+           expressions[0].is_a?(Literal) and
+           expressions[0].value == nil then
+          # empty
+        else
+          s << " { #{expressions.join('; ')} }"
+        end
       end
       return s
     end
@@ -175,6 +205,10 @@ class Expression
   end
 
   class Self < Expression
+    def initialize(seq)
+      super(seq)
+    end
+
     def to_s
       return "self"
     end
@@ -185,7 +219,8 @@ class Expression
   end
 
   class Hash < Expression
-    def initialize(args)
+    def initialize(seq, args)
+      super(seq)
       @args = args
     end
 
@@ -198,7 +233,8 @@ class Expression
         i += 2
       end
       s << a.join(', ')
-      s << ' }'
+      s << ' ' if a.length != 0
+      s << '}'
       return s
     end
 
@@ -208,7 +244,8 @@ class Expression
   end
 
   class Array < Expression
-    def initialize(args)
+    def initialize(seq, args)
+      super(seq)
       @args = args
     end
 
@@ -225,7 +262,8 @@ class Expression
   end
 
   class Defined < Expression
-    def initialize(arg)
+    def initialize(seq, arg)
+      super(seq)
       @arg = arg
     end
 
@@ -239,7 +277,8 @@ class Expression
   end
 
   class Variable < Expression
-    def initialize(name)
+    def initialize(seq, name)
+      super(seq)
       @name = name
     end
 
@@ -253,7 +292,8 @@ class Expression
   end
 
   class Constant < Expression
-    def initialize(klass, name)
+    def initialize(seq, klass, name)
+      super(seq)
       @klass = klass
       @name = name
     end
@@ -276,7 +316,8 @@ class Expression
   end
 
   class ConcatStrings < Expression
-    def initialize(args)
+    def initialize(seq, args)
+      super(seq)
       @args = args
     end
 
@@ -302,7 +343,8 @@ class Expression
   end
 
   class Assignment < Expression
-    def initialize(name, value)
+    def initialize(seq, name, value)
+      super(seq)
       @name = name
       @value = value
     end
@@ -317,7 +359,8 @@ class Expression
   end
 
   class ToRegexp < Expression
-    def initialize(value)
+    def initialize(seq, value)
+      super(seq)
       @value = value
     end
 
@@ -326,7 +369,6 @@ class Expression
       when ConcatStrings
         string = @value.to_s
         unstring = string[1..-2]
-        p @value, string, unstring
         return Regexp.compile(unstring).inspect
       else
         return Regexp.compile(@value.to_s).inspect
@@ -339,16 +381,17 @@ class Expression
   end
 
   class Throw < Expression
-    def initialize(value)
+    def initialize(seq, value)
+      super(seq)
       @value = value
     end
 
     def to_s
       # TODO: not all throws are breaks...
-      if @value then
-        return "break #{@value}"
-      else
+      if not @value or (@value.is_a?(Literal) and @value.value == nil) then
         return "break"
+      else
+        return "break #{@value}"
       end
     end
 
@@ -368,7 +411,7 @@ class VM
 
     class PUTOBJECT
       def bytedecode(env)
-        env.stack.push Expression::Literal.new(self.operands[0])
+        env.stack.push Expression::Literal.new(env.seq, self.operands[0])
       end
     end
 
@@ -394,7 +437,7 @@ class VM
         define_method(:bytedecode) do |env|
           rhs = env.stack.pop
           lhs = env.stack.pop
-          env.stack.push Expression::Infix.new(op, lhs, rhs)
+          env.stack.push Expression::Infix.new(env.seq, op, lhs, rhs)
         end
       end
     end
@@ -409,7 +452,7 @@ class VM
       klass.class_eval do
         define_method(:bytedecode) do |env|
           expr = env.stack.pop
-          env.stack.push Expression::Prefix.new(op, expr)
+          env.stack.push Expression::Prefix.new(env.seq, op, expr)
         end
       end
     end
@@ -433,7 +476,7 @@ class VM
     LITERAL_OPCODES.each do |klass|
       klass.class_eval do
         define_method(:bytedecode) do |env|
-          env.stack.push Expression::Literal.new(@operands[0])
+          env.stack.push Expression::Literal.new(env.seq, @operands[0])
         end
       end
     end
@@ -452,12 +495,12 @@ class VM
         receiver = env.stack.pop
         block = @operands[2]
         if INFIX_OPERATORS.include?(id) and args.size == 1 then
-          env.stack.push Expression::Infix.new(id, receiver, args[0])
+          env.stack.push Expression::Infix.new(env.seq, id, receiver, args[0])
         elsif PREFIX_OPERATORS.include?(id) and args.size == 0 then
-          env.stack.push Expression::Prefix.new(id, receiver)
+          env.stack.push Expression::Prefix.new(env.seq, id, receiver)
         else
           env.stack.push Expression::Send.new(
-              id, has_receiver, has_parens, receiver, block, splat_last, *args)
+              env.seq, id, has_receiver, has_parens, receiver, block, splat_last, *args)
         end
       end
 
@@ -469,7 +512,7 @@ class VM
 
     class PUTSELF
       def bytedecode(env)
-        env.stack.push Expression::Self.new
+        env.stack.push Expression::Self.new(env.seq)
       end
     end
 
@@ -481,7 +524,7 @@ class VM
           args.unshift env.stack.pop
           i -= 1
         end
-        env.stack.push Expression::Hash.new(args)
+        env.stack.push Expression::Hash.new(env.seq, args)
       end
     end
 
@@ -493,13 +536,13 @@ class VM
           args.unshift env.stack.pop
           i -= 1
         end
-        env.stack.push Expression::Array.new(args)
+        env.stack.push Expression::Array.new(env.seq, args)
       end
     end
 
     class DEFINED
       def bytedecode(env)
-        env.stack.push Expression::Defined.new(@operands[1])
+        env.stack.push Expression::Defined.new(env.seq, @operands[1])
       end
     end
 
@@ -512,7 +555,7 @@ class VM
     GET_VARIABLE_OPCODES.each do |klass|
       klass.class_eval do
         define_method(:bytedecode) do |env|
-          env.stack.push Expression::Variable.new(@operands[0])
+          env.stack.push Expression::Variable.new(env.seq, @operands[0])
         end
       end
     end
@@ -528,7 +571,7 @@ class VM
         define_method(:bytedecode) do |env|
           value = env.stack.pop
           env.stack.delete_at(-1) # TODO: dup'd value.. is this right?
-          env.stack.push Expression::Assignment.new(@operands[0], value)
+          env.stack.push Expression::Assignment.new(env.seq, @operands[0], value)
         end
       end
     end
@@ -536,14 +579,14 @@ class VM
     class GETCONSTANT
       def bytedecode(env)
         klass = env.stack.pop
-        env.stack.push Expression::Constant.new(klass, @operands[0])
+        env.stack.push Expression::Constant.new(env.seq, klass, @operands[0])
       end
     end
 
     class GETSPECIAL
       def bytedecode(env)
         type = @operands[1] >> 1
-        env.stack.push Expression::Variable.new("$#{type.chr}")
+        env.stack.push Expression::Variable.new(env.seq, "$#{type.chr}")
       end
     end
 
@@ -576,13 +619,13 @@ class VM
           args.unshift env.stack.pop
           i -= 1
         end
-        env.stack.push Expression::ConcatStrings.new(args)
+        env.stack.push Expression::ConcatStrings.new(env.seq, args)
       end
     end
 
     class TOREGEXP
       def bytedecode(env)
-        env.stack.push Expression::ToRegexp.new(env.stack.pop)
+        env.stack.push Expression::ToRegexp.new(env.seq, env.stack.pop)
       end
     end
 
@@ -599,7 +642,7 @@ class VM
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[idx]
         value = env.stack.pop
-        env.stack.push Expression::Assignment.new(name, value)
+        env.stack.push Expression::Assignment.new(env.seq, name, value)
       end
     end
 
@@ -607,7 +650,7 @@ class VM
       def bytedecode(env)
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[idx]
-        env.stack.push Expression::Variable.new(name)
+        env.stack.push Expression::Variable.new(env.seq, name)
       end
     end
 
@@ -616,7 +659,7 @@ class VM
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[-idx]
         value = env.stack.pop
-        env.stack.push Expression::Assignment.new(name, value)
+        env.stack.push Expression::Assignment.new(env.seq, name, value)
       end
     end
 
@@ -624,7 +667,7 @@ class VM
       def bytedecode(env)
         idx = env.local_table.size - @operands[0] + 1
         name = env.local_table[-idx]
-        env.stack.push Expression::Variable.new(name)
+        env.stack.push Expression::Variable.new(env.seq, name)
       end
     end
 
@@ -634,7 +677,7 @@ class VM
         n = @operands[0]
         dest = -(n+1)
         if env.stack[dest].is_a?(Expression) then
-          env.expressions.push env.stack[dest]
+          env.remember env.stack[dest]
         end
         env.stack[dest] = env.stack[-1]
       end
@@ -643,14 +686,13 @@ class VM
     class POP
       def bytedecode(env)
         top = env.stack[-1]
-        if top.is_a?(Expression) then
-          if top.is_a?(Expression::Send) and top.is_assignment then
-            # special case - the return value from the assignment gets
-            # thrown away and the result is the rhs
-            env.stack.delete_at(-2)
-          end
-          env.expressions.push top
+        if top.is_a?(Expression::Send) and top.is_assignment then
+          # special case - the return value from the assignment gets
+          # thrown away and the result is the rhs
+          env.remember env.stack[-2]
+          env.stack.delete_at(-2)
         end
+        env.remember top
         env.stack.pop
       end
     end
@@ -658,8 +700,8 @@ class VM
     class THROW
       def bytedecode(env)
         value = env.stack.pop
-        env.expressions.push env.stack.pop
-        env.stack.push Expression::Throw.new(value)
+        env.remember env.stack.pop
+        env.stack.push Expression::Throw.new(env.seq, value)
       end
     end
   end
@@ -669,13 +711,15 @@ class VM
       self.each do |instruction|
         # p instruction
         instruction.bytedecode(env)
+        env.advance
+        # puts env.stack.map { |x| x.to_s }.join(', ')
       end
     end
   end
 end
 
 if __FILE__ == $0 then
-  def foo; @@foo = 1; end
+  # def foo; @@foo = 1; end
   # def foo; a = [2, 3]; foo(1, *a); end
   # def foo; not true; end
   # def foo; catch(:foo) { throw :foo; 42 }; end
@@ -689,7 +733,7 @@ if __FILE__ == $0 then
   # def foo; a << b; end
   # def foo; a === b; end
   # def foo; []; end
-  # def foo; foo.bar = 42; end
+  def foo; foo.bar = 42; end
   # def foo; h = {}; h.default = true; h; end
   # def foo; @FOO; end
   # def foo; $FOO; end
@@ -723,12 +767,14 @@ if __FILE__ == $0 then
     end
     puts a.join(', ')
     i.bytedecode(env)
+    env.advance
     # p env.stack
     # p env.stack.map { |x| x.to_s }
     # puts
   end
 
-  (env.expressions + env.stack).each do |expr|
+  puts "---"
+  (env.expressions + env.stack).sort.each do |expr|
     puts expr.to_s
   end
 end
