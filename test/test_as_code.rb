@@ -22,6 +22,12 @@ class TC_As_Code < Test::Unit::TestCase
 
   extend Test::Unit::Assertions
 
+  # Some of the samples use this
+  def foo(*a, &b)
+    return b.call if b
+    return a
+  end
+
   EXPRESSION_SAMPLES.each do |name, code|
     p = proc {
       p_orig = eval("proc { #{code} }")
