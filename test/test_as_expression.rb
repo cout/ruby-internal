@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
+require 'timeout'
 
 dir = File.dirname(__FILE__)
 $:.unshift(dir) if not $:.include?(dir)
@@ -17,15 +18,22 @@ $stderr.sync = true
 class TC_As_Expression < Test::Unit::TestCase
   extend Test::Unit::Assertions
 
+  # Some of the samples use this
+  def foo(*a, &b)
+    return b.call if b
+    return a
+  end
+
   EXPRESSION_SAMPLES.each do |name, code|
     p = proc {
       p_orig = eval("proc { #{code} }")
       code_new = p_orig.body.as_expression
+      # p code, code_new
       p_new = eval("proc { #{code_new} }")
       result_orig = result_new = nil
       exc_orig = exc_new = nil
-      begin; result_orig = p_orig.call; rescue; exc_orig = $!; end
-      begin; result_new = p_new.call; rescue; exc_new = $!; end
+      timeout(1) { begin; result_orig = p_orig.call; rescue; exc_orig = $!; end }
+      timeout(1) { begin; result_new = p_new.call; rescue; exc_new = $!; end }
       assert_equal(result_orig, result_new)
       assert_equal(exc_orig.class, exc_new.class)
       if exc_orig and exc_new then
