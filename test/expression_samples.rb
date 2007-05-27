@@ -10,6 +10,8 @@ EXPRESSION_SAMPLES = {
   :fcall                   => 'foo()',
   :fcall_many              => 'foo(1, 2, 3)',
   :fcall_many2             => 'foo 1, 2, 3',
+  :fcall_splat             => 'a = [2, 3]; foo(1, *a)',
+  :fcall_block             => 'foo() { nil }',
   :plus                    => '1+1',
   :minus                   => '54-2',
   :times                   => '12*6',
@@ -105,6 +107,7 @@ EXPRESSION_SAMPLES = {
   :until_0_x               => 'begin; break 7; end until false',
   :break                   => 'break',
   :break_x                 => 'break 49',
+  :catch                   => 'catch(:foo) { throw :foo; 42 }',
   # TODO: yield
   :begin                   => 'begin; 42; end',
   :begin_empty             => 'begin; end',
