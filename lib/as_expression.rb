@@ -14,7 +14,13 @@ if Object.const_defined?(:VM) and
         env = Nodewrap::ByteDecoder::Environment.new(local_table())
         self.bytedecode(env)
         expressions = env.expressions + env.stack
-        return expressions.join('; ')
+        if expressions.length == 1 and
+           expressions[0].is_a?(Nodewrap::ByteDecoder::Expression::Literal) and
+           expressions[0].value == nil then
+          return nil
+        else
+          return expressions.join('; ')
+        end
       end
     end
   end
@@ -617,11 +623,10 @@ class Proc
   def as_expression
     sig = self.signature
     body = self.body ? self.body.as_expression : ''
-    return(
-      "proc { " +
-      "#{sig.args.unspecified ? "" : sig.to_s + ' '}" +
-      "#{self.body ? self.body.as_expression + ' ' : ''}" +
-      "}")
+    body_expression = self.body ? self.body.as_expression : nil
+    s = sig.args.unspecified ? "" : sig.to_s + ' '
+    b = body_expression ? body_expression + ' ' : ''
+    return "proc { #{s}#{b}}"
   end
 end
 
