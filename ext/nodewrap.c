@@ -1742,7 +1742,16 @@ static VALUE iseq_local_table(VALUE self)
 
   for(j = 0; j < iseqdat->local_table_size; ++j)
   {
-    rb_ary_push(ary, ID2SYM(iseqdat->local_table[j]));
+    ID id = iseqdat->local_table[j];
+    if(rb_id2name(id))
+    {
+      rb_ary_push(ary, ID2SYM(id));
+    }
+    else
+    {
+      // Temporary
+      rb_ary_push(ary, Qnil);
+    }
   }
 
   return ary;
