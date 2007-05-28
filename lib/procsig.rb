@@ -11,7 +11,13 @@ class Proc
     end
 
     def unspecified
-      @names.nil?
+      if defined?(VM) and defined?(VM::InstructionSequence) then
+        # YARV
+        return @names.length == 0
+      else
+        # pre-YARV
+        @names.nil?
+      end
     end
 
     def single_assignment
@@ -43,11 +49,12 @@ class Proc
     end
 
     def empty_last_arg
-      if (@names.size == 1 and not @rest_arg) or # pre-YARV
-         (@rest_arg and @names[-1] == nil) then # YARV
-        return true
+      if defined?(VM) and defined?(VM::InstructionSequence) then
+        # YARV
+        return (@rest_arg and @names[-1] == nil)
       else
-        return false
+        # pre-YARV
+        return (@names.size == 1 and not @rest_arg)
       end
     end
   end
