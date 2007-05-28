@@ -111,7 +111,7 @@ class Expression
       case @op
       when :*, :/, :%
         return 2
-      when :+, :-
+      when :"+", :"-"
         return 3
       when :<<, :>>
         return 4
@@ -429,8 +429,8 @@ class VM
     end
 
     INFIX_OPCODES = {
-      OPT_PLUS  => :+,
-      OPT_MINUS => :-,
+      OPT_PLUS  => :"+",
+      OPT_MINUS => :"-",
       OPT_MULT  => :*,
       OPT_DIV   => :/,
       OPT_MOD   => :%,
