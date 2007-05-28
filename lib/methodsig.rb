@@ -84,6 +84,43 @@ module MethodSig
     end
   end
 
+  def set_optional_arg_info(info, args_node, names)
+    if args_node then
+      # pre-YARV
+      opt = args_node.opt
+      while opt do
+        head = opt.head
+        if head.class == Node::LASGN then
+          info[head.vid] = "#{head.vid}=#{head.value.as_expression}"
+        else
+          raise "Unexpected node type: #{opt.class}"
+        end
+        opt = opt.next
+      end
+    else
+      # YARV
+      iseq = self.body.body
+      opt_pc = iseq.opt_pc
+      env = Nodewrap::ByteDecoder::Environment.new(iseq.local_table())
+      iseq.bytedecode(env, 0, opt_pc)
+      expressions = env.expressions + env.stack
+      expressions.sort!
+      opt_table = self.body.body.arg_opt_table
+      opt_table.pop
+      first_opt_idx =
+        names.size -
+        opt_table.size -
+        (self.rest_arg ? 1 : 0) -
+        (self.block_arg ? 1 : 0)
+      opt_table.each_with_index do |pc, idx|
+        name = names[first_opt_idx + idx]
+        expr = expressions.find { |e| e.pc >= pc }
+        info[name] = "#{name}=#{expr.rhs}"
+      end
+    end
+  end
+  private :set_optional_arg_info
+
   # Return a hash mapping each argument name to a description of that
   # argument.
   def argument_info
@@ -97,22 +134,7 @@ module MethodSig
 
     # Optional args
     args_node = args_node()
-    if args_node then
-      # pre-YARV
-      opt = args_node().opt
-      while opt do
-        head = opt.head
-        if head.class == Node::LASGN then
-          info[head.vid] = "#{head.vid}=#{head.value.as_expression}"
-        else
-          raise "Unexpected node type: #{opt.class}"
-        end
-        opt = opt.next
-      end
-    else
-      # YARV
-      opt = self.body.body.arg_opt_table.size
-    end
+    set_optional_arg_info(info, args_node, names)
 
     # Rest arg
     if self.rest_arg then
