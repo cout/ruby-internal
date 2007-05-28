@@ -2,6 +2,31 @@ require 'nodewrap'
 require 'rbconfig'
 require 'as_expression'
 
+if defined?(VM::InstructionSequence) then
+  require 'bytedecoder'
+
+  class VM
+    class InstructionSequence
+      def as_code(indent=0)
+        env = Nodewrap::ByteDecoder::Environment.new(local_table())
+        opt_pc = self.opt_pc
+        self.bytedecode(env, opt_pc)
+        expressions = env.expressions + env.stack
+        if expressions.length == 0 then
+          return nil
+        elsif expressions.length == 1 and
+           expressions[0].is_a?(Nodewrap::ByteDecoder::Expression::Literal) and
+           expressions[0].value == nil then
+          return nil
+        else
+          expressions.map! { |e| "#{'  '*indent}#{e}" }
+          return expressions.join("\n")
+        end
+      end
+    end
+  end
+end
+
 class Node
   public
 
@@ -252,7 +277,6 @@ class Proc
   def as_code(indent=0)
     sig = self.signature
     body = self.body ? self.body.as_code(indent+1) : ''
-    sig = self.signature
     s = "#{'  '*indent}proc do"
     if not sig.args.unspecified then
       s += " #{sig}"
