@@ -1868,9 +1868,11 @@ static VALUE iseq_each(VALUE self)
         }
 
         case TS_GENTRY:
-          rb_ary_push(args, Qnil);
-          /* TODO */
+        {
+          struct global_entry *entry = (struct global_entry *)*seq;
+          rb_ary_push(args, ID2SYM(rb_intern(rb_id2name(entry->id))));
           break;
+        }
 
         case TS_OFFSET:
           rb_ary_push(args, Qnil);
