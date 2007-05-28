@@ -1803,10 +1803,12 @@ static VALUE iseq_arg_block(VALUE self)
 }
 
 /* call-seq:
- *   iseq.arg_opt_table => true or false
+ *   iseq.arg_opt_table => Array of Integer
  *
- * Returns optional argument table, which contains instruction sequences
- * for each of the optional arguments.
+ * Returns optional argument table.  The value in the table represent
+ * the index into the instruction sequence of the code to set the
+ * optional argument.  The last element is the index of the start of the
+ * code sequence.
  */
 static VALUE iseq_arg_opt_table(VALUE self)
 {
@@ -1816,7 +1818,7 @@ static VALUE iseq_arg_opt_table(VALUE self)
 
   for(j = 0; j < iseqdat->arg_opts; ++j)
   {
-    rb_ary_push(ary, iseqdat->arg_opt_tbl[j]);
+    rb_ary_push(ary, INT2NUM(iseqdat->arg_opt_tbl[j]));
   }
 
   return ary;
