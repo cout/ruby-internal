@@ -315,6 +315,19 @@ class Expression
     end
   end
 
+  class ConstantAssignment < Constant
+    def initialize(seq, klass, name, value)
+      super(seq, klass, name)
+      @value = value
+    end
+
+    def to_s
+      s = super()
+      s << " = #{@value}"
+      return s
+    end
+  end
+
   class ConcatStrings < Expression
     def initialize(seq, args)
       super(seq)
@@ -421,8 +434,8 @@ class VM
       OPT_MULT  => :*,
       OPT_DIV   => :/,
       OPT_MOD   => :%,
-      OPT_LTLT  => :>>,
-      # OPT_GTGT  => :<<,
+      OPT_LTLT  => :<<,
+      # OPT_GTGT  => :>>,
       OPT_EQ    => :==,
       OPT_GT    => :>,
       OPT_GE    => :>=,
@@ -430,7 +443,7 @@ class VM
       OPT_LE    => :<=,
     }
 
-    INFIX_OPERATORS = INFIX_OPCODES.values + [ :===, :<< ]
+    INFIX_OPERATORS = INFIX_OPCODES.values + [ :===, :>> ]
 
     INFIX_OPCODES.each do |klass, op|
       klass.class_eval do
@@ -583,9 +596,18 @@ class VM
       end
     end
 
+    class SETCONSTANT
+      def bytedecode(env)
+        klass = env.stack.pop
+        value = env.stack.pop
+        env.stack.push Expression::ConstantAssignment.new(env.seq, klass, @operands[0], value)
+      end
+    end
+
     class GETSPECIAL
       def bytedecode(env)
         type = @operands[1] >> 1
+        type += ?0.ord if type < 10
         env.stack.push Expression::Variable.new(env.seq, "$#{type.chr}")
       end
     end
@@ -656,8 +678,8 @@ class VM
 
     class SETDYNAMIC
       def bytedecode(env)
-        idx = env.local_table.size - @operands[0] + 1
-        name = env.local_table[-idx]
+        idx = env.local_table.size - @operands[0]
+        name = env.local_table[idx]
         value = env.stack.pop
         env.stack.push Expression::Assignment.new(env.seq, name, value)
       end
@@ -665,8 +687,9 @@ class VM
 
     class GETDYNAMIC
       def bytedecode(env)
-        idx = env.local_table.size - @operands[0] + 1
-        name = env.local_table[-idx]
+        idx = env.local_table.size - @operands[0]
+        name = env.local_table[idx]
+        p idx, name, env.local_table
         env.stack.push Expression::Variable.new(env.seq, name)
       end
     end
@@ -709,10 +732,10 @@ class VM
   class InstructionSequence
     def bytedecode(env)
       self.each do |instruction|
-        # p instruction
+        p instruction
         instruction.bytedecode(env)
         env.advance
-        # puts env.stack.map { |x| x.to_s }.join(', ')
+        puts env.stack.map { |x| x.to_s }.join(', ')
       end
     end
   end
