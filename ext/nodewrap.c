@@ -409,7 +409,7 @@ static VALUE node_inspect(VALUE node)
 #if RUBY_VERSION_CODE < 190
   if(rb_inspecting_p(node))
   {
-    str = rb_str_new2("#<");
+    VALUE str = rb_str_new2("#<");
     rb_str_append(str, rb_class2name(CLASS_OF(node)));
     rb_str_cat2(str, ":...>");
     return str;
@@ -2069,6 +2069,8 @@ static VALUE instruction_operands(VALUE self)
  * ---------------------------------------------------------------------
  */
 
+#ifdef RUBY_HAS_YARV
+
 static VALUE inline_cache_klass(VALUE self)
 {
   /* TODO: returning the real value can crash the interpreter */
@@ -2086,6 +2088,8 @@ static VALUE inline_cache_vmstat(VALUE self)
   IC inline_cache = unwrap_node(self);
   return INT2NUM(inline_cache->ic_vmstat);
 }
+
+#endif
 
 /* ---------------------------------------------------------------------
  * Eval tree
