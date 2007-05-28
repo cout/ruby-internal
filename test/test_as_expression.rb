@@ -51,59 +51,66 @@ class TC_As_Expression < Test::Unit::TestCase
   end
 
   def method_no_args
+    42
   end
 
   def test_method_no_args_as_expression
     m = method(:method_no_args)
-    assert_equal 'def method_no_args(); nil; end', m.as_expression
+    assert_equal 'def method_no_args(); 42; end', m.as_expression
   end
 
   def method_one_arg(a)
+    42
   end
 
   def test_method_one_arg_as_expression
     m = method(:method_one_arg)
-    assert_equal 'def method_one_arg(a); nil; end', m.as_expression
+    assert_equal 'def method_one_arg(a); 42; end', m.as_expression
   end
 
   def method_two_args(a, b)
+    42
   end
 
   def test_method_two_args_as_expression
     m = method(:method_two_args)
-    assert_equal 'def method_two_args(a, b); nil; end', m.as_expression
+    assert_equal 'def method_two_args(a, b); 42; end', m.as_expression
   end
 
   def method_rest_arg(*rest)
+    42
   end
 
   def test_method_rest_arg_as_expression
     m = method(:method_rest_arg)
-    assert_equal 'def method_rest_arg(*rest); nil; end', m.as_expression
+    assert_equal 'def method_rest_arg(*rest); 42; end', m.as_expression
   end
 
   def method_block_arg(&block)
+    42
   end
 
   def test_method_block_arg_as_expression
     m = method(:method_block_arg)
-    assert_equal 'def method_block_arg(&block); nil; end', m.as_expression
+    assert_equal 'def method_block_arg(&block); 42; end', m.as_expression
   end
 
   def method_rest_and_block_arg(*rest, &block)
+    42
   end
 
   def test_method_rest_and_block_arg_as_expression
     m = method(:method_rest_and_block_arg)
-    assert_equal 'def method_rest_and_block_arg(*rest, &block); nil; end', m.as_expression
+    assert_equal 'def method_rest_and_block_arg(*rest, &block); 42; end', m.as_expression
   end
 
   def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)
+    42
   end
 
   def test_method_two_args_and_rest_and_block_arg_as_expression
     m = method(:method_two_args_and_rest_and_block_arg)
-    assert_equal 'def method_two_args_and_rest_and_block_arg(a, b, *rest, &block); nil; end', m.as_expression
+    assert_equal 'def method_two_args_and_rest_and_block_arg(a, b, *rest, &block); 42; end', m.as_expression
   end
 
   def method_with_body(a, b)
@@ -121,8 +128,11 @@ class TC_As_Expression < Test::Unit::TestCase
   end
 
   def test_proc_empty_args_as_expression
-    p = proc { || }
-    assert_equal 'proc { || }', p.as_expression
+    if not defined?(VM) then
+      # indistinguishable from proc { } on YARV
+      p = proc { || }
+      assert_equal 'proc { || }', p.as_expression
+    end
   end
 
   def test_proc_one_arg_as_expression
