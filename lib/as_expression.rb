@@ -4,17 +4,19 @@ require 'procsig'
 require 'node_to_a'
 require 'rbconfig'
 
-if Object.const_defined?(:VM) and
-   VM.const_defined?(:InstructionSequence) then
+if defined?(VM::InstructionSequence) then
   require 'bytedecoder'
 
   class VM
     class InstructionSequence
       def as_expression
         env = Nodewrap::ByteDecoder::Environment.new(local_table())
-        self.bytedecode(env)
+        opt_pc = self.opt_pc
+        self.bytedecode(env, opt_pc)
         expressions = env.expressions + env.stack
-        if expressions.length == 1 and
+        if expressions.length == 0 then
+          return nil
+        elsif expressions.length == 1 and
            expressions[0].is_a?(Nodewrap::ByteDecoder::Expression::Literal) and
            expressions[0].value == nil then
           return nil
@@ -610,19 +612,22 @@ class Method
     sig = self.signature
     if self.body.respond_to?(:body) then
       # YARV
-      body = self.body.body.as_expression
+      body_expression, opt_expressions = self.body.body.as_expression
     else
       # pre-YARV
-      body = self.body.as_expression
+      body_expression = self.body.as_expression
     end
-    return "def #{sig.name}(#{sig.param_list}); #{body}; end"
+    if body_expression then
+      return "def #{sig.name}(#{sig.param_list}); #{body_expression}; end"
+    else
+      return "def #{sig.name}(#{sig.param_list}); end"
+    end
   end
 end
 
 class Proc
   def as_expression
     sig = self.signature
-    body = self.body ? self.body.as_expression : ''
     body_expression = self.body ? self.body.as_expression : nil
     s = sig.args.unspecified ? "" : sig.to_s + ' '
     b = body_expression ? body_expression + ' ' : ''
