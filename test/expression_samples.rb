@@ -12,6 +12,7 @@ EXPRESSION_SAMPLES = {
   :fcall_many2             => 'foo 1, 2, 3',
   :fcall_splat             => 'a = [2, 3]; foo(1, *a)',
   :fcall_block             => 'foo() { nil }',
+  :fcall_block_with_args   => 'foo() { |x,y| [x, y] }',
   :plus                    => '1+1',
   :minus                   => '54-2',
   :times                   => '12*6',
