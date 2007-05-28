@@ -20,7 +20,7 @@ class TC_As_Expression < Test::Unit::TestCase
 
   # Some of the samples use this
   def foo(*a, &b)
-    return b.call if b
+    return b.call(1, 2) if b
     return a
   end
 
@@ -111,6 +111,15 @@ class TC_As_Expression < Test::Unit::TestCase
   def test_method_two_args_and_rest_and_block_arg_as_expression
     m = method(:method_two_args_and_rest_and_block_arg)
     assert_equal 'def method_two_args_and_rest_and_block_arg(a, b, *rest, &block); 42; end', m.as_expression
+  end
+
+  def method_two_default_args(a = 1, b = 2)
+    42
+  end
+
+  def test_method_two_default_args_as_expression
+    m = method(:method_two_default_args)
+    assert_equal('def method_two_default_args(a=1, b=2); 42; end', m.as_expression)
   end
 
   def method_with_body(a, b)
