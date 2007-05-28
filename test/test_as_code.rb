@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
+require 'timeout'
 
 dir = File.dirname(__FILE__)
 $:.unshift(dir) if not $:.include?(dir)
@@ -24,7 +25,7 @@ class TC_As_Code < Test::Unit::TestCase
 
   # Some of the samples use this
   def foo(*a, &b)
-    return b.call if b
+    return b.call(1, 2) if b
     return a
   end
 
@@ -32,11 +33,12 @@ class TC_As_Code < Test::Unit::TestCase
     p = proc {
       p_orig = eval("proc { #{code} }")
       code_new = p_orig.body.as_code
+      # p code, code_new
       p_new = eval("proc { #{code_new} }")
       result_orig = result_new = nil
       exc_orig = exc_new = nil
-      begin; result_orig = p_orig.call; rescue; exc_orig = $!; end
-      begin; result_new = p_new.call; rescue; exc_new = $!; end
+      timeout(1) { begin; result_orig = p_orig.call; rescue; exc_orig = $!; end }
+      timeout(1) { begin; result_new = p_new.call; rescue; exc_new = $!; end }
       assert_equal(exc_orig.class, exc_new.class)
       if exc_orig and exc_new then
         assert_equal(exc_orig.message, exc_new.message)
