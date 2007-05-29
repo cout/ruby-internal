@@ -254,11 +254,17 @@ end
 module MethodAsCode
   def as_code(indent=0, name=nil)
     sig = self.signature
-    body = self.body ? self.body.as_code(indent+1) : ''
+    if self.body.respond_to?(:body) then
+      # YARV
+      body_expression = self.body.body.as_code(indent+1)
+    else
+      # pre-YARV
+      body_expression = self.body ? self.body.as_code(indent+1) : ''
+    end
     name ||= sig.name
     s = "#{'  '*indent}def #{name}(#{sig.param_list})\n"
-    if self.body then
-      s += "#{self.body.as_code(indent+1)}\n"
+    if body_expression then
+      s += "#{body_expression}\n"
     end
     s += "#{'  '*indent}end"
     return s
@@ -276,14 +282,14 @@ end
 class Proc
   def as_code(indent=0)
     sig = self.signature
-    body = self.body ? self.body.as_code(indent+1) : ''
+    body_expression = self.body ? self.body.as_code(indent+1) : nil
     s = "#{'  '*indent}proc do"
     if not sig.args.unspecified then
       s += " #{sig}"
     end
     s += "\n"
-    if self.body then
-      s += "#{self.body.as_code(indent+1)}\n"
+    if body_expression then
+      s += "#{body_expression}\n"
     end
     s += "#{'  '*indent}end"
     return s

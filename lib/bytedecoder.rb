@@ -184,7 +184,9 @@ class Expression
         # TODO: handle block args
         env = Environment.new(@block.local_table)
         @block.bytedecode(env)
-        expressions = (env.expressions + env.stack).sort.map { |x| x.to_s }
+        expressions = env.expressions + env.stack
+        expressions.sort!
+        expressions.map! { |x| x.to_s }
         if expressions.length == 1 and
            expressions[0].is_a?(Literal) and
            expressions[0].value == nil then
@@ -770,6 +772,7 @@ class VM
         if start_pc and env.pc >= start_pc then
           instruction.bytedecode(env)
         end
+        # p env.stack
         env.advance(instruction.length)
         break if end_pc and env.pc >= end_pc
       end

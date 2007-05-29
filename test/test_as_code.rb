@@ -56,59 +56,66 @@ class TC_As_Code < Test::Unit::TestCase
   end
 
   def method_no_args
+    42
   end
 
   def test_method_no_args_as_code
     m = method(:method_no_args)
-    assert_equal "def method_no_args()\n  nil\nend", m.as_code
+    assert_equal "def method_no_args()\n  42\nend", m.as_code
   end
 
   def method_one_arg(a)
+    42
   end
 
   def test_method_one_arg_as_code
     m = method(:method_one_arg)
-    assert_equal "def method_one_arg(a)\n  nil\nend", m.as_code
+    assert_equal "def method_one_arg(a)\n  42\nend", m.as_code
   end
 
   def method_two_args(a, b)
+    42
   end
 
   def test_method_two_args_as_code
     m = method(:method_two_args)
-    assert_equal "def method_two_args(a, b)\n  nil\nend", m.as_code
+    assert_equal "def method_two_args(a, b)\n  42\nend", m.as_code
   end
 
   def method_rest_arg(*rest)
+    42
   end
 
   def test_method_rest_arg_as_code
     m = method(:method_rest_arg)
-    assert_equal "def method_rest_arg(*rest)\n  nil\nend", m.as_code
+    assert_equal "def method_rest_arg(*rest)\n  42\nend", m.as_code
   end
 
   def method_block_arg(&block)
+    42
   end
 
   def test_method_block_arg_as_code
     m = method(:method_block_arg)
-    assert_equal "def method_block_arg(&block)\n  nil\nend", m.as_code
+    assert_equal "def method_block_arg(&block)\n  42\nend", m.as_code
   end
 
   def method_rest_and_block_arg(*rest, &block)
+    42
   end
 
   def test_method_rest_and_block_arg_as_code
     m = method(:method_rest_and_block_arg)
-    assert_equal "def method_rest_and_block_arg(*rest, &block)\n  nil\nend", m.as_code
+    assert_equal "def method_rest_and_block_arg(*rest, &block)\n  42\nend", m.as_code
   end
 
   def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)
+    42
   end
 
   def test_method_two_args_and_rest_and_block_arg_as_code
     m = method(:method_two_args_and_rest_and_block_arg)
-    assert_equal "def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)\n  nil\nend", m.as_code
+    assert_equal "def method_two_args_and_rest_and_block_arg(a, b, *rest, &block)\n  42\nend", m.as_code
   end
 
   def method_with_body(a, b)
@@ -157,8 +164,11 @@ class TC_As_Code < Test::Unit::TestCase
   end
 
   def test_proc_empty_args_as_code
-    p = proc { || }
-    assert_equal "proc do ||\nend", p.as_code
+    if not defined?(VM) then
+      # indistinguishable from proc { } on YARV
+      p = proc { || }
+      assert_equal "proc do ||\nend", p.as_code
+    end
   end
 
   def test_proc_one_arg_as_code

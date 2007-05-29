@@ -616,7 +616,7 @@ class Node
   }
 end
 
-class Method
+module MethodAsExpression
   # It doesn't entirely make sense to have Method#as_expression, because
   # a method definition isn't an expression.  We have one anyway, to be
   # consistent with Proc.
@@ -624,7 +624,7 @@ class Method
     sig = self.signature
     if self.body.respond_to?(:body) then
       # YARV
-      body_expression, opt_expressions = self.body.body.as_expression
+      body_expression = self.body.body.as_expression
     else
       # pre-YARV
       body_expression = self.body.as_expression
@@ -635,6 +635,14 @@ class Method
       return "def #{sig.name}(#{sig.param_list}); end"
     end
   end
+end
+
+class Method
+  include MethodAsExpression
+end
+
+class UnboundMethod
+  include MethodAsExpression
 end
 
 class Proc
