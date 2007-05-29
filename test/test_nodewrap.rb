@@ -174,69 +174,74 @@ class TC_Nodewrap < Test::Unit::TestCase
   end
 
   def test_marshal_class
-    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
-    assert_equal 2, TestClass.instance_eval('@foo')
+    begin
+      assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+      assert_equal 2, TestClass.instance_eval('@foo')
 
-    d = Marshal.dump(TestClass)
+      d = Marshal.dump(TestClass)
 
-    # Thread critical should have been reset by the class restorer
-    assert_equal false, Thread.critical
+      # Thread critical should have been reset by the class restorer
+      assert_equal false, Thread.critical
 
-    # Make sure the class instance variables are still set
-    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
-    assert_equal 2, TestClass.instance_eval('@foo')
+      # Make sure the class instance variables are still set
+      assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+      assert_equal 2, TestClass.instance_eval('@foo')
 
-    c = Marshal.load(d)
-    assert_equal Class, c.class
-    a = c.ancestors
-    assert a.include?(Object)
-    assert a.include?(Kernel)
-    assert a.include?(Foo)
-    assert a.include?(c)
+      c = Marshal.load(d)
+      assert_equal Class, c.class
+      a = c.ancestors
+      assert a.include?(Object)
+      assert a.include?(Kernel)
+      assert a.include?(Foo)
+      assert a.include?(c)
 
-    # Constant lookup
-    assert_equal 1, c::FOO
+      # Constant lookup
+      assert_equal 1, c::FOO
 
-    # Constant lookup in singleton class
-    result = class << c
-      FOO
+      # Constant lookup in singleton class
+      result = class << c
+        FOO
+      end
+      assert_equal 4, result
+
+      # Class instance variable lookup
+      result = c.instance_eval do
+        @foo
+      end
+      assert_equal 2, result
+
+      # Singleton class instance variable lookup
+      result = class << c
+        @foo
+      end
+      assert_equal 5, result
+
+      # Class variable lookup
+      # This is a little bit messy, but it was the only way I could figure
+      # to get at @@foo
+      self.class.instance_eval do
+        remove_const :Tmp_Foo
+        const_set :Tmp_Foo, c
+      end
+      eval "class Tmp_Foo; $at_at_foo = @@foo; end"
+      result = $at_at_foo
+      assert_equal 3, result
+
+      # Test method call
+      f = c.new
+      assert_equal 42, f.foo()
+      assert_equal 42*42, f.foo(42)
+
+      # Thread critical should have been reset by the class restorer
+      assert_equal false, Thread.critical
+
+      # Also make sure the class instance variables are still set
+      assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+      assert_equal 2, TestClass.instance_eval('@foo')
+
+    ensure
+      Thread.critical = false
     end
-    assert_equal 4, result
-
-    # Class instance variable lookup
-    result = c.instance_eval do
-      @foo
-    end
-    assert_equal 2, result
-
-    # Singleton class instance variable lookup
-    result = class << c
-      @foo
-    end
-    assert_equal 5, result
-
-    # Class variable lookup
-    # This is a little bit messy, but it was the only way I could figure
-    # to get at @@foo
-    self.class.instance_eval do
-      remove_const :Tmp_Foo
-      const_set :Tmp_Foo, c
-    end
-    eval "class Tmp_Foo; $at_at_foo = @@foo; end"
-    result = $at_at_foo
-    assert_equal 3, result
-
-    # Test method call
-    f = c.new
-    assert_equal 42, f.foo()
-    assert_equal 42*42, f.foo(42)
-
-    # Thread critical should have been reset by the class restorer
-    assert_equal false, Thread.critical
-
-    # Also make sure the class instance variables are still set
-    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
-    assert_equal 2, TestClass.instance_eval('@foo')
   end
 
   extend Test::Unit::Assertions
