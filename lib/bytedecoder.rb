@@ -112,7 +112,7 @@ class Expression
       case @op
       when :*, :/, :%
         return 2
-      when :"+", :"-"
+      when '+'.intern, '-'.intern
         return 3
       when :<<, :>>
         return 4
@@ -134,7 +134,7 @@ class Expression
     def to_s
       op = @op.to_s
       op.chop! if op[-1] == ?@
-      if @op == :"!" and @expr.is_a?(Infix) and @expr.op == :== then
+      if @op == '!'.intern and @expr.is_a?(Infix) and @expr.op == :== then
         return "#{@expr.fmt(@expr.lhs)} != #{@expr.fmt(@expr.rhs)}"
       elsif self.precedence < @expr.precedence then
         return "#{op}(#{@expr})"
@@ -256,6 +256,29 @@ class Expression
       s << @args.join(', ')
       s << ' ]'
       return s
+    end
+
+    def precedence
+      return 1
+    end
+  end
+
+  class ConcatArray < Expression
+    def initialize(array, splat)
+      @array = array
+      @splat = splat
+    end
+
+    def to_s
+      s = '[ '
+      case @array
+      when Array then s << @array.args.join(', ')
+      when Literal then s << @array.value.join(', ')
+      else; raise "Unexpected: #{@array.inspect}"
+      end
+      s << ', *'
+      s << @splat.to_s
+      s << ' ]'
     end
 
     def precedence
@@ -433,8 +456,8 @@ class VM
     end
 
     INFIX_OPCODES = {
-      OPT_PLUS  => :"+",
-      OPT_MINUS => :"-",
+      OPT_PLUS  => '+'.intern,
+      OPT_MINUS => '-'.intern,
       OPT_MULT  => :*,
       OPT_DIV   => :/,
       OPT_MOD   => :%,
@@ -460,7 +483,7 @@ class VM
     end
 
     PREFIX_OPCODES = {
-      PUTNOT => :"!",
+      PUTNOT => '!'.intern,
     }
 
     PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
@@ -693,7 +716,6 @@ class VM
       def bytedecode(env)
         idx = env.local_table.size - @operands[0]
         name = env.local_table[idx]
-        p idx, name, env.local_table
         env.stack.push Expression::Variable.new(env.pc, name)
       end
     end
@@ -731,11 +753,20 @@ class VM
         env.stack.push Expression::Throw.new(env.pc, value)
       end
     end
+
+    class CONCATARRAY
+      def bytedecode(env)
+        splat = env.stack.pop
+        array = env.stack.pop
+        env.stack.push Expression::ConcatArray.new(array, splat)
+      end
+    end
   end
 
   class InstructionSequence
     def bytedecode(env, start_pc=nil, end_pc=nil)
       self.each do |instruction|
+        # p instruction
         if start_pc and env.pc >= start_pc then
           instruction.bytedecode(env)
         end
