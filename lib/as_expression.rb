@@ -70,6 +70,7 @@ class Node
   end
 
   define_expression(:FCALL) do |node|
+    # args with either be an ARRAY or ARGSCAT
     args = node.args
     "#{node.mid}(#{args ? args.as_expression(false) : ''})"
   end
@@ -132,8 +133,19 @@ class Node
   class ARRAY < Node
     def as_expression_impl(node, brackets = true)
       s = brackets ? '[' : ''
-      s += node.to_a.map { |n| n.as_expression }.join(', ')
-      s += brackets ? ']' : ''
+      s << (node.to_a.map { |n| n.as_expression }.join(', '))
+      s << (brackets ? ']' : '')
+      s
+    end
+  end
+
+  class ARGSCAT < Node
+    def as_expression_impl(node, brackets = true)
+      s = brackets ? '[' : ''
+      s << node.head.as_expression(false)
+      s << ", "
+      s << "*#{node.body.as_expression}"
+      s << (brackets ? ']' : '')
       s
     end
   end
