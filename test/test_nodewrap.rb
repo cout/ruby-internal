@@ -174,7 +174,18 @@ class TC_Nodewrap < Test::Unit::TestCase
   end
 
   def test_marshal_class
+    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+    assert_equal 2, TestClass.instance_eval('@foo')
+
     d = Marshal.dump(TestClass)
+
+    # Thread critical should have been reset by the class restorer
+    assert_equal false, Thread.critical
+
+    # Make sure the class instance variables are still set
+    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+    assert_equal 2, TestClass.instance_eval('@foo')
+
     c = Marshal.load(d)
     assert_equal Class, c.class
     a = c.ancestors
@@ -219,6 +230,13 @@ class TC_Nodewrap < Test::Unit::TestCase
     f = c.new
     assert_equal 42, f.foo()
     assert_equal 42*42, f.foo(42)
+
+    # Thread critical should have been reset by the class restorer
+    assert_equal false, Thread.critical
+
+    # Also make sure the class instance variables are still set
+    assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
+    assert_equal 2, TestClass.instance_eval('@foo')
   end
 
   extend Test::Unit::Assertions

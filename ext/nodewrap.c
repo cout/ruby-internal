@@ -13,6 +13,8 @@
 
 #include <ctype.h>
 
+static VALUE rb_mNodewrap = Qnil;
+
 #ifdef RUBY_HAS_YARV
 #include "eval_intern.h"
 #define ruby_safe_level rb_safe_level()
@@ -1536,14 +1538,15 @@ static VALUE module_dump(VALUE self, VALUE limit)
     }
 
     class_restorer = ALLOC(struct Class_Restorer);
-    class_restorer->klass = self;
+    class_restorer->klass = CLASS_OF(self);
     class_restorer->m_tbl = *singleton_class->m_tbl;
     class_restorer->iv_tbl = *singleton_class->iv_tbl;
     class_restorer->thread_critical = rb_thread_critical;
     obj = Data_Wrap_Struct(
         rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
         class_restorer);
-    rb_iv_set(self, "__class_restorer__", obj);
+
+    rb_iv_set(str, "__class_restorer__", obj);
 
     singleton_class->iv_tbl->num_entries = 1;
     singleton_class->m_tbl->num_entries = 0;
@@ -1679,6 +1682,11 @@ static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
   *klass->iv_tbl = class_restorer->iv_tbl;
   rb_thread_critical = class_restorer->thread_critical;
   return rb_str_new2("");
+}
+
+static VALUE class_restorer_load(VALUE klass, VALUE str)
+{
+  return Qnil;
 }
 
 static void mark_class_restorer(struct Class_Restorer * class_restorer)
@@ -2251,6 +2259,8 @@ void Init_nodewrap(void)
     }
   }
 
+  rb_mNodewrap = rb_define_module("Nodewrap");
+
   rb_cNode = rb_define_class("Node", rb_cObject);
 
 #if RUBY_VERSION_CODE >= 180
@@ -2340,15 +2350,13 @@ void Init_nodewrap(void)
   rb_global_variable(&lookup_module_proc);
 
 #if RUBY_VERSION_CODE >= 180
-  rb_cClass_Restorer = rb_class_new(rb_cObject);
+  rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
-  rb_global_variable(&rb_cClass_Restorer);
-  rb_define_method(rb_cModule, "_dump", module_dump, 1);
-  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
-#else
-  rb_define_method(rb_cModule, "_dump", module_dump, 1);
-  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
+  rb_define_singleton_method(rb_cClass_Restorer, "_load", class_restorer_load, 1);
 #endif
+
+  rb_define_method(rb_cModule, "_dump", module_dump, 1);
+  rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
 
   wrapped_nodes = rb_hash_new();
 
