@@ -46,6 +46,8 @@ EXPRESSION_SAMPLES = {
   :lit_or                  => 'true or false',
   :array                   => '[1, 2, 3]',
   :zarray                  => '[]',
+  :array_splat             => '[1, 2, *[3, 4]]',
+  :array_splat_var         => 'a = [3, 4]; [1, 2, *a]',
   # TODO: block
   :hash                    => '{ 1 => 2, 2 => 3 }',
   :zhash                   => '{}',
