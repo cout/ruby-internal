@@ -1471,6 +1471,82 @@ static VALUE class_variable_hash(VALUE module)
   return class_variables;
 }
 
+#if RUBY_VERSION_CODE >= 180
+static VALUE create_class_restorer(VALUE klass)
+{
+  /* On Ruby 1.8, there is a check in marshal_dump() to ensure that
+   * the object being dumped has no modifications to its singleton
+   * class (e.g. no singleton instance variables, and no singleton
+   * methods defined).  Since we need to dump the class's singleton
+   * class in order to dump class methods, we need a way around this
+   * restriction.  The solution found here temporarily removes the
+   * singleton instance variables and singleton methods while the
+   * class is being dumped, and sets a special singleton instance
+   * variable that restores the tables when dumping is complete.  A
+   * hack for sure, but it seems to work.
+   */
+  struct RClass * singleton_class = RCLASS(CLASS_OF(klass));
+  struct Class_Restorer * class_restorer;
+
+  if(!singleton_class->iv_tbl)
+  {
+    rb_raise(
+        rb_eTypeError,
+        "can't dump singleton class on Ruby 1.8 without iv_tbl");
+  }
+
+  class_restorer = ALLOC(struct Class_Restorer);
+  class_restorer->klass = CLASS_OF(klass);
+  class_restorer->m_tbl = *singleton_class->m_tbl;
+  class_restorer->iv_tbl = *singleton_class->iv_tbl;
+  class_restorer->thread_critical = rb_thread_critical;
+  return Data_Wrap_Struct(
+      rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
+      class_restorer);
+}
+
+static void set_class_restore_state(VALUE klass)
+{
+  struct RClass * singleton_class = RCLASS(CLASS_OF(klass));
+  singleton_class->iv_tbl->num_entries = 1;
+  singleton_class->m_tbl->num_entries = 0;
+  rb_thread_critical = 1;
+}
+
+static void restore_class(VALUE ruby_class_restorer)
+{
+  struct Class_Restorer * class_restorer;
+  struct RClass * klass;
+
+  Data_Get_Struct(
+      ruby_class_restorer,
+      struct Class_Restorer,
+      class_restorer);
+  klass = RCLASS(class_restorer->klass);
+  *klass->m_tbl = class_restorer->m_tbl;
+  *klass->iv_tbl = class_restorer->iv_tbl;
+  rb_thread_critical = class_restorer->thread_critical;
+}
+
+static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
+{
+  restore_class(ruby_class_restorer);
+  return rb_str_new2("");
+}
+
+static VALUE class_restorer_load(VALUE klass, VALUE str)
+{
+  return Qnil;
+}
+
+static void mark_class_restorer(struct Class_Restorer * class_restorer)
+{
+  rb_mark_tbl(&class_restorer->m_tbl);
+  rb_mark_tbl(&class_restorer->iv_tbl);
+}
+
+#endif
+
 /*
  * call-seq:
  *   module.dump(limit) => String
@@ -1513,44 +1589,11 @@ static VALUE module_dump(VALUE self, VALUE limit)
 
   str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE > 180
   {
-    /* On Ruby 1.8, there is a check in marshal_dump() to ensure that
-     * the object being dumped has no modifications to its singleton
-     * class (e.g. no singleton instance variables, and no singleton
-     * methods defined).  Since we need to dump the class's singleton
-     * class in order to dump class methods, we need a way around this
-     * restriction.  The solution found here temporarily removes the
-     * singleton instance variables and singleton methods while the
-     * class is being dumped, and sets a special singleton instance
-     * variable that restores the tables when dumping is complete.  A
-     * hack for sure, but it seems to work.
-     */
-    struct RClass * singleton_class = RCLASS(CLASS_OF(self));
-    struct Class_Restorer * class_restorer;
-    VALUE obj;
-
-    if(!singleton_class->iv_tbl)
-    {
-      rb_raise(
-          rb_eTypeError,
-          "can't dump singleton class on Ruby 1.8 without iv_tbl");
-    }
-
-    class_restorer = ALLOC(struct Class_Restorer);
-    class_restorer->klass = CLASS_OF(self);
-    class_restorer->m_tbl = *singleton_class->m_tbl;
-    class_restorer->iv_tbl = *singleton_class->iv_tbl;
-    class_restorer->thread_critical = rb_thread_critical;
-    obj = Data_Wrap_Struct(
-        rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
-        class_restorer);
-
-    rb_iv_set(str, "__class_restorer__", obj);
-
-    singleton_class->iv_tbl->num_entries = 1;
-    singleton_class->m_tbl->num_entries = 0;
-    rb_thread_critical = 1;
+    VALUE class_restorer = create_class_restorer(self);
+    rb_iv_set(str, "__class_restorer__", class_restorer);
+    set_class_restore_state(self);
   }
 #endif
 
@@ -1666,33 +1709,26 @@ static VALUE module_load(VALUE klass, VALUE str)
   return module;
 }
 
-#if RUBY_VERSION_CODE >= 180
+#if RUBY_VERSION_CODE == 180
 
-static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
+static VALUE ruby180_marshal_dump(int argc, VALUE * argv, VALUE klass)
 {
-  struct Class_Restorer * class_restorer;
-  struct RClass * klass;
+  VALUE class_restorer = Qnil;
 
-  Data_Get_Struct(
-      ruby_class_restorer,
-      struct Class_Restorer,
-      class_restorer);
-  klass = RCLASS(class_restorer->klass);
-  *klass->m_tbl = class_restorer->m_tbl;
-  *klass->iv_tbl = class_restorer->iv_tbl;
-  rb_thread_critical = class_restorer->thread_critical;
-  return rb_str_new2("");
-}
+  if(argc >= 1 && (TYPE(argv[0]) == T_CLASS || TYPE(argv[0]) == T_MODULE))
+  {
+    class_restorer = create_class_restorer(argv[0]);
+    set_class_restore_state(argv[0]);
+  }
 
-static VALUE class_restorer_load(VALUE klass, VALUE str)
-{
-  return Qnil;
-}
+  VALUE str = rb_funcall2(klass, rb_intern("_Nodewrap__orig_dump"), argc, argv);
 
-static void mark_class_restorer(struct Class_Restorer * class_restorer)
-{
-  rb_mark_tbl(&class_restorer->m_tbl);
-  rb_mark_tbl(&class_restorer->iv_tbl);
+  if(class_restorer != Qnil)
+  {
+    restore_class(class_restorer);
+  }
+
+  return str;
 }
 
 #endif
@@ -1961,7 +1997,7 @@ void convert_modules_to_placeholders(VALUE array)
     {
       VALUE p = rb_class_new_instance(0, 0, rb_cModulePlaceholder);
       VALUE sym = rb_mod_name(p);
-      rb_ivar_set(p, rb_intern("name"), sym);
+      rb_iv_set(p, "name", sym);
       RARRAY(array)->ptr[j] = p;
     }
   }
@@ -2063,13 +2099,13 @@ VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE
 static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
 {
   VALUE operands = rb_ary_new4(argc, argv);
-  rb_ivar_set(self, rb_intern("@operands"), operands);
+  rb_iv_set(self, "@operands", operands);
   return Qnil;
 }
 
 static VALUE instruction_operands(VALUE self)
 {
-  return rb_ivar_get(self, rb_intern("@operands"));
+  return rb_iv_get(self, "@operands");
 }
 
 #endif
@@ -2353,6 +2389,11 @@ void Init_nodewrap(void)
   rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
   rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
   rb_define_singleton_method(rb_cClass_Restorer, "_load", class_restorer_load, 1);
+#endif
+
+#if RUBY_VERSION_CODE == 180
+  rb_alias(CLASS_OF(rb_mMarshal), rb_intern("_Nodewrap__orig_dump"), rb_intern("dump"));
+  rb_define_singleton_method(rb_mMarshal, "dump", ruby180_marshal_dump, -1);
 #endif
 
   rb_define_method(rb_cModule, "_dump", module_dump, 1);
