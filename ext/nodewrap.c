@@ -410,7 +410,7 @@ static VALUE node_inspect(VALUE node)
   if(rb_inspecting_p(node))
   {
     VALUE str = rb_str_new2("#<");
-    rb_str_append(str, rb_class2name(CLASS_OF(node)));
+    rb_str_cat2(str, rb_class2name(CLASS_OF(node)));
     rb_str_cat2(str, ":...>");
     return str;
   }
