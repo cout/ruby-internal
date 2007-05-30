@@ -220,6 +220,31 @@ static char const * lookup_module_str =
   "}\n";
 static VALUE lookup_module_proc = Qnil;
 
+static char const * outer_module_str =
+  "proc { |name|\n"
+  "  o = Object\n"
+  "  names = name.to_s.split('::')\n"
+  "  names.pop\n"
+  "  names.each do |subname|\n"
+  "    if subname == '<Singleton>' then\n"
+  "      o = o.singleton_class\n"
+  "    else\n"
+  "      o = o.const_get(subname)\n"
+  "    end\n"
+  "  end\n"
+  "  o\n"
+  "}\n";
+
+static VALUE outer_module_proc = Qnil;
+
+static char const * module_name_str =
+  "proc { |name|\n"
+  "  names = name.to_s.split('::')\n"
+  "  names[-1].intern\n"
+  "}\n";
+
+static VALUE module_name_proc = Qnil;
+
 /* ---------------------------------------------------------------------
  * Node methods
  * ---------------------------------------------------------------------
@@ -1556,7 +1581,9 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
 static VALUE module_dump(VALUE self, VALUE limit)
 {
   VALUE flags, instance_methods, class_variables;
-  VALUE included_modules, superclass, metaclass, arr, str;
+  VALUE included_modules, superclass, metaclass, arr, str, class_name;
+
+  limit = INT2NUM(NUM2INT(limit) - 1);
 
   if(ruby_safe_level >= 4)
   {
@@ -1574,20 +1601,23 @@ static VALUE module_dump(VALUE self, VALUE limit)
   if(FL_TEST(self, FL_SINGLETON))
   {
     metaclass = Qnil;
+    class_name = Qnil;
   }
   else
   {
     metaclass = rb_singleton_class(self);
+    class_name = rb_class_name(self);
   }
 
   rb_ary_push(arr, flags);
-  rb_ary_push(arr, instance_methods);
-  rb_ary_push(arr, class_variables);
+  rb_ary_push(arr, marshal_dump(instance_methods, limit));
+  rb_ary_push(arr, marshal_dump(class_variables, limit));
   rb_ary_push(arr, included_modules);
   rb_ary_push(arr, superclass);
-  rb_ary_push(arr, metaclass);
+  rb_ary_push(arr, marshal_dump(metaclass, limit));
+  rb_ary_push(arr, class_name);
 
-  str = marshal_dump(arr, INT2NUM(NUM2INT(limit) + 1));
+  str = marshal_dump(arr, limit);
 
 #if RUBY_VERSION_CODE > 180
   {
@@ -1619,7 +1649,13 @@ static int add_method_iter(VALUE name, VALUE value, VALUE module)
 {
   NODE * n;
   rb_check_type(name, T_SYMBOL);
-  rb_check_type(value, T_NODE);
+  if(!rb_obj_is_kind_of(value, rb_cNode))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected Node, but got %s",
+        rb_class2name(CLASS_OF(value)));
+  }
   Data_Get_Struct(value, NODE, n);
   rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
   return ST_CONTINUE;
@@ -1655,8 +1691,9 @@ static void add_class_variables(VALUE module, VALUE class_variables)
  */
 static VALUE module_load(VALUE klass, VALUE str)
 {
-  VALUE arr, metaclass, superclass_name, included_modules;
-  VALUE class_variables, instance_methods, flags, module;
+  VALUE arr, class_name, metaclass_str, metaclass, superclass_name,
+        included_modules, class_variables_str, class_variables,
+        instance_methods_str, instance_methods, flags, module;
 
   if(   ruby_safe_level >= 4
      || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
@@ -1666,11 +1703,12 @@ static VALUE module_load(VALUE klass, VALUE str)
   }
 
   arr = marshal_load(str);
-  metaclass = rb_ary_pop(arr);
+  class_name = rb_ary_pop(arr);
+  metaclass_str = rb_ary_pop(arr);
   superclass_name = rb_ary_pop(arr);
   included_modules = rb_ary_pop(arr);
-  class_variables = rb_ary_pop(arr);
-  instance_methods = rb_ary_pop(arr);
+  class_variables_str = rb_ary_pop(arr);
+  instance_methods_str = rb_ary_pop(arr);
   flags = rb_ary_pop(arr);
 
   if(RTEST(superclass_name))
@@ -1695,11 +1733,21 @@ static VALUE module_load(VALUE klass, VALUE str)
     module = rb_module_new();
   }
 
+  if(!NIL_P(class_name))
+  {
+    VALUE outer_module = rb_funcall(outer_module_proc, rb_intern("call"), 1, class_name);
+    VALUE module_name = rb_funcall(module_name_proc, rb_intern("call"), 1, class_name);
+    rb_const_set(outer_module, SYM2ID(module_name), module);
+  }
+
   RBASIC(module)->flags = NUM2INT(flags);
   include_modules(module, included_modules);
+  class_variables = marshal_load(class_variables_str);
   add_class_variables(module, class_variables);
+  instance_methods = marshal_load(instance_methods_str);
   add_methods(module, instance_methods);
 
+  metaclass = marshal_load(metaclass_str);
   if(RTEST(metaclass))
   {
     rb_singleton_class_attached(metaclass, module);
@@ -2384,6 +2432,12 @@ void Init_nodewrap(void)
 
   lookup_module_proc = rb_eval_string(lookup_module_str);
   rb_global_variable(&lookup_module_proc);
+
+  outer_module_proc = rb_eval_string(outer_module_str);
+  rb_global_variable(&outer_module_proc);
+
+  module_name_proc = rb_eval_string(module_name_str);
+  rb_global_variable(&module_name_proc);
 
 #if RUBY_VERSION_CODE >= 180
   rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
