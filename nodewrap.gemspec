@@ -33,6 +33,7 @@ hierarchies from one Ruby process and load them into another.
     'ext/cached/ruby-*/LGPL',
     'ext/cached/ruby-*/README',
     'example/*.rb',
+    'example/README',
     'test/*.rb',
     '*.rb',
     'COPYING',
