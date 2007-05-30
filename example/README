@@ -1,0 +1,5 @@
+To use these programs, install nodewrap, then:
+
+  ruby simple_server.rb | ruby simple_client.rb
+  ruby triangle_server.rb | ruby triangle_client.rb
+
