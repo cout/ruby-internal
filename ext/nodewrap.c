@@ -42,7 +42,9 @@ struct Class_Restorer
   VALUE klass;
   struct st_table m_tbl;
   struct st_table iv_tbl;
+#ifndef RUBY_HAS_YARV
   int thread_critical;
+#endif
 };
 
 static VALUE rb_cClass_Restorer = Qnil;
@@ -1524,7 +1526,9 @@ static VALUE create_class_restorer(VALUE klass)
   class_restorer->klass = CLASS_OF(klass);
   class_restorer->m_tbl = *singleton_class->m_tbl;
   class_restorer->iv_tbl = *singleton_class->iv_tbl;
+#ifndef RUBY_HAS_YARV
   class_restorer->thread_critical = rb_thread_critical;
+#endif
   return Data_Wrap_Struct(
       rb_cClass_Restorer, mark_class_restorer, ruby_xfree,
       class_restorer);
@@ -1535,7 +1539,9 @@ static void set_class_restore_state(VALUE klass)
   struct RClass * singleton_class = RCLASS(CLASS_OF(klass));
   singleton_class->iv_tbl->num_entries = 1;
   singleton_class->m_tbl->num_entries = 0;
+#ifndef RUBY_HAS_YARV
   rb_thread_critical = 1;
+#endif
 }
 
 static void restore_class(VALUE ruby_class_restorer)
@@ -1550,7 +1556,9 @@ static void restore_class(VALUE ruby_class_restorer)
   klass = RCLASS(class_restorer->klass);
   *klass->m_tbl = class_restorer->m_tbl;
   *klass->iv_tbl = class_restorer->iv_tbl;
+#ifndef RUBY_HAS_YARV
   rb_thread_critical = class_restorer->thread_critical;
+#endif
 }
 
 static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
@@ -1576,7 +1584,17 @@ static void mark_class_restorer(struct Class_Restorer * class_restorer)
  * call-seq:
  *   module.dump(limit) => String
  *
- * Dump a module to a string.
+ * Dump a module to a string.  The module will be dumped along with its
+ * instance methods, class variables, names of included modules, name of
+ * superclass, its entire metaclass, and the name of the class.
+ *
+ * Note that on ruby 1.8 and newer the module is temporarily modified
+ * while dumping in order to allow singleton classes to be dumped.  To
+ * prevent access to the modifed module, Thread.critical is temporarily
+ * set, then restored to its original value once dumping is complete.
+ * Note also that because YARV does not support Thread.critical, the
+ * user must synchronize access to the class with a Mutex in order to
+ * prevent accessing the modified class.
  */
 static VALUE module_dump(VALUE self, VALUE limit)
 {

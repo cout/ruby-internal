@@ -181,7 +181,9 @@ class TC_Nodewrap < Test::Unit::TestCase
       d = Marshal.dump(TestClass)
 
       # Thread critical should have been reset by the class restorer
-      assert_equal false, Thread.critical
+      if not defined?(VM) then
+        assert_equal false, Thread.critical
+      end
 
       # Make sure the class instance variables are still set
       assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
@@ -233,14 +235,18 @@ class TC_Nodewrap < Test::Unit::TestCase
       assert_equal 42*42, f.foo(42)
 
       # Thread critical should have been reset by the class restorer
-      assert_equal false, Thread.critical
+      if not defined?(VM) then
+        assert_equal false, Thread.critical
+      end
 
       # Also make sure the class instance variables are still set
       assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
       assert_equal 2, TestClass.instance_eval('@foo')
 
     ensure
-      Thread.critical = false
+      if not defined?(VM) then
+        Thread.critical = false
+      end
     end
   end
 
