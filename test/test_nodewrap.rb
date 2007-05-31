@@ -173,6 +173,15 @@ class TC_Nodewrap < Test::Unit::TestCase
     @@a = 42
   end
 
+  @@test_class = TestClass
+
+  def setup
+    self.class.instance_eval do
+      remove_const :TestClass if defined?(TestClass)
+      const_set :TestClass, @@test_class
+    end
+  end
+
   def test_marshal_class
     begin
       assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
@@ -189,7 +198,10 @@ class TC_Nodewrap < Test::Unit::TestCase
       assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
       assert_equal 2, TestClass.instance_eval('@foo')
 
-      c = Marshal.load(d)
+      self.class.instance_eval { remove_const :TestClass }
+
+      Marshal.load(d)
+      c = TestClass
       assert_equal Class, c.class
       a = c.ancestors
       assert a.include?(Object)
