@@ -1624,7 +1624,7 @@ static VALUE module_dump(VALUE self, VALUE limit)
   else
   {
     metaclass = rb_singleton_class(self);
-    class_name = rb_class_name(self);
+    class_name = rb_class_path(self);
   }
 
   rb_ary_push(arr, flags);
