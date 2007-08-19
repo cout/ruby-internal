@@ -65,6 +65,21 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal "#{self.class.name}##{name}(a, b)", sig.to_s
   end
 
+  def two_args_with_locals(a, b)
+    x = 1
+    y = 2
+  end
+
+  def test_two_args_with_locals
+    name = :two_args_with_locals
+    sig = method(name).signature
+    assert_equal self.class, sig.origin_class
+    assert_equal name.to_s, sig.name
+    assert_equal [:a, :b], sig.arg_names
+    assert_equal Hash[:a=>"a", :b=>"b"], sig.arg_info
+    assert_equal "#{self.class.name}##{name}(a, b)", sig.to_s
+  end
+
   def three_args(a, b, c)
   end
 
@@ -180,6 +195,36 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal [:a, :b, :r, :block], sig.arg_names
     assert_equal Hash[:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"], sig.arg_info
     assert_equal "#{self.class.name}##{name}(a, b=42, *r, &block)", sig.to_s
+  end
+
+  def nondefault_and_default_and_rest_and_block_with_locals(a, b = 42, *r, &block)
+    x = 1
+    y = 2
+  end
+
+  def test_nondefault_and_default_and_rest_and_block_with_locals
+    name = :nondefault_and_default_and_rest_and_block_with_locals
+    sig = method(name).signature
+    assert_equal self.class, sig.origin_class
+    assert_equal name.to_s, sig.name
+    assert_equal [:a, :b, :r, :block], sig.arg_names
+    assert_equal Hash[:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"], sig.arg_info
+    assert_equal "#{self.class.name}##{name}(a, b=42, *r, &block)", sig.to_s
+  end
+
+  def three_default_and_rest_and_block_with_locals(a = 42, b = 43, c = 44, *r, &block)
+    x = 1
+    y = 2
+  end
+
+  def test_three_default_and_rest_and_block_with_locals
+    name = :three_default_and_rest_and_block_with_locals
+    sig = method(name).signature
+    assert_equal self.class, sig.origin_class
+    assert_equal name.to_s, sig.name
+    assert_equal [:a, :b, :c, :r, :block], sig.arg_names
+    assert_equal Hash[:a=>"a=42", :b=>"b=43", :c=>"c=44", :r=>"*r", :block=>"&block"], sig.arg_info
+    assert_equal "#{self.class.name}##{name}(a=42, b=43, c=44, *r, &block)", sig.to_s
   end
 end
 

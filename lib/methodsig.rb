@@ -2,9 +2,7 @@ require 'nodewrap'
 require 'as_expression'
 
 module MethodSig
-  # Return the names of the arguments this method takes, in the order in
-  # which they appear in the argument list.
-  def argument_names
+  def local_vars
     if self.body.respond_to?(:tbl) then
       # pre-YARV
       return self.body.tbl || []
@@ -12,13 +10,39 @@ module MethodSig
       # YARV
       iseq = self.body.body
       local_vars = iseq.local_table
-      has_rest_arg = iseq.arg_rest != -1
-      has_block_arg = iseq.arg_block != -1
+      return local_vars
+    end
+  end
+
+  # Return the names of the arguments this method takes, in the order in
+  # which they appear in the argument list.
+  def argument_names
+    local_vars = self.local_vars
+    if self.body.respond_to?(:tbl) then
+      # pre-YARV
+      num_required_args = self.body.next.head.cnt
+      num_optional_args = 0
+      opt = self.body.next.head.opt
+      while opt do
+        num_optional_args += 1
+        opt = opt.next
+      end
+      num_args = \
+        num_required_args + \
+        num_optional_args + \
+        (rest_arg ? 1 : 0) + \
+        (block_arg ? 1 : 0)
+      return local_vars[0...num_args]
+    else
+      # YARV
+      iseq = self.body.body
+      opt_args = iseq.arg_opt_table
+      opt_args.pop # last arg is a pointer to the start of the code
       num_args = \
         iseq.argc + \
-        iseq.arg_opt_table.size + \
-        (has_rest_arg ? 1 : 0) + \
-        (has_block_arg ? 1 : 0)
+        opt_args.size + \
+        (rest_arg ? 1 : 0) + \
+        (block_arg ? 1 : 0)
       return local_vars[0...num_args]
     end
   end
@@ -68,6 +92,7 @@ module MethodSig
   # return its index, otherwise return nil.
   def block_arg
     if self.body.respond_to?(:next) then
+      require 'nodepp'
       # pre-YARV
       block = self.body.next
       if block.class == Node::BLOCK and

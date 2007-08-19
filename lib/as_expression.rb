@@ -70,7 +70,7 @@ class Node
   end
 
   define_expression(:FCALL) do |node|
-    # args with either be an ARRAY or ARGSCAT
+    # args will either be an ARRAY or ARGSCAT
     args = node.args
     "#{node.mid}(#{args ? args.as_expression(false) : ''})"
   end
