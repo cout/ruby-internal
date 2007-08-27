@@ -70,7 +70,7 @@ EXPRESSION_SAMPLES = {
   # TODO: dasgn
   :iasgn                   => '@foo = 6',
   # TODO: lasgn
-  # TODO: masgn
+  :masgn                   => 'a, b = 1, 2',
   :cdecl                   => 'remove_foo; FOO = 1',
   :cvdecl                  => '@@foo = 1',
   # TODO: cvasgn

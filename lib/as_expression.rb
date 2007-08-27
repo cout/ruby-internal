@@ -259,7 +259,8 @@ class Node
   end
 
   define_expression(:DASGN_CURR) do |node|
-    node.value ? "#{node.vid} = #{node.value.as_expression}" : ''
+    # node.value is unset for MASGN
+    node.value ? "#{node.vid} = #{node.value.as_expression}" : "#{node.vid}"
   end
 
   define_expression(:DASGN) do |node|
@@ -275,9 +276,16 @@ class Node
   end
 
   define_expression(:MASGN) do |node|
+    require 'nodepp'
+    require 'prettyprint'
     lhs = node.head.to_a.map { |n| n.as_expression }
     rhs = node.value.to_a.map { |n| n.as_expression }
     "#{lhs.join(', ')} = #{rhs.join(', ')}"
+  end
+
+  define_expression(:OP_ASGN1) do |node|
+    # TODO
+    raise "Not implemented"
   end
 
   define_expression(:CDECL) do |node|
