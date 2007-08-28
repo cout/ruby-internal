@@ -133,6 +133,11 @@ VALUE wrap_node(NODE * n)
     return Qnil;
   }
 
+  if(nd_type(n) > NODE_LAST || rb_cNodeSubclass[nd_type(n)] == Qnil)
+  {
+    rb_raise(rb_eRuntimeError, "Unknown node type %d", nd_type(n));
+  }
+
   return wrap_node_as(n, rb_cNodeSubclass[nd_type(n)]);
 }
 

@@ -2100,6 +2100,12 @@ void define_node_subclass_methods()
   /* For rdoc: rb_cNode = rb_define_class("Node", rb_cObject); */
   VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node"));
   VALUE members;
+  int j;
+
+  for(j = 0; j < NODE_LAST; ++j)
+  {
+    rb_cNodeSubclass[j] = Qnil;
+  }
 
   {
     VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);
@@ -3101,6 +3107,15 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
     rb_define_method(rb_cEVSTR, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
+  }
+  {
+    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
+    rb_iv_set(rb_cTO_ARY, "__member__", members);
+    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
+    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
   {
     VALUE rb_cDMETHOD = rb_define_class_under(rb_cNode, "DMETHOD", rb_cNode);

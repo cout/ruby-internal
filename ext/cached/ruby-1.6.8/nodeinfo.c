@@ -2089,6 +2089,12 @@ void define_node_subclass_methods()
   /* For rdoc: rb_cNode = rb_define_class("Node", rb_cObject); */
   VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node"));
   VALUE members;
+  int j;
+
+  for(j = 0; j < NODE_LAST; ++j)
+  {
+    rb_cNodeSubclass[j] = Qnil;
+  }
 
   {
     VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);

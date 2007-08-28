@@ -105,6 +105,7 @@ else
 # [180, oo)
 NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
+  [ 'TO_ARY'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
 ]
 end
 if RUBY_VERSION_CODE < 190 then
