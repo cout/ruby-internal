@@ -96,18 +96,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
 ]
-if RUBY_VERSION_CODE < 180 then
-# (0, 180)
-NODE_TYPE_DESCRIPS.concat [
-  [ 'EVSTR'       , 'LIT'   , 'NONE'  , 'NONE'  ], 
-]
-else
-# [180, oo)
-NODE_TYPE_DESCRIPS.concat [
-  [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
-  [ 'TO_ARY'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
-]
-end
 if RUBY_VERSION_CODE < 190 then
 # (0, 190)
 NODE_TYPE_DESCRIPS.concat [
@@ -130,6 +118,7 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'RESTARGS'    , 'HEAD'  , 'NONE'  , 'NONE'  ], 
   [ 'CLASS'       , 'SUPER' , 'CNAME' , 'BODY'  ], 
   [ 'MODULE'      , 'CNAME' , 'BODY'  , 'NONE'  ], 
+  [ 'EVSTR'       , 'LIT'   , 'NONE'  , 'NONE'  ], 
 ]
 if RUBY_VERSION_CODE >= 170 then
 # [170, oo)
@@ -146,6 +135,9 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'MODULE'      , 'CPATH' , 'BODY'  , 'NONE'  ], 
   [ 'DSYM'        , 'LIT'   , 'NEXT'  , 'NONE'  ],
   [ 'ATTRASGN'    , 'MID'   , 'RECV'  , 'ARGS'  ],
+  [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
+  [ 'TO_ARY'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
+  [ 'SPLAT'       , 'HEAD'  , 'NONE'  , 'NONE'  ],
 ]
 end
 

@@ -30,5 +30,13 @@ class Node
     end
   end
 
+  if defined?(TO_ARY) then
+    class TO_ARY < Node
+      def to_a
+        return [ self.head ]
+      end
+    end
+  end
+
 end
 

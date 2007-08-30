@@ -3089,15 +3089,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("tval"));
   }
   {
-    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
-    rb_iv_set(rb_cEVSTR, "__member__", members);
-    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
-    rb_define_method(rb_cEVSTR, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-  }
-  {
     VALUE rb_cDMETHOD = rb_define_class_under(rb_cNode, "DMETHOD", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_DMETHOD] = rb_cDMETHOD;
@@ -3182,6 +3173,15 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cname"));
     rb_define_method(rb_cMODULE, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
+  }
+  {
+    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
+    rb_iv_set(rb_cEVSTR, "__member__", members);
+    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
+    rb_define_method(rb_cEVSTR, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
   }
 }
 

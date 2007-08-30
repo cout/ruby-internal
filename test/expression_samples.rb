@@ -71,6 +71,7 @@ EXPRESSION_SAMPLES = {
   :iasgn                   => '@foo = 6',
   # TODO: lasgn
   :masgn                   => 'a, b = 1, 2',
+  :masgn_with_one_value    => 'a, b = 1',
   :cdecl                   => 'remove_foo; FOO = 1',
   :cvdecl                  => '@@foo = 1',
   # TODO: cvasgn

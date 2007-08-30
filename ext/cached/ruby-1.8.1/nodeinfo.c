@@ -3100,24 +3100,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("tval"));
   }
   {
-    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
-    rb_iv_set(rb_cEVSTR, "__member__", members);
-    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
-    rb_define_method(rb_cEVSTR, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-  }
-  {
-    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
-    rb_iv_set(rb_cTO_ARY, "__member__", members);
-    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
-    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-  }
-  {
     VALUE rb_cDMETHOD = rb_define_class_under(rb_cNode, "DMETHOD", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_DMETHOD] = rb_cDMETHOD;
@@ -3208,6 +3190,33 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("recv"));
     rb_define_method(rb_cATTRASGN, "args", node_args, 0);
     rb_ary_push(members, rb_str_new2("args"));
+  }
+  {
+    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
+    rb_iv_set(rb_cEVSTR, "__member__", members);
+    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
+    rb_define_method(rb_cEVSTR, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
+  {
+    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
+    rb_iv_set(rb_cTO_ARY, "__member__", members);
+    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
+    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+  }
+  {
+    VALUE rb_cSPLAT = rb_define_class_under(rb_cNode, "SPLAT", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_SPLAT] = rb_cSPLAT;
+    rb_iv_set(rb_cSPLAT, "__member__", members);
+    rb_define_singleton_method(rb_cSPLAT, "members", node_s_members, 0);
+    rb_define_method(rb_cSPLAT, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 }
 

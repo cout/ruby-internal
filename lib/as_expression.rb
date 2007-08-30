@@ -276,8 +276,6 @@ class Node
   end
 
   define_expression(:MASGN) do |node|
-    require 'nodepp'
-    require 'prettyprint'
     lhs = node.head.to_a.map { |n| n.as_expression }
     rhs = node.value.to_a.map { |n| n.as_expression }
     "#{lhs.join(', ')} = #{rhs.join(', ')}"
