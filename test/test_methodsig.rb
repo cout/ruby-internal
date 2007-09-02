@@ -21,21 +21,25 @@ class TC_Methodsig < Test::Unit::TestCase
         default = value.sub(/.*=/, '')
         assert_equal default, sig.args[name].default
         assert_equal true, sig.args[name].optional?
+        assert_equal false, sig.args[name].required?
         assert_equal false, sig.args[name].rest?
         assert_equal false, sig.args[name].block?
       elsif ?* == value[0] then
         assert_equal nil, sig.args[name].default
         assert_equal true, sig.args[name].optional?
+        assert_equal false, sig.args[name].required?
         assert_equal true, sig.args[name].rest?
         assert_equal false, sig.args[name].block?
       elsif ?& == value[0] then
         assert_equal nil, sig.args[name].default
         assert_equal true, sig.args[name].optional?
+        assert_equal false, sig.args[name].required?
         assert_equal false, sig.args[name].rest?
         assert_equal true, sig.args[name].block?
       else
         assert_equal nil, sig.args[name].default
         assert_equal false, sig.args[name].optional?
+        assert_equal true, sig.args[name].required?
         assert_equal false, sig.args[name].rest?
         assert_equal false, sig.args[name].block?
       end

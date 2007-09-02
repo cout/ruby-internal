@@ -11,6 +11,10 @@ module MethodSig
       return (@default != nil) || @is_rest || @is_block
     end
 
+    def required?
+      return !optional?
+    end
+
     def rest?
       return @is_rest
     end
