@@ -2,6 +2,46 @@ require 'nodewrap'
 require 'as_expression'
 
 module MethodSig
+  class Argument
+    attr_reader :name
+    attr_reader :default
+    attr_reader :node_or_iseq_for_default
+
+    def optional?
+      return (@default != nil) || @is_rest || @is_block
+    end
+
+    def rest?
+      return @is_rest
+    end
+
+    def block?
+      return @is_block
+    end
+
+    def initialize(name, default, node_or_iseq_for_default, is_rest, is_block)
+      @name = name
+      @default = default
+      @node_or_iseq_for_default = node_or_iseq_for_default
+      @is_rest = is_rest
+      @is_block = is_block
+    end
+
+    def to_s
+      if @is_rest then
+        prefix = "*"
+      elsif @is_block then
+        prefix = "&"
+      end
+
+      if @default then
+        suffix = "=#{@default}"
+      end
+
+      return "#{prefix}#{@name}#{suffix}"
+    end
+  end
+
   def local_vars
     if self.body.respond_to?(:tbl) then
       # pre-YARV
@@ -109,14 +149,14 @@ module MethodSig
     end
   end
 
-  def set_optional_arg_info(info, args_node, names)
+  def set_optional_args(args, args_node, names)
     if args_node then
       # pre-YARV
       opt = args_node.opt
       while opt do
         head = opt.head
         if head.class == Node::LASGN then
-          info[head.vid] = "#{head.vid}=#{head.value.as_expression}"
+          args[head.vid] = Argument.new(head.vid, head.value.as_expression, head.value, false, false)
         else
           raise "Unexpected node type: #{opt.class}"
         end
@@ -140,60 +180,59 @@ module MethodSig
       opt_table.each_with_index do |pc, idx|
         name = names[first_opt_idx + idx]
         expr = expressions.find { |e| e.pc >= pc }
-        info[name] = "#{name}=#{expr.rhs}"
+        args[name] = Argument.new(name, expr.rhs, nil, false, false) # TODO
       end
     end
   end
-  private :set_optional_arg_info
+  private :set_optional_args
 
   # Return a hash mapping each argument name to a description of that
   # argument.
-  def argument_info
+  def arguments
     names = self.argument_names()
     block_arg = self.block_arg()
 
-    info = {}
+    args = {}
     names.each do |name|
-      info[name] = name.to_s
+      args[name] = Argument.new(name, nil, nil, false, false)
     end
 
     # Optional args
     args_node = args_node()
-    set_optional_arg_info(info, args_node, names)
+    set_optional_args(args, args_node, names)
 
     # Rest arg
     if self.rest_arg then
       rest_name = names[rest_arg]
-      info[rest_name] = "*#{rest_name}"
+      args[rest_name] = Argument.new(rest_name, nil, nil, true, false)
     end
 
     # Block arg
     if block_arg then
       block_name = names[block_arg]
-      info[block_name] = "&#{block_name}"
+      args[block_name] = Argument.new(block_name, nil, nil, false, true)
     end
 
-    return info
+    return args
   end
 
   # An abstraction for a method signature.
   class Signature
-    attr_reader :origin_class, :name, :arg_names, :arg_info
+    attr_reader :origin_class, :name, :arg_names, :args
 
-    def initialize(origin_class, name, arg_names, arg_info)
+    def initialize(origin_class, name, arg_names, args)
       @origin_class = origin_class
       @name = name
       @arg_names = arg_names
-      @arg_info = arg_info
+      @args = args
     end
 
     def to_s
-      params = @arg_names.map{ |n| arg_info[n] }
       return "#{@origin_class}\##{@name}(#{param_list})"
     end
 
     def param_list
-      params = @arg_names.map{ |n| arg_info[n] }
+      params = @arg_names.map{ |n| args[n].to_s }
       return params.join(', ')
     end
   end
@@ -228,7 +267,7 @@ class Method
         origin_class() || attached_class(),
         method_oid().to_s,
         argument_names(),
-        argument_info)
+        arguments())
   end
 end
 
@@ -241,7 +280,7 @@ class UnboundMethod
         nil,
         method_oid().to_s,
         argument_names(),
-        argument_info)
+        arguments())
   end
 end
 

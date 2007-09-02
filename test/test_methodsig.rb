@@ -13,6 +13,36 @@ $stdout.sync = true
 $stderr.sync = true
 
 class TC_Methodsig < Test::Unit::TestCase
+  def check_args(expected_arg_info, sig)
+    expected_arg_info.each do |name, value|
+      assert_equal name, sig.args[name].name
+      assert_equal value, sig.args[name].to_s
+      if value =~ /=/ then
+        default = value.sub(/.*=/, '')
+        assert_equal default, sig.args[name].default
+        assert_equal true, sig.args[name].optional?
+        assert_equal false, sig.args[name].rest?
+        assert_equal false, sig.args[name].block?
+      elsif ?* == value[0] then
+        assert_equal nil, sig.args[name].default
+        assert_equal true, sig.args[name].optional?
+        assert_equal true, sig.args[name].rest?
+        assert_equal false, sig.args[name].block?
+      elsif ?& == value[0] then
+        assert_equal nil, sig.args[name].default
+        assert_equal true, sig.args[name].optional?
+        assert_equal false, sig.args[name].rest?
+        assert_equal true, sig.args[name].block?
+      else
+        assert_equal nil, sig.args[name].default
+        assert_equal false, sig.args[name].optional?
+        assert_equal false, sig.args[name].rest?
+        assert_equal false, sig.args[name].block?
+      end
+    end
+    assert_equal expected_arg_info.size, sig.args.size
+  end
+
   def no_args_no_parens
   end
 
@@ -22,7 +52,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [], sig.arg_names
-    assert_equal Hash.new, sig.arg_info
+    check_args({}, sig)
     assert_equal "#{self.class.name}##{name}()", sig.to_s
   end
 
@@ -35,7 +65,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [], sig.arg_names
-    assert_equal Hash.new, sig.arg_info
+    check_args({}, sig)
     assert_equal "#{self.class.name}##{name}()", sig.to_s
   end
 
@@ -48,7 +78,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a], sig.arg_names
-    assert_equal Hash[:a=>"a"], sig.arg_info
+    check_args({:a => "a"}, sig)
     assert_equal "#{self.class.name}##{name}(a)", sig.to_s
   end
 
@@ -61,7 +91,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b"], sig.arg_info
+    check_args({:a=>"a", :b=>"b"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b)", sig.to_s
   end
 
@@ -76,7 +106,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b"], sig.arg_info
+    check_args({:a=>"a", :b=>"b"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b)", sig.to_s
   end
 
@@ -89,7 +119,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b, :c], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b", :c=>"c"], sig.arg_info
+    check_args({:a=>"a", :b=>"b", :c=>"c"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b, c)", sig.to_s
   end
 
@@ -102,7 +132,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:b], sig.arg_names
-    assert_equal Hash[:b=>"&b"], sig.arg_info
+    check_args({:b=>"&b"}, sig)
     assert_equal "#{self.class.name}##{name}(&b)", sig.to_s
   end
 
@@ -115,7 +145,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:r], sig.arg_names
-    assert_equal Hash[:r=>"*r"], sig.arg_info
+    check_args({:r=>"*r"}, sig)
     assert_equal "#{self.class.name}##{name}(*r)", sig.to_s
   end
 
@@ -128,7 +158,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:r, :b], sig.arg_names
-    assert_equal Hash[:r=>"*r", :b=>"&b"], sig.arg_info
+    check_args({:r=>"*r", :b=>"&b"}, sig)
     assert_equal "#{self.class.name}##{name}(*r, &b)", sig.to_s
   end
 
@@ -141,7 +171,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a], sig.arg_names
-    assert_equal Hash[:a=>"a=1"], sig.arg_info
+    check_args({:a=>"a=1"}, sig)
     assert_equal "#{self.class.name}##{name}(a=1)", sig.to_s
   end
 
@@ -154,7 +184,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b=42"], sig.arg_info
+    check_args({:a=>"a", :b=>"b=42"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b=42)", sig.to_s
   end
 
@@ -167,7 +197,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :r], sig.arg_names
-    assert_equal Hash[:a=>"a=42", :r=>"*r"], sig.arg_info
+    check_args({:a=>"a=42", :r=>"*r"}, sig)
     assert_equal "#{self.class.name}##{name}(a=42, *r)", sig.to_s
   end
 
@@ -180,7 +210,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :r, :b], sig.arg_names
-    assert_equal Hash[:a=>"a=42", :r=>"*r", :b=>"&b"], sig.arg_info
+    check_args({:a=>"a=42", :r=>"*r", :b=>"&b"}, sig)
     assert_equal "#{self.class.name}##{name}(a=42, *r, &b)", sig.to_s
   end
 
@@ -193,7 +223,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b, :r, :block], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"], sig.arg_info
+    check_args({:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b=42, *r, &block)", sig.to_s
   end
 
@@ -208,7 +238,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b, :r, :block], sig.arg_names
-    assert_equal Hash[:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"], sig.arg_info
+    check_args({:a=>"a", :b=>"b=42", :r=>"*r", :block=>"&block"}, sig)
     assert_equal "#{self.class.name}##{name}(a, b=42, *r, &block)", sig.to_s
   end
 
@@ -223,7 +253,7 @@ class TC_Methodsig < Test::Unit::TestCase
     assert_equal self.class, sig.origin_class
     assert_equal name.to_s, sig.name
     assert_equal [:a, :b, :c, :r, :block], sig.arg_names
-    assert_equal Hash[:a=>"a=42", :b=>"b=43", :c=>"c=44", :r=>"*r", :block=>"&block"], sig.arg_info
+    check_args({:a=>"a=42", :b=>"b=43", :c=>"c=44", :r=>"*r", :block=>"&block"}, sig)
     assert_equal "#{self.class.name}##{name}(a=42, b=43, c=44, *r, &block)", sig.to_s
   end
 end
