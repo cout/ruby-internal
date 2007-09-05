@@ -72,9 +72,15 @@ class Node
 
   define_code(:BLOCK) do |node, indent|
     a = node.to_a
-    if a[0].class == Node::DASGN_CURR and not a[0].value
-      # ignore variable definitions
-      a.shift
+    if a[0].class == Node::DASGN_CURR then
+      vardefs = a[0]
+      while vardefs.class == Node::DASGN_CURR do
+        vardefs = vardefs.value
+      end
+      if not vardefs then
+        # ignore variable definitions
+        a.shift
+      end
     end
     lines = a.map { |n| n.as_code(indent) }
     lines.reject! { |e| e.nil? }
