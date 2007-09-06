@@ -2425,12 +2425,13 @@ void Init_nodewrap(void)
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
 #endif
   rb_define_method(rb_cMethod, "receiver", method_receiver, 0);
-  rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
 
   /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */
 #if RUBY_VERSION_CODE < 185
   rb_cUnboundMethod = rb_const_get(rb_cObject, rb_intern("UnboundMethod"));
 #endif
+  rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
+  rb_define_method(rb_cUnboundMethod, "origin_class", method_origin_class, 0);
   rb_define_method(rb_cMethod, "method_id", method_id, 0);
   rb_define_method(rb_cUnboundMethod, "method_id", method_id, 0);
   rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
