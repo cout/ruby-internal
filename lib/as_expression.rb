@@ -315,6 +315,7 @@ class Node
   end
 
   define_expression(:COLON2) do |node|
+    # TODO: shouldn't COLON2 have args if it's a method?
     if node.head then
       "#{node.head.as_expression}::#{node.mid}"
     else
