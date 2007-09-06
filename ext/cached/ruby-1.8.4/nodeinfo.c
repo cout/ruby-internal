@@ -2359,8 +2359,10 @@ void define_node_subclass_methods()
     rb_cNodeSubclass[NODE_YIELD] = rb_cYIELD;
     rb_iv_set(rb_cYIELD, "__member__", members);
     rb_define_singleton_method(rb_cYIELD, "members", node_s_members, 0);
-    rb_define_method(rb_cYIELD, "stts", node_stts, 0);
-    rb_ary_push(members, rb_str_new2("stts"));
+    rb_define_method(rb_cYIELD, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cYIELD, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
   }
   {
     VALUE rb_cRESCUE = rb_define_class_under(rb_cNode, "RESCUE", rb_cNode);
