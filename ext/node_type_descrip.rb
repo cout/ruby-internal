@@ -50,7 +50,7 @@ NODE_TYPE_DESCRIPS = [
   [ 'OP_ASGN1'    , 'RECV'  , 'ARGS'  , 'MID'   ], 
   [ 'OP_ASGN2'    , 'VID'   , 'RECV'  , 'VALUE' ], 
   [ 'OP_ASGN_AND' , 'HEAD'  , 'VALUE' , 'NONE'  ], 
-  [ 'OP_ASGN_OR'  , 'HEAD'  , 'VALUE' , 'NONE'  ], 
+  [ 'OP_ASGN_OR'  , 'HEAD'  , 'VALUE' , 'AID'   ], 
   [ 'MASGN'       , 'VALUE' , 'HEAD'  , 'ARGS'  ], 
   [ 'LASGN'       , 'VID'   , 'VALUE' , 'CNT'   ], 
   [ 'DASGN'       , 'VALUE' , 'VID'   , 'NONE'  ], 
