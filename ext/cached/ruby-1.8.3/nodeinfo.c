@@ -1485,6 +1485,23 @@ static VALUE node_2nd(VALUE self)
   }
 }
 /*
+ * Return the Node's _aid_ member.  The return type is a
+ * Symbol.
+ */
+static VALUE node_aid(VALUE self)
+{
+  NODE * n;
+  Data_Get_Struct(self, NODE, n);
+  if(n->nd_aid == 0)
+  {
+    rb_raise(
+        rb_eRuntimeError,
+        "Invalid ID for aid (node type=%d)",
+        nd_type(n));
+  }
+  return ID2SYM(n->nd_aid);
+}
+/*
  * Return the Node's _alen_ member.  The return type is an
  * Integer.
  */
@@ -2620,6 +2637,8 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("head"));
     rb_define_method(rb_cOP_ASGN_OR, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
+    rb_define_method(rb_cOP_ASGN_OR, "aid", node_aid, 0);
+    rb_ary_push(members, rb_str_new2("aid"));
   }
   {
     VALUE rb_cMASGN = rb_define_class_under(rb_cNode, "MASGN", rb_cNode);
