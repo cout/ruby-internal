@@ -1395,6 +1395,49 @@ static VALUE node_load(VALUE klass, VALUE str)
   return wrap_node(n);
 }
 
+#if RUBY_VERSION_CODE <= 183
+static VALUE rb_obj_respond_to(VALUE obj, ID id, int priv)
+{
+  VALUE include_private = priv ? Qtrue : Qfalse;
+  return rb_funcall(obj, rb_intern("respond_to?"), 2, ID2SYM(id), include_private);
+}
+#endif
+
+/*
+ * call-seq:
+ *   node.swap(another_node) => Node
+ *
+ * Swap one node with another.  Both nodes must respond to the #swap
+ * method.  Returns the receiver.
+ */
+static VALUE node_swap(VALUE self, VALUE other)
+{
+  NODE * n1;
+  NODE * n2;
+  NODE tmp;
+
+  if(!rb_obj_respond_to(other, rb_intern("swap"), 0))
+  {
+    rb_raise(rb_eArgError, "Argument must respond to #swap");
+  }
+
+  if(   ruby_safe_level >= 4
+     || (ruby_safe_level >= 1 && (OBJ_TAINTED(other) || OBJ_TAINTED(self))))
+  {
+    /* no playing with knives in the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't swap node");
+  }
+
+  Data_Get_Struct(self, NODE, n1);
+  Data_Get_Struct(other, NODE, n2);
+
+  tmp = *n1;
+  *n1 = *n2;
+  *n2 = tmp;
+
+  return self;
+}
+
 /* ---------------------------------------------------------------------
  * Class marshalling
  * ---------------------------------------------------------------------
@@ -2389,6 +2432,9 @@ void Init_nodewrap(void)
 #endif
   rb_define_method(rb_cNode, "_dump", node_dump, 1);
   rb_define_singleton_method(rb_cNode, "_load", node_load, 1);
+
+  /* TODO: undefine swap for types that are "unsafe" to swap */
+  rb_define_method(rb_cNode, "swap", node_swap, 1);
 
   define_node_subclass_methods();
 
