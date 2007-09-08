@@ -44,7 +44,7 @@ NODE_TYPE_DESCRIPS = [
   [ 'FCALL'       , 'ARGS'  , 'MID'   , 'NONE'  ], 
   [ 'VCALL'       , 'MID'   , 'NONE'  , 'NONE'  ], 
   [ 'SUPER'       , 'ARGS'  , 'NONE'  , 'NONE'  ], 
-  [ 'ZSUPER'      , 'ARGS'  , 'NONE'  , 'NONE'  ], 
+  [ 'ZSUPER'      , 'NONE'  , 'NONE'  , 'NONE'  ], 
   # rval holds an object, not a node
   [ 'SCOPE'       , 'RVAL'  , 'TBL'   , 'NEXT'  ], 
   [ 'OP_ASGN1'    , 'RECV'  , 'ARGS'  , 'MID'   ], 
