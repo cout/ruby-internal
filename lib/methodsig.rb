@@ -158,7 +158,7 @@ class Method
   # Return a String representing the method's signature.
   def signature
     return Signature.new(
-        origin_class() || attached_class(),
+        attached_class(),
         method_oid().to_s,
         argument_names(),
         arguments())
@@ -171,7 +171,7 @@ class UnboundMethod
   # Return a String representing the method's signature.
   def signature
     return Signature.new(
-        nil,
+        origin_class(),
         method_oid().to_s,
         argument_names(),
         arguments())

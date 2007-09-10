@@ -722,11 +722,20 @@ static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-#if RUBY_VERSION_CODE < 180
-  return m->oklass;
-#else
-  return m->rklass;
-#endif
+  return m->klass;
+}
+
+/*
+ * call-seq:
+ *   method.attached_class => Class
+ *
+ * Given a Method, returns the Class it is attached to.
+ */
+static VALUE method_attached_class(VALUE method)
+{
+  struct METHOD * m;
+  Data_Get_Struct(method, struct METHOD, m);
+  return CLASS_OF(m->recv);
 }
 
 /*
@@ -2478,6 +2487,7 @@ void Init_nodewrap(void)
 #endif
   rb_define_method(rb_cMethod, "origin_class", method_origin_class, 0);
   rb_define_method(rb_cUnboundMethod, "origin_class", method_origin_class, 0);
+  rb_define_method(rb_cMethod, "attached_class", method_attached_class, 0);
   rb_define_method(rb_cMethod, "method_id", method_id, 0);
   rb_define_method(rb_cUnboundMethod, "method_id", method_id, 0);
   rb_define_method(rb_cMethod, "method_oid", method_oid, 0);
