@@ -27,7 +27,7 @@ NODE_TYPE_DESCRIPS = [
   [ 'RETRY'       , 'NONE'  , 'NONE'  , 'NONE'  ], 
   [ 'YIELD'       , 'HEAD'  , 'STATE' , 'NONE'  ], 
   [ 'RESCUE'      , 'HEAD'  , 'RESQ'  , 'ELSE'  ], 
-  [ 'RESBODY'     , 'HEAD'  , 'RESQ'  , 'ENSR'  ], 
+  [ 'RESBODY'     , 'HEAD'  , 'BODY'  , 'ARGS'  ], 
   [ 'ENSURE'      , 'HEAD'  , 'ENSR'  , 'NONE'  ], 
   [ 'AND'         , '1ST'   , '2ND'   , 'NONE'  ], 
   [ 'OR'          , '1ST'   , '2ND'   , 'NONE'  ], 
