@@ -138,6 +138,7 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
   [ 'TO_ARY'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
   [ 'SPLAT'       , 'HEAD'  , 'NONE'  , 'NONE'  ],
+  [ 'SVALUE'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
 ]
 end
 
