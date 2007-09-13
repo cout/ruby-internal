@@ -1046,6 +1046,26 @@ static VALUE proc_unbind(VALUE self)
 
 /*
  * call-seq:
+ *   proc.push(anotherProc) => self
+ *
+ * Append the body of anotherProc onto proc.
+ */
+static VALUE proc_push(VALUE self, VALUE other)
+{
+#ifdef RUBY_HAS_YARV
+  rb_raise(rb_eRuntimeError, "Proc#push not implemented yet for YARV");
+#else
+  struct BLOCK * b1;
+  struct BLOCK * b2;
+  Data_Get_Struct(self, struct BLOCK, b1);
+  Data_Get_Struct(other, struct BLOCK, b2);
+  b1->body = NEW_NODE(NODE_BLOCK, b1->body, 0, b2->body);
+  return self;
+#endif
+}
+
+/*
+ * call-seq:
  *   unbound_proc.bind(Binding) => Proc
  *
  * Bind an UnboundProc to a Binding.  Returns a Proc that has been bound
@@ -2464,6 +2484,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cProc, "var", proc_var, 0);
 #endif
   rb_define_method(rb_cProc, "unbind", proc_unbind, 0);
+  rb_define_method(rb_cProc, "<<", proc_push, 1);
+  rb_define_method(rb_cProc, "push", proc_push, 1);
   rb_define_method(rb_cProc, "_dump", proc_dump, 1);
   rb_define_singleton_method(rb_cProc, "_load", proc_load, 1);
 
