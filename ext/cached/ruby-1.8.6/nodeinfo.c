@@ -2373,10 +2373,10 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cRESBODY, "members", node_s_members, 0);
     rb_define_method(rb_cRESBODY, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
-    rb_define_method(rb_cRESBODY, "resq", node_resq, 0);
-    rb_ary_push(members, rb_str_new2("resq"));
-    rb_define_method(rb_cRESBODY, "ensr", node_ensr, 0);
-    rb_ary_push(members, rb_str_new2("ensr"));
+    rb_define_method(rb_cRESBODY, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cRESBODY, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
   }
   {
     VALUE rb_cENSURE = rb_define_class_under(rb_cNode, "ENSURE", rb_cNode);
@@ -2564,8 +2564,6 @@ void define_node_subclass_methods()
     rb_cNodeSubclass[NODE_ZSUPER] = rb_cZSUPER;
     rb_iv_set(rb_cZSUPER, "__member__", members);
     rb_define_singleton_method(rb_cZSUPER, "members", node_s_members, 0);
-    rb_define_method(rb_cZSUPER, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
   }
   {
     VALUE rb_cSCOPE = rb_define_class_under(rb_cNode, "SCOPE", rb_cNode);
@@ -3225,6 +3223,15 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cSPLAT, "__member__", members);
     rb_define_singleton_method(rb_cSPLAT, "members", node_s_members, 0);
     rb_define_method(rb_cSPLAT, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+  }
+  {
+    VALUE rb_cSVALUE = rb_define_class_under(rb_cNode, "SVALUE", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_SVALUE] = rb_cSVALUE;
+    rb_iv_set(rb_cSVALUE, "__member__", members);
+    rb_define_singleton_method(rb_cSVALUE, "members", node_s_members, 0);
+    rb_define_method(rb_cSVALUE, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
   }
 }
