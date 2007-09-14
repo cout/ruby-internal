@@ -159,12 +159,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       puts <<-END
       if(n->nd_#{node_elem_name}->id == 0)
       {
-        rb_raise(
-            rb_eRuntimeError,
-            "Invalid ID for #{node_elem_name} (node type %d)",
-            nd_type(n));
+        return Qfalse;
       }
-      return ID2SYM(n->nd_#{node_elem_name}->id);
+      else
+      {
+        return ID2SYM(n->nd_#{node_elem_name}->id);
+      }
       END
     when /\.(cfunc)$/
       puts <<-END
@@ -376,12 +376,12 @@ static VALUE node_#{node_elem_name}(VALUE self)
   Data_Get_Struct(self, NODE, n);
   if(n->nd_#{node_elem_name} == 0)
   {
-    rb_raise(
-        rb_eRuntimeError,
-        "Invalid ID for #{node_elem_name} (node type=%d)",
-        nd_type(n));
+    return Qfalse;
   }
-  return ID2SYM(n->nd_#{node_elem_name});
+  else
+  {
+    return ID2SYM(n->nd_#{node_elem_name});
+  }
 }
       END
     when /\.(argc|state|cnt)$/
@@ -422,12 +422,12 @@ static VALUE node_#{node_elem_name}(VALUE self)
   Data_Get_Struct(self, NODE, n);
   if(n->nd_#{node_elem_name}->id == 0)
   {
-    rb_raise(
-        rb_eRuntimeError,
-        "Invalid ID for #{node_elem_name} (node type %d)",
-        nd_type(n));
+    return Qfalse;
   }
-  return ID2SYM(n->nd_#{node_elem_name}->id);
+  else
+  {
+    return ID2SYM(n->nd_#{node_elem_name}->id);
+  }
 }
       END
     when /\.(cfunc)$/
