@@ -326,16 +326,135 @@ Members:
   argument, not including the implicit variables.
 
 = SCLASS =
+Represents the body of a singleton class definition, e.g.:
+  class << recv
+    body
+  end
+
+The class definition is evaluated in a new lexical scope.
+
+Members:
+* recv (node) - the object whose singleton class is to be modified
+* body (node) - the body of the class definition
+
 = DEFS =
+Represents a singleton method definition, e.g.:
+  def recv.mid
+    defn
+  end
+
+Members:
+* recv (node) - the object to whose singleton class the new method is to be
+  added
+* mid (id) - the name of the method
+* defn - the body of the method
+
 = DEFN =
+Represents a method definition, e.g.:
+  def mid
+    defn
+  end
+
+Members:
+* mid (id) - the name of the method
+* defn - the body of the method
+
 = UNTIL =
+Represents a loop constructed with the 'until' keyword, e.g.:
+  until cond do
+    body
+  end
+
+Members:
+* cond (node) - a condition to terminate the loop when it becomes true
+* body (node) - the body of the loop
+
 = WHILE =
+Represents a loop constructed with the 'while' keyword, e.g.:
+  while cond do
+    body
+  end
+
+Members:
+* cond (node) - a condition to terminate the loop when it becomes false
+* body (node) - the body of the loop
+
 = YIELD =
+Represents the 'yield' keyword.
+
+When evaluated, causes control of the program to be transferred to the block
+passed by the calling scope.
+
+Members:
+* head (node) - the value to yield
+* state (int) - if nonzero, splats the value before yielding
+
 = FOR =
+Represents a loop constructed with the 'for' keyword, e.g.:
+  for var in iter do
+    body
+  end
+
+This is equivalent to:
+  iter.each do |*args|
+    assign args to var
+    body
+  end
+
+Except that a new block is not created.
+
+Members:
+* iter (node) - the sequence over which to iterate
+* var (node) - an assignment node which assigns the next value in the sequence
+  to a variable, which may or may not be local.  May also be a multiple
+  assignment.
+* body (node) - the body of the loop
+
 = NEXT =
+Represents the 'next' keyword.
+
+Causes control to be transferred to the end of the loop, causing the next
+value in the sequence to be retrieved.
+
+Members:
+none
+
 = REDO =
-= ITER =
+Represents the 'redo' keyword.
+
+Causes control to be transferred to the beginning of the loop.  The loop
+assignment is not repeated.
+
+Members:
+none
+
 = BREAK =
+Represents the 'break' keyword.
+
+Causes control to be transferred out of the current loop.
+
+Members:
+* stts (node) - the value to be used as the "return" value of the loop, 0 if
+  nil is to be used.
+
+= ITER =
+Represents an iteration loop, e.g.:
+  iter do |*args|
+    assign args to var
+    body
+  end
+
+A new block is created so that dynamic variables created inside the loop do
+not persist once the loop has terminated.
+
+Members:
+* iter (node) - an expression which calls the desired iteration method,
+  usually recv.each
+* var (node) - an assignment node which assigns the next value in the sequence
+  to a variable, which may or may not be local.  May also be a multiple
+  assignment.
+* body (node) - the body of the loop
+
 = BEGIN =
 = ENSURE =
 = RESCUE =
