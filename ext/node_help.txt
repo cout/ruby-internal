@@ -497,10 +497,43 @@ Members:
 = XSTR =
 = DXSTR =
 = EVSTR =
+
 = ARRAY =
+Represents an array of elements.
+
+Evaluation of this node creates a new Array by evalating the given expressions
+and placing them into the arary.
+
+Members:
+* head (node) - the first element of the array
+* next (node or 0) - the tail of the array
+
 = ZARRAY =
+Represents an array of zero elements.
+
+Evalation of this node creates a new array of length zero.
+
+Members:
+none
+
 = TO_ARY =
+Represents a conversion from one object type to an array type.
+
+Evaluation of this node converts its argument to an array by calling #to_ary
+on the argument.
+
+Members:
+* head (node) - the object to convert to an array
+
 = HASH =
+Represents a hash table.
+
+Evaluation of this node creates a new Hash by evaluating the given expressions
+and placing them into the table.
+
+Members:
+* head (ARRAY node) - an array of successive keys and values
+
 = DOT2 =
 = DOT3 =
 = SPLAT =
