@@ -493,16 +493,68 @@ Members:
 * second (node) - the expression on the right hand side
 
 = STR =
+Represents a string object.
+
+Duplicates the string stored in the node.
+
+Members:
+* lit (object) - the string to be duplicated
+
 = DSTR =
+Represents a string object with interpolation.
+
+The node is evaluated by duplicating the string stored in the 'lit' element,
+then iterating over the nodes stored in the 'next' element.  Each node found
+should evalate to an string, and each resulting string is appended onto the
+original string.
+
+Interpolation is represented with the EVSTR node.
+
+Members:
+* lit (object) - a string
+* next (ARRAY node) - a list of expressions to be appended onto the string
+
 = XSTR =
+Represents a string object inside backticks, e.g.:
+  `lit`
+
+The given string is executed in a subshell and the output from its stdout
+stored in a string.
+
+Members:
+* lit (object) - the string to be executed
+
 = DXSTR =
+Represents a string object with interpolation inside backticks, e.g.:
+  `lit#{next}`
+
+The node is evaluated by duplicating the string stored in the 'lit' element,
+then iterating over the nodes stored in the 'next' element.  Each node found
+should evalate to an string, and each resulting string is appended onto the
+original string.
+
+The resulting string is executed in a subshell and the output from its stdout
+stored in a string, which becomes the result of the expression.
+
+Interpolation is represented with the EVSTR node.
+
+Members:
+* lit (object) - a string
+* next (ARRAY node) - a list of expressions to be appended onto the string
+
 = EVSTR =
+Represents a single string interpolation.
+
+Evaluates the given expression and converts its result to a string with #to_s.
+
+Members:
+* body (node) - an expression to evaluate
 
 = ARRAY =
 Represents an array of elements.
 
 Evaluation of this node creates a new Array by evalating the given expressions
-and placing them into the arary.
+and placing them into the array.
 
 Members:
 * head (node) - the first element of the array
@@ -585,6 +637,19 @@ Members:
 * head (node) - an expression which returns an Array.
 
 = ARGSCAT =
+Represents the concatenation of a list of arguments and a splatted value,
+e.g.:
+  a, b, *value
+
+Evaluates head and to create an array.  Evaluates body and performs a splat
+operation on the result to create another array (see SPLAT).  Concatenates the
+the second array onto the end of the first to produce the result.
+
+Members:
+* head (ARRAY node) - a list of fixed arguments
+* body (node) - the last argument, which will be splatted onto the end of the
+  fixed arguments
+
 = NTH_REF =
 = MATCH =
 = MATCH2 =
