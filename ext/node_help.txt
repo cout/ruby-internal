@@ -189,14 +189,81 @@ Members:
 * head (node) - the expression to inspect
 
 = CONST =
+Represents a constant lookup in the current class.
+
+The current class is the class in which the containing scope was defined.
+
+Members:
+* vid (id) - the name of the constant to look up
+
 = COLON3 =
+Represents a constant lookup or method call in class Object.
+
+This expression has the form:
+  ::mid
+
+Members:
+* mid (id) - the name of the method or constant to call/look up
+
 = COLON2 =
+Represents a constant lookup in a particular class.
+
+This expressoin has the form:
+  klass::mid
+
+Where klass is the result of evaluating the expression in the head member.
+
+Members:
+* head (node) - an expression specifying the class in which to do the lookup
+* mid (id) - the name of the method or constant to call/look up
+
 = CVAR =
+Represents a class variable retrieval.
+
+Members:
+* vid (id) - the name of the class variable, with two leading '@' characters.
+
 = CVASGN =
+Represents class variable assignment.
+
+Members:
+* vid (id) - the name of the class variable to assign
+* value (node) - an expression whose result is the new value of the class
+  variable
+
 = GASGN =
+Represents global variable assignment.
+
+Members:
+* vid (id) - the name of the global variable, with a leading '$' character.
+* value (node) - an expression whose result is the new value of the global
+  variable
+
 = GVAR =
+Represents global variable retrieval.
+
+Members:
+* vid (id) the name of the global variable to retrieve, with a leading '$'
+  character.
+
 = LIT =
+Represents a literal object.
+
+The result of the expression is the object contained in this node.
+
+Members:
+* lit (object) - the object
+
 = RETURN =
+Represents the 'return' keyword.
+
+Evaluation of this node results in a return from the current method.  If no
+argument is supplied, returns nil, otherwise returns the result of the
+supplied expression.
+
+Members:
+* stts (node or 0) - an expression representing the value to return
+
 = NEWLINE =
 = BLOCK =
 = SCOPE =
