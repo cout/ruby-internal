@@ -135,7 +135,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       puts <<-END
       if(n->nd_#{node_elem_name} == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_#{node_elem_name} == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -261,9 +265,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       END
     when /\.id$/
       puts <<-END
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_#{node_elem_name} = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_#{node_elem_name} = 1;
       }
       else
       {
@@ -377,6 +385,10 @@ static VALUE node_#{node_elem_name}(VALUE self)
   if(n->nd_#{node_elem_name} == 0)
   {
     return Qfalse;
+  }
+  else if(n->nd_#{node_elem_name} == 1)
+  {
+    return Qtrue;
   }
   else
   {
