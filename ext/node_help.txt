@@ -85,9 +85,9 @@ Represents dynamic local variable assignment.  Dynamic assignment differs from
 static assignment in that the slots for static local variables are allocated
 when the method is called, wereas slots for dynamic variables are allocated
 when the variable is first assigned to.  When searching for the variable,
-dynamic assignment searches backward up the scope stack to see if the variable
-exists in any previous scope in the current frame; if it does, it assigns to
-the slot found in that scope, otherwise it creates a new variable slot.  As a
+dynamic assignment searches backward up the stack to see if the variable
+exists in any previous block in the current frame; if it does, it assigns to
+the slot found in that block, otherwise it creates a new variable slot.  As a
 result, dynamic assignment is typically much slower than static assignment.
 
 Members:
@@ -265,12 +265,69 @@ Members:
 * stts (node or 0) - an expression representing the value to return
 
 = NEWLINE =
+Represents the termination of a line.  This is used for calling event hooks
+when a new line of code is reached.
+
+Members:
+* next (node) - the expression on the next line
+
 = BLOCK =
+Represents a block of code (a succession of multiple expressions).
+
+A single block node can hold two expressions: one expression to be evaluated
+and second expression, which may be another BLOCK.
+
+The first node in the block may be of type ARGS, in which case it represents
+the arguments to the current method.
+
+The second node in the block may be of type BLOCK_ARG, in which case it
+represents an explicit block argument.
+
+The result of the block is the last expression evaluated.
+
+Members:
+* head (node) - the first expression in the block of code
+* next (node) - the second expression in the block of code
+
 = SCOPE =
+Represents a lexical scope.
+
+A new scope is created when a method is invoked.  The scope node holds
+information about local variables and arguments to the method.
+
+The first two variables in the local variable table are the implicit variables
+$_ and $~.
+
+The next variables listed in the local variable table are the arguments to
+the method.  More information about the arguments to the method are stored in
+the ARGS node, which will either be the first node in the scope or the first
+node in the BLOCK held by the scope.
+
+Members:
+* rval (node) - holds information about which class(es) to search for
+  constants in this scope
+* tbl (pointer to array of ID) - the names of the local variables
+* next - the first expression in the scope
+
+= ARGS =
+Represents the arguments to a method.
+
+Members:
+* cnt (int) - the number of required arguments
+* rest (node) - an assignment node to assign the rest arg, if it is present
+* opt (BLOCK node) - a list of assignment nodes to assign default values to
+  the optional arguments if no argument is specified
+
+= BLOCK_ARG =
+Represents a block argument.
+
+Members:
+* cnt - the index into the local variable table of the name of the block
+  argument, not including the implicit variables.
+
 = SCLASS =
 = DEFS =
 = DEFN =
-= ARGS =
 = UNTIL =
 = WHILE =
 = YIELD =
