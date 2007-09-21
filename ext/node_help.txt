@@ -151,8 +151,43 @@ Members:
 * args (ARGSCAT node) - the arguments to the assigment
 
 = OP_ASGN_OR =
+Represents an expression of the form:
+  recv ||= value
+
+Ruby will evaluate the expression on the left hand side.  If it is undefined,
+nil, or false, then ruby will evaluate the expression on the right hand side
+and assign it to recv.  The expression will short-circuit if recv is defined
+and true (non-false, non-nil).
+
+Members:
+* recv (node) - the receiver of the assignment
+* value (node) - the right hand side of the assignment
+* aid (id) - if this indicator is nonzero, ruby will check to see if the provided
+  expression is defined, otherwise it will assume that the provided expression
+  is defined.
+
 = OP_ASGN_AND =
+Represents an expression of the form:
+  recv &&= value
+
+Ruby will evaluate the expression left hand side of the assignment; if it is
+true, then it will assign the result of the expression on the right hand side
+to the receiver on the left hand side.
+
+Members:
+* head (node) - an expression representing the left hand side of the
+  assignment
+* value (node) - an expression representing the assignment that should be
+  performed if the left hand side is true
+
 = DEFINED =
+Represents an expression using the 'defined?' keyword.
+
+The result is either nil or a string describing the expression.
+
+Members:
+* head (node) - the expression to inspect
+
 = CONST =
 = COLON3 =
 = COLON2 =
