@@ -461,9 +461,37 @@ Members:
 = IF =
 = CASE =
 = WHEN =
+
 = NOT =
+Represents a logical negation.
+
+Members:
+* body (node) - the value to negate.
+
 = OR =
+Represents a logical 'or' of the form:
+  first || second
+
+The expression will short-circuit and yield the result of the left hand side
+if it is true, else it will evaluate the right hand side and use it as the
+result of the expression.
+
+Members:
+* first (node) - the expression on the left hand side
+* second (node) - the expression on the right hand side
+
 = AND =
+Represents a logical 'and' of the form:
+  first && second
+
+The expression will short-circuit and yield the result of the left hand side
+if it is false or nil, else it will evaluate the right hand side and use it as
+the result of the expression.
+
+Members:
+* first (node) - the expression on the left hand side
+* second (node) - the expression on the right hand side
+
 = STR =
 = DSTR =
 = XSTR =
