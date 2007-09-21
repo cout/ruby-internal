@@ -535,9 +535,55 @@ Members:
 * head (ARRAY node) - an array of successive keys and values
 
 = DOT2 =
+Represents a range created with the form:
+  beg..end
+
+Creates a range which does not exclude the range end.
+
+Members:
+* beg (node) - the beginning of the range
+* end (node) - the end of the range
+
 = DOT3 =
+Represents a range created with the form:
+  beg...end
+
+Creates a range which excludes the range end.
+
+Members:
+* beg (node) - the beginning of the range
+* end (node) - the end of the range
+
 = SPLAT =
+Represents the splat (*) operation as an rvalue, e.g.:
+  *head
+
+If the argument is an array, returns self.
+
+If the argument is nil, returns [nil].
+
+If the argument is any other value, returns the result of calling #to_a on the
+argument.
+
+Members:
+* head (node) - the argument to splat.
+
 = SVALUE =
+Represents the collection of multiple values of the right hand side of an
+assignment into a single value, for use in single assignment, e.g.:
+  lhs = a, b, c
+
+The argument to this node is an Array.
+
+If it is length 0, returns nil.
+
+If it is length 1, returns the first element in the array.
+
+Otherwise, returns the array.
+
+Members:
+* head (node) - an expression which returns an Array.
+
 = ARGSCAT =
 = NTH_REF =
 = MATCH =
