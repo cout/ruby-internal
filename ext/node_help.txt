@@ -1,0 +1,207 @@
+= FALSENODE =
+Represents the keyword 'false'.
+
+Members:
+none
+
+= TRUENODE =
+Represents the keyword 'true'.
+
+Members:
+none
+
+= NILNODE =
+Represents the keyword 'nil'.
+
+Members:
+none
+
+= SELF =
+Represents the keyword 'self'.
+
+Members:
+none
+
+= CALL =
+Represents a method call in the form recv.mid(args).
+
+Members:
+* recv (node) - the receiver of the method
+* mid (id) - the method id
+* args (ARRAY node) - the arguments to the method
+
+= FCALL = 
+Represents a method call without an explicit receiver that can be determined
+at compile-time to be a method call.
+
+Members:
+* mid (id) - the method id
+* args (ARRAY node) - the arguments to the method
+
+= VCALL =
+Represents a local variable or a method call without an explicit receiver, to
+be determined at run-time.
+
+Members:
+* mid (id) - the name of the variable or method
+
+= SUPER =
+Represents the keyword 'super' when used with parens or with arguments.
+
+Members:
+* args (ARRAY node) - the arguments to be passed to the base class
+
+= ZSUPER = 
+Represents the keyword 'super' when used without parens nor arguments.  The
+arguments to the base class method are obtained from the arguments passed to
+the current method, which are store in the current frame.
+
+Members:
+none
+
+= ATTRASGN = 
+Represents attribute assignment in the form recv.mid = args or recv.mid=(args).
+
+Members:
+* recv - the receiver of the method
+* mid (id) - the id of the attribute, with a trailing '=' sign
+* args - (ARRAY node) - the arguments to the method
+
+= LASGN =
+Represents local variable assignment.
+
+Members:
+* vid (id) - the name of the local variable
+* value (node) - the value to assign to the local variable
+
+= LVAR =
+Represents local variable retrieval.
+
+Members:
+* vid (id) - the name of the local variable to retrieve.
+
+= DASGN =
+Represents dynamic local variable assignment.  Dynamic assignment differs from
+static assignment in that the slots for static local variables are allocated
+when the method is called, wereas slots for dynamic variables are allocated
+when the variable is first assigned to.  When searching for the variable,
+dynamic assignment searches backward up the scope stack to see if the variable
+exists in any previous scope in the current frame; if it does, it assigns to
+the slot found in that scope, otherwise it creates a new variable slot.  As a
+result, dynamic assignment is typically much slower than static assignment.
+
+Members:
+* vid (id) - the name of the local variable
+* value (node) - the value to assign to the local variable
+
+= DVAR =
+Represents dynamic local variable retrieval.
+
+See also DASGN.
+
+Members:
+* vid (id) - the name of the local variable to retrieve.
+
+= IASGN =
+Represents instance variable assignment.
+
+* vid (id) - the name of the instance variable, with a leading '@' sign
+* value (node) - the value to assign to the instance variable
+
+= IVAR =
+Represents instance variable retrieval.
+
+* vid (id) - the name of the instance variable to retrieve, with a leading '@' sign
+
+= MASGN =
+Represents multiple assignment.
+
+Members:
+* head (node) - TODO
+* args (node) - TODO
+* value (node) - TODO
+
+= OP_ASGN1 =
+Represents bracket assignment of the form:
+  recv[index] += value or 
+  recv[index] ||= value or
+  recv[index] &&= value.
+
+The index is obtained from args.body.
+
+The value is obtained from args.head.
+
+In the case of ||=, mid will be 0.  The rhs will be equal to the result of
+evaluating args.head if the lhs is false, otherwise the rhs will be equal to
+lhs.
+
+In the case of &&=, mid will be 1.  The rhs will be equal to the lhs if lhs is
+false, otherwise the rhs will be equal to the result of evaluating args.head.
+
+In all other cases, mid will be the name of the method to call to calculate
+value, such that the expression is equivalent to:
+  recv[args.body] = recv[args.body].mid(args.head)
+
+In no case does ruby short-circuit the assignment.
+
+Members:
+* recv (node) - the receiver of the assignment
+* mid (id) - 0, 1, or the name a method to call to calculate the value of the
+  rhs
+* args (ARGSCAT node) - the arguments to the assigment
+
+= OP_ASGN_OR =
+= OP_ASGN_AND =
+= DEFINED =
+= CONST =
+= COLON3 =
+= COLON2 =
+= CVAR =
+= CVASGN =
+= GASGN =
+= GVAR =
+= LIT =
+= RETURN =
+= NEWLINE =
+= BLOCK =
+= SCOPE =
+= SCLASS =
+= DEFS =
+= DEFN =
+= ARGS =
+= UNTIL =
+= WHILE =
+= YIELD =
+= FOR =
+= NEXT =
+= REDO =
+= ITER =
+= BREAK =
+= BEGIN =
+= ENSURE =
+= RESCUE =
+= IF =
+= CASE =
+= WHEN =
+= NOT =
+= OR =
+= AND =
+= STR =
+= DSTR =
+= XSTR =
+= DXSTR =
+= EVSTR =
+= ARRAY =
+= ZARRAY =
+= TO_ARY =
+= HASH =
+= DOT2 =
+= DOT3 =
+= SPLAT =
+= SVALUE =
+= ARGSCAT =
+= NTH_REF =
+= MATCH =
+= MATCH2 =
+= MATCH3 =
+
