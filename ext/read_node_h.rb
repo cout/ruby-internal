@@ -1,6 +1,6 @@
 require 'ruby_source_dir'
 
-NODE_H_LOCATION = "#{RUBY_SOURCE_DIR}/node.h"
+NODE_H_LOCATION = "#{RUBY_INCLUDE_DIR}/node.h"
 
 NODEINFO = Hash.new
 File.open(NODE_H_LOCATION) do |node_h|

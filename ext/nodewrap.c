@@ -4,12 +4,19 @@
 #include "node_type_descrip.h"
 #include "builtins.h"
 #include "insns_info.h"
+#include "ruby_version.h"
 
 #include "ruby.h"
-#include "version.h"
+
+#if RUBY_VERSION_CODE >= 190
+#include "ruby/signal.h"
+#include "ruby/node.h"
+#include "ruby/st.h"
+#else
 #include "rubysig.h"
 #include "node.h"
 #include "st.h"
+#endif
 
 #include <ctype.h>
 
@@ -20,6 +27,7 @@ static VALUE rb_mNodewrap = Qnil;
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
+VALUE iseq_compile(VALUE self, NODE *node);
 static VALUE rb_cInstruction = Qnil;
 static VALUE rb_cModulePlaceholder = Qnil;
 static VALUE rb_cInlineCache = Qnil;
@@ -503,7 +511,7 @@ static VALUE node_type_to_i(VALUE node_type)
 static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
 {
   rb_thread_t * th = GET_THREAD();
-  rb_control_frame_t * cfp = th_get_ruby_level_cfp(th, th->cfp);
+  rb_control_frame_t * cfp = vm_get_ruby_level_cfp(th, th->cfp);
   iseqdat->cref_stack = NEW_BLOCK(klass);
   iseqdat->cref_stack->nd_visi = noex;
   iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */
@@ -1162,7 +1170,10 @@ static VALUE node_eval(VALUE node, VALUE self)
   }
 
 #ifdef RUBY_HAS_YARV
-  return yarvcore_eval_parsed(n, rb_str_new2("(eval)"));
+  {
+    VALUE iseq = iseq_compile(self, n);
+    return rb_iseq_eval(iseq);
+  }
 #else
   {
     /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
@@ -1329,15 +1340,18 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
 
   node = rb_compile_string(STR2CSTR(file), str, NUM2INT(line));
 
+#ifdef RUBY_HAS_YARV
+  if(!node)
+  {
+    rb_exc_raise(GET_THREAD()->errinfo);
+  }
+#else
   if(ruby_nerrs > 0)
   {
-#ifdef RUBY_HAS_YARV
     ruby_nerrs = 0;
-    rb_exc_raise(GET_THREAD()->errinfo);
-#else
     compile_error(0);
-#endif
   }
+#endif
 
   return wrap_node(node);
 }
@@ -1759,7 +1773,14 @@ static int add_method_iter(VALUE name, VALUE value, VALUE module)
 static void add_methods(VALUE module, VALUE methods)
 {
   rb_check_type(methods, T_HASH);
+#if RUBY_VERSION_CODE >= 190
+  if(RHASH(methods)->ntbl)
+  {
+    st_foreach(RHASH(methods)->ntbl, add_method_iter, module);
+  }
+#else
   st_foreach(RHASH(methods)->tbl, add_method_iter, module);
+#endif
 }
 
 static int set_cvar_from_hash(VALUE key, VALUE value, VALUE module)
@@ -1775,7 +1796,14 @@ static int set_cvar_from_hash(VALUE key, VALUE value, VALUE module)
 static void add_class_variables(VALUE module, VALUE class_variables)
 {
   rb_check_type(class_variables, T_HASH);
+#if RUBY_VERSION_CODE >= 190
+  if(RHASH(class_variables)->ntbl)
+  {
+    st_foreach(RHASH(class_variables)->ntbl, set_cvar_from_hash, module);
+  }
+#else
   st_foreach(RHASH(class_variables)->tbl, set_cvar_from_hash, module);
+#endif
 }
 
 /*
@@ -2005,7 +2033,7 @@ static VALUE iseq_arg_opt_table(VALUE self)
 
   for(j = 0; j < iseqdat->arg_opts; ++j)
   {
-    rb_ary_push(ary, INT2NUM(iseqdat->arg_opt_tbl[j]));
+    rb_ary_push(ary, INT2NUM(iseqdat->arg_opt_table[j]));
   }
 
   return ary;
@@ -2021,7 +2049,7 @@ static VALUE iseq_each(VALUE self)
   rb_iseq_t *iseqdat = iseq_check(self);
   VALUE * seq;
 
-  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->size; )
+  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->iseq_size; )
   {
     VALUE insn = *seq++;
     int op_type_idx;
@@ -2111,7 +2139,7 @@ static VALUE iseq_insn_line(VALUE self, VALUE n)
   rb_iseq_t *iseqdat = iseq_check(self);
   unsigned long pos = NUM2LONG(n);
   unsigned long i, size = iseqdat->insn_info_size;
-  struct insn_info_struct *iiary = iseqdat->insn_info_tbl;
+  struct iseq_insn_info_entry *iiary = iseqdat->insn_info_table;
 
   for (i = 0; i < size; i++) {
       if (iiary[i].position == pos) {

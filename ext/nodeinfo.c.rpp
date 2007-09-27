@@ -62,6 +62,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       return Qnil;
 #ruby <<END
   require 'read_node_h.rb'
+  require 'node_help.rb'
   require 'node_type_descrip.rb'
 
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
@@ -493,6 +494,15 @@ void define_node_subclass_methods()
       name = descrip.name
     end
     node_type = "rb_c#{name}"
+
+    if NODE_HELP.include?(name) then
+      doc = "\n  /* Document-class: Node::#{name}\n"
+      NODE_HELP[name].each do |line|
+        doc << "   * #{line}\n"
+      end
+      doc << "   */\n\n"
+      puts doc
+    end
 
     if name == 'ALLOCA' then
       puts <<-END

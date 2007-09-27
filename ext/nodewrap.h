@@ -1,6 +1,15 @@
 #ifndef nodewrap__h_
 #define nodewrap__h_
 
+#include "ruby.h"
+#include "ruby_version.h"
+
+#if RUBY_VERSION_CODE >= 190
+#include "ruby/node.h"
+#else
+#include "node.h"
+#endif
+
 VALUE wrap_node(NODE * n);
 VALUE node_id(NODE * n);
 NODE * id_to_node(VALUE id);

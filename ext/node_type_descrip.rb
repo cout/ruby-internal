@@ -92,7 +92,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'DEFINED'     , 'HEAD'  , 'NONE'  , 'NONE'  ], 
   [ 'IFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
   [ 'CFUNC'       , 'CFNC'  , 'TVAL'  , 'ARGC'  ], 
-  [ 'CREF'        , 'CLSS'  , 'NEXT'  , 'BODY'  ], 
   [ 'BMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'MEMO'        , 'LIT'   , 'TVAL'  , 'NONE'  ], 
 ]
@@ -103,6 +102,7 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
   [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'NONE'  ], 
   [ 'FBODY'       , 'ORIG'  , 'MID'   , 'HEAD'  ], 
+  [ 'CREF'        , 'CLSS'  , 'NEXT'  , 'BODY'  ], 
 ]
 else
 # [190, oo)
@@ -138,8 +138,13 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'EVSTR'       , 'BODY'  , 'NONE'  , 'NONE'  ], 
   [ 'TO_ARY'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
   [ 'SPLAT'       , 'HEAD'  , 'NONE'  , 'NONE'  ],
+]
+if RUBY_VERSION_CODE < 190 then
+# [180, 190)
+NODE_TYPE_DESCRIPS.concat [
   [ 'SVALUE'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
 ]
+end
 end
 
 

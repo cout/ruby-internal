@@ -54,7 +54,7 @@ NODE_TYPE_DESCRIPS.each do |descrip|
   m3 = descrip.node3
 
   if not NODE_HELP[node_name] then
-    $stderr.puts "Warning: no help for #{node_name}"
+    $stderr.puts "Warning: no documentation for #{node_name}"
   else
     extra_help_nodes.delete(node_name)
 

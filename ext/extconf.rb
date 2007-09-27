@@ -1,10 +1,19 @@
 require 'mkmf'
+require 'ruby_version_code'
 
 cmdline_ruby_source_path = arg_config('--ruby-source-path')
 configured_ruby_source_dir = nil
 begin
   require 'ruby_source_dir'
   configured_ruby_source_dir = RUBY_SOURCE_DIR
+rescue InstallError
+end
+
+cmdline_ruby_include_path = arg_config('--ruby-include-path')
+configured_ruby_include_dir = nil
+begin
+  require 'ruby_source_dir'
+  configured_ruby_include_dir = RUBY_INCLUDE_DIR
 rescue InstallError
 end
 
@@ -22,6 +31,9 @@ end
 srcs.uniq!
 $objs = srcs.map { |f| f.sub(/\.c$/, ".#{$OBJEXT}") }
 $CFLAGS << ' -Wall -g'
+if RUBY_VERSION_CODE >= 190 then
+$CPPFLAGS << " -I#{RUBY_SOURCE_DIR}"
+end
 create_makefile('nodewrap')
 
 append_to_makefile = ''
