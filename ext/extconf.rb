@@ -9,14 +9,6 @@ begin
 rescue InstallError
 end
 
-cmdline_ruby_include_path = arg_config('--ruby-include-path')
-configured_ruby_include_dir = nil
-begin
-  require 'ruby_source_dir'
-  configured_ruby_include_dir = RUBY_INCLUDE_DIR
-rescue InstallError
-end
-
 rb_files = Dir['*.rb']
 
 rpp_files = Dir['*.rpp']

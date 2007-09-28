@@ -1,7 +1,7 @@
-ruby_source_path = @config['ruby-source-path']
-ruby_include_path = @config['ruby-include-path']
+ruby_source_path = config('ruby-source-path')
+ruby_include_path = config('ruby-include-path')
 
-if ruby_source_path.nil? and ruby_include_path.nil? then
+if ruby_source_path.nil? then
 
   cached_dir = "ext/cached/ruby-#{RUBY_VERSION}"
   if File.exist?(cached_dir) then
