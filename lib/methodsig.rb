@@ -252,6 +252,37 @@ class Node
     end
   end
 
+  # Pre-YARV, I think
+  class BMETHOD
+    def local_vars
+      raise "TODO: Not implemented yet"
+    end
+
+    def argument_names
+      return self.cval.arguments.names
+    end
+
+    def arguments
+      return self.cval.arguments
+    end
+
+    def args_node
+      raise "TODO: Not implemented yet"
+    end
+
+    def rest_arg
+      raise "TODO: Not implemented yet"
+    end
+
+    def block_arg
+      raise "TODO: Not implemented yet"
+    end
+
+    def set_optional_args(args, args_node, names)
+      raise "TODO: Not implemented yet"
+    end
+  end
+
   # YARV
   class METHOD
     include MethodSig

@@ -64,7 +64,7 @@ class Proc
   def arguments
     has_rest_arg = self.has_rest_arg
 
-    if self.respond_to?(:var) and self.var then
+    if self.respond_to?(:var) then
       # pre-YARV
       case self.var
       when Node::DASGN_CURR
@@ -80,7 +80,7 @@ class Proc
           args.push(self.var.args.vid)
         end
         return Arguments.new(args, true, has_rest_arg ? args.size - 1: nil)
-      when Fixnum
+      when Fixnum, nil # TODO: ?
         return Arguments.new([], false, has_rest_arg ? 0 : nil)
       else
         raise "Unexpected node type: #{self.var.class}"
