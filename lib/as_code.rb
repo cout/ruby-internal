@@ -182,16 +182,16 @@ class Node
   define_code(:RESBODY) do |node, indent, *args|
     begin_rescue = args[0] || false
     if begin_rescue then
-      if node.ensr then
-        a = node.ensr.to_a.map { |n| n.as_expression }
+      if node.args then
+        a = node.args.to_a.map { |n| n.as_expression }
         "#{a.join(', ')}\n" +
-        "#{'  '*indent}#{node.resq.as_code(indent+1)}"
+        "#{'  '*indent}#{node.body.as_code(indent+1)}"
       else
-        node.resq ? "\n#{'  '*indent}#{node.resq.as_code(indent+1)}" : ''
+        node.body ? "\n#{'  '*indent}#{node.resq.as_code(indent+1)}" : ''
       end
     else
-      # TODO: assuming node.ensr is false...
-      node.resq ? node.resq.as_code : ''
+      # TODO: assuming node.args is false...
+      node.body ? node.body.as_code : ''
     end
   end
 

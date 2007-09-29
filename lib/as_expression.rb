@@ -522,14 +522,14 @@ class Node
   define_expression(:RESBODY) do |node, *args|
     begin_rescue = args[0] || false
     if begin_rescue then
-      if node.ensr then
-        a = node.ensr.to_a.map { |n| n.as_expression }
+      if node.args then
+        a = node.args.to_a.map { |n| n.as_expression }
         "#{a.join(', ')}; #{node.resq.as_expression}"
       else
         node.resq ? "; #{node.resq.as_expression}" : ''
       end
     else
-      # TODO: assuming node.ensr is false...
+      # TODO: assuming node.args is false...
       node.resq ? node.resq.as_expression : ''
     end
   end
