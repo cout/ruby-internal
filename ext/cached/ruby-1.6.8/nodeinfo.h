@@ -1,9 +1,15 @@
 #ifndef nodeinfo_h
 #define nodeinfo_h
 
-#include "ruby.h"
-#include "node.h"
 #include "nodewrap.h"
+
+#include "ruby.h"
+
+#if RUBY_VERSION_CODE >= 190
+#include "ruby/node.h"
+#else
+#include "node.h"
+#endif
 
 enum Node_Elem_Name
 {

@@ -4,7 +4,7 @@
 #ifdef RUBY_HAS_YARV
 
 
-VALUE instruction_class[YARV_MAX_INSTRUCTION_SIZE];
+VALUE instruction_class[VM_INSTRUCTION_SIZE];
 
 static ID operand_type_name_of(int operand_type)
 {

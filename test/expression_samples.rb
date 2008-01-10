@@ -130,7 +130,7 @@ EXPRESSION_SAMPLES = {
   :case_when_empty_body    => 'case 42; when TrueClass; when Fixnum then 42; end',
   # TODO: alias
   # TODO: valias
-  # TODO: undef
+  :undef                   => 'undef :a',
   # TODO: class
   # TODO: sclass
   # TODO: scope

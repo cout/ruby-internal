@@ -561,7 +561,13 @@ class Node
   end
 
   define_expression(:UNDEF) do |node|
-    "alias #{node.mid}"
+    if defined? node.mid then
+      # < 1.8.5
+      "undef #{node.mid}"
+    else
+      # >= 1.8.5
+      "undef #{node.body.as_expression}"
+    end
   end
 
   define_expression(:CLASS) do |node|

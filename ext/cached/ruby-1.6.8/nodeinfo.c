@@ -83,7 +83,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_AID:
       if(n->nd_aid == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_aid == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -173,7 +177,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_CNAME:
       if(n->nd_cname == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_cname == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -357,7 +365,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_MID:
       if(n->nd_mid == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_mid == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -366,7 +378,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_MODL:
       if(n->nd_modl == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_modl == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -375,7 +391,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_NEW:
       if(n->nd_new == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_new == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -402,7 +422,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_OLD:
       if(n->nd_old == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_old == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -515,7 +539,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_TAG:
       if(n->nd_tag == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_tag == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -585,7 +613,11 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_VID:
       if(n->nd_vid == 0)
       {
-        return Qnil;
+        return Qfalse;
+      }
+      else if(n->nd_vid == 1)
+      {
+        return Qtrue;
       }
       else
       {
@@ -645,9 +677,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_AID:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_aid = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_aid = 1;
       }
       else
       {
@@ -773,9 +809,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_CNAME:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_cname = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_cname = 1;
       }
       else
       {
@@ -1052,9 +1092,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_MID:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_mid = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_mid = 1;
       }
       else
       {
@@ -1064,9 +1108,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_MODL:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_modl = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_modl = 1;
       }
       else
       {
@@ -1076,9 +1124,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_NEW:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_new = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_new = 1;
       }
       else
       {
@@ -1119,9 +1171,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_OLD:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_old = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_old = 1;
       }
       else
       {
@@ -1301,9 +1357,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_TAG:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_tag = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_tag = 1;
       }
       else
       {
@@ -1424,9 +1484,13 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_VID:
     {
-      if(NIL_P(v))
+      if(v == Qfalse)
       {
         n->nd_vid = 0;
+      }
+      else if(v == Qfalse)
+      {
+        n->nd_vid = 1;
       }
       else
       {
@@ -1485,6 +1549,10 @@ static VALUE node_aid(VALUE self)
   if(n->nd_aid == 0)
   {
     return Qfalse;
+  }
+  else if(n->nd_aid == 1)
+  {
+    return Qtrue;
   }
   else
   {
@@ -1614,6 +1682,10 @@ static VALUE node_cname(VALUE self)
   if(n->nd_cname == 0)
   {
     return Qfalse;
+  }
+  else if(n->nd_cname == 1)
+  {
+    return Qtrue;
   }
   else
   {
@@ -1820,6 +1892,10 @@ static VALUE node_mid(VALUE self)
   if(n->nd_mid == 0)
   {
     return Qfalse;
+  }
+  else if(n->nd_mid == 1)
+  {
+    return Qtrue;
   }
   else
   {
@@ -2086,6 +2162,10 @@ static VALUE node_vid(VALUE self)
   {
     return Qfalse;
   }
+  else if(n->nd_vid == 1)
+  {
+    return Qtrue;
+  }
   else
   {
     return ID2SYM(n->nd_vid);
@@ -2112,6 +2192,26 @@ void define_node_subclass_methods()
   {
     rb_cNodeSubclass[j] = Qnil;
   }
+
+
+  /* Document-class: Node::BLOCK
+   * Represents a block of code (a succession of multiple expressions).
+   * 
+   * A single block node can hold two expressions: one expression to be evaluated
+   * and second expression, which may be another BLOCK.
+   * 
+   * The first node in the block may be of type ARGS, in which case it represents
+   * the arguments to the current method.
+   * 
+   * The second node in the block may be of type BLOCK_ARG, in which case it
+   * represents an explicit block argument.
+   * 
+   * The result of the block is the last expression evaluated.
+   * 
+   * Members:
+   * * head (node) - the first expression in the block of code
+   * * next (node) - the second expression in the block of code
+   */
 
   {
     VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);
@@ -2180,6 +2280,14 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOPT_N, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
   }
+
+  /* Document-class: Node::SELF
+   * Represents the keyword 'self'.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cSELF = rb_define_class_under(rb_cNode, "SELF", rb_cNode);
     members = rb_ary_new();
@@ -2187,6 +2295,14 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cSELF, "__member__", members);
     rb_define_singleton_method(rb_cSELF, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::NILNODE
+   * Represents the keyword 'nil'.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cNILNODE = rb_define_class_under(rb_cNode, "NILNODE", rb_cNode);
     members = rb_ary_new();
@@ -2194,6 +2310,14 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cNILNODE, "__member__", members);
     rb_define_singleton_method(rb_cNILNODE, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::TRUENODE
+   * Represents the keyword 'true'.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cTRUENODE = rb_define_class_under(rb_cNode, "TRUENODE", rb_cNode);
     members = rb_ary_new();
@@ -2201,6 +2325,14 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cTRUENODE, "__member__", members);
     rb_define_singleton_method(rb_cTRUENODE, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::FALSENODE
+   * Represents the keyword 'false'.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cFALSENODE = rb_define_class_under(rb_cNode, "FALSENODE", rb_cNode);
     members = rb_ary_new();
@@ -2221,6 +2353,10 @@ void define_node_subclass_methods()
     rb_define_method(rb_cIF, "cond", node_cond, 0);
     rb_ary_push(members, rb_str_new2("cond"));
   }
+
+  /* Document-class: Node::WHEN
+   */
+
   {
     VALUE rb_cWHEN = rb_define_class_under(rb_cNode, "WHEN", rb_cNode);
     members = rb_ary_new();
@@ -2247,6 +2383,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCASE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
+
+  /* Document-class: Node::WHILE
+   * Represents a loop constructed with the 'while' keyword, e.g.:
+   *   while cond do
+   *     body
+   *   end
+   * 
+   * Members:
+   * * cond (node) - a condition to terminate the loop when it becomes false
+   * * body (node) - the body of the loop
+   */
+
   {
     VALUE rb_cWHILE = rb_define_class_under(rb_cNode, "WHILE", rb_cNode);
     members = rb_ary_new();
@@ -2260,6 +2408,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cWHILE, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
   }
+
+  /* Document-class: Node::UNTIL
+   * Represents a loop constructed with the 'until' keyword, e.g.:
+   *   until cond do
+   *     body
+   *   end
+   * 
+   * Members:
+   * * cond (node) - a condition to terminate the loop when it becomes true
+   * * body (node) - the body of the loop
+   */
+
   {
     VALUE rb_cUNTIL = rb_define_class_under(rb_cNode, "UNTIL", rb_cNode);
     members = rb_ary_new();
@@ -2284,6 +2444,26 @@ void define_node_subclass_methods()
     rb_define_method(rb_cBLOCK_PASS, "iter", node_iter, 0);
     rb_ary_push(members, rb_str_new2("iter"));
   }
+
+  /* Document-class: Node::ITER
+   * Represents an iteration loop, e.g.:
+   *   iter do |*args|
+   *     assign args to var
+   *     body
+   *   end
+   * 
+   * A new block is created so that dynamic variables created inside the loop do
+   * not persist once the loop has terminated.
+   * 
+   * Members:
+   * * iter (node) - an expression which calls the desired iteration method,
+   *   usually recv.each
+   * * var (node) - an assignment node which assigns the next value in the sequence
+   *   to a variable, which may or may not be local.  May also be a multiple
+   *   assignment.
+   * * body (node) - the body of the loop
+   */
+
   {
     VALUE rb_cITER = rb_define_class_under(rb_cNode, "ITER", rb_cNode);
     members = rb_ary_new();
@@ -2297,6 +2477,29 @@ void define_node_subclass_methods()
     rb_define_method(rb_cITER, "iter", node_iter, 0);
     rb_ary_push(members, rb_str_new2("iter"));
   }
+
+  /* Document-class: Node::FOR
+   * Represents a loop constructed with the 'for' keyword, e.g.:
+   *   for var in iter do
+   *     body
+   *   end
+   * 
+   * This is equivalent to:
+   *   iter.each do |*args|
+   *     assign args to var
+   *     body
+   *   end
+   * 
+   * Except that a new block is not created.
+   * 
+   * Members:
+   * * iter (node) - the sequence over which to iterate
+   * * var (node) - an assignment node which assigns the next value in the sequence
+   *   to a variable, which may or may not be local.  May also be a multiple
+   *   assignment.
+   * * body (node) - the body of the loop
+   */
+
   {
     VALUE rb_cFOR = rb_define_class_under(rb_cNode, "FOR", rb_cNode);
     members = rb_ary_new();
@@ -2310,6 +2513,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFOR, "iter", node_iter, 0);
     rb_ary_push(members, rb_str_new2("iter"));
   }
+
+  /* Document-class: Node::BREAK
+   * Represents the 'break' keyword.
+   * 
+   * Causes control to be transferred out of the current loop.
+   * 
+   * Members:
+   * * stts (node) - the value to be used as the "return" value of the loop, 0 if
+   *   nil is to be used.
+   */
+
   {
     VALUE rb_cBREAK = rb_define_class_under(rb_cNode, "BREAK", rb_cNode);
     members = rb_ary_new();
@@ -2319,6 +2533,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cBREAK, "stts", node_stts, 0);
     rb_ary_push(members, rb_str_new2("stts"));
   }
+
+  /* Document-class: Node::NEXT
+   * Represents the 'next' keyword.
+   * 
+   * Causes control to be transferred to the end of the loop, causing the next
+   * value in the sequence to be retrieved.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cNEXT = rb_define_class_under(rb_cNode, "NEXT", rb_cNode);
     members = rb_ary_new();
@@ -2328,6 +2553,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cNEXT, "stts", node_stts, 0);
     rb_ary_push(members, rb_str_new2("stts"));
   }
+
+  /* Document-class: Node::REDO
+   * Represents the 'redo' keyword.
+   * 
+   * Causes control to be transferred to the beginning of the loop.  The loop
+   * assignment is not repeated.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cREDO = rb_define_class_under(rb_cNode, "REDO", rb_cNode);
     members = rb_ary_new();
@@ -2342,6 +2578,18 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cRETRY, "__member__", members);
     rb_define_singleton_method(rb_cRETRY, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::YIELD
+   * Represents the 'yield' keyword.
+   * 
+   * When evaluated, causes control of the program to be transferred to the block
+   * passed by the calling scope.
+   * 
+   * Members:
+   * * head (node) - the value to yield
+   * * state (int) - if nonzero, splats the value before yielding
+   */
+
   {
     VALUE rb_cYIELD = rb_define_class_under(rb_cNode, "YIELD", rb_cNode);
     members = rb_ary_new();
@@ -2390,6 +2638,20 @@ void define_node_subclass_methods()
     rb_define_method(rb_cENSURE, "ensr", node_ensr, 0);
     rb_ary_push(members, rb_str_new2("ensr"));
   }
+
+  /* Document-class: Node::AND
+   * Represents a logical 'and' of the form:
+   *   first && second
+   * 
+   * The expression will short-circuit and yield the result of the left hand side
+   * if it is false or nil, else it will evaluate the right hand side and use it as
+   * the result of the expression.
+   * 
+   * Members:
+   * * first (node) - the expression on the left hand side
+   * * second (node) - the expression on the right hand side
+   */
+
   {
     VALUE rb_cAND = rb_define_class_under(rb_cNode, "AND", rb_cNode);
     members = rb_ary_new();
@@ -2401,6 +2663,20 @@ void define_node_subclass_methods()
     rb_define_method(rb_cAND, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
   }
+
+  /* Document-class: Node::OR
+   * Represents a logical 'or' of the form:
+   *   first || second
+   * 
+   * The expression will short-circuit and yield the result of the left hand side
+   * if it is true, else it will evaluate the right hand side and use it as the
+   * result of the expression.
+   * 
+   * Members:
+   * * first (node) - the expression on the left hand side
+   * * second (node) - the expression on the right hand side
+   */
+
   {
     VALUE rb_cOR = rb_define_class_under(rb_cNode, "OR", rb_cNode);
     members = rb_ary_new();
@@ -2412,6 +2688,14 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOR, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
   }
+
+  /* Document-class: Node::NOT
+   * Represents a logical negation.
+   * 
+   * Members:
+   * * body (node) - the value to negate.
+   */
+
   {
     VALUE rb_cNOT = rb_define_class_under(rb_cNode, "NOT", rb_cNode);
     members = rb_ary_new();
@@ -2421,6 +2705,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cNOT, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
   }
+
+  /* Document-class: Node::DOT2
+   * Represents a range created with the form:
+   *   beg..end
+   * 
+   * Creates a range which does not exclude the range end.
+   * 
+   * Members:
+   * * beg (node) - the beginning of the range
+   * * end (node) - the end of the range
+   */
+
   {
     VALUE rb_cDOT2 = rb_define_class_under(rb_cNode, "DOT2", rb_cNode);
     members = rb_ary_new();
@@ -2434,6 +2730,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDOT2, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
   }
+
+  /* Document-class: Node::DOT3
+   * Represents a range created with the form:
+   *   beg...end
+   * 
+   * Creates a range which excludes the range end.
+   * 
+   * Members:
+   * * beg (node) - the beginning of the range
+   * * end (node) - the end of the range
+   */
+
   {
     VALUE rb_cDOT3 = rb_define_class_under(rb_cNode, "DOT3", rb_cNode);
     members = rb_ary_new();
@@ -2473,6 +2781,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFLIP3, "end", node_end, 0);
     rb_ary_push(members, rb_str_new2("end"));
   }
+
+  /* Document-class: Node::RETURN
+   * Represents the 'return' keyword.
+   * 
+   * Evaluation of this node results in a return from the current method.  If no
+   * argument is supplied, returns nil, otherwise returns the result of the
+   * supplied expression.
+   * 
+   * Members:
+   * * stts (node or 0) - an expression representing the value to return
+   */
+
   {
     VALUE rb_cRETURN = rb_define_class_under(rb_cNode, "RETURN", rb_cNode);
     members = rb_ary_new();
@@ -2482,6 +2802,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cRETURN, "stts", node_stts, 0);
     rb_ary_push(members, rb_str_new2("stts"));
   }
+
+  /* Document-class: Node::ARGS
+   * Represents the arguments to a method.
+   * 
+   * Members:
+   * * cnt (int) - the number of required arguments
+   * * rest (node) - an assignment node to assign the rest arg, if it is present
+   * * opt (BLOCK node) - a list of assignment nodes to assign default values to
+   *   the optional arguments if no argument is specified
+   */
+
   {
     VALUE rb_cARGS = rb_define_class_under(rb_cNode, "ARGS", rb_cNode);
     members = rb_ary_new();
@@ -2495,6 +2826,22 @@ void define_node_subclass_methods()
     rb_define_method(rb_cARGS, "opt", node_opt, 0);
     rb_ary_push(members, rb_str_new2("opt"));
   }
+
+  /* Document-class: Node::ARGSCAT
+   * Represents the concatenation of a list of arguments and a splatted value,
+   * e.g.:
+   *   a, b, *value
+   * 
+   * Evaluates head and to create an array.  Evaluates body and performs a splat
+   * operation on the result to create another array (see SPLAT).  Concatenates the
+   * the second array onto the end of the first to produce the result.
+   * 
+   * Members:
+   * * head (ARRAY node) - a list of fixed arguments
+   * * body (node) - the last argument, which will be splatted onto the end of the
+   *   fixed arguments
+   */
+
   {
     VALUE rb_cARGSCAT = rb_define_class_under(rb_cNode, "ARGSCAT", rb_cNode);
     members = rb_ary_new();
@@ -2517,6 +2864,24 @@ void define_node_subclass_methods()
     rb_define_method(rb_cARGSPUSH, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
   }
+
+  /* Document-class: Node::CALL
+   * Represents a method call in the form recv.mid(args).
+   * 
+   * Members:
+   * * recv (node) - the receiver of the method
+   * * mid (id) - the method id
+   * * args (ARRAY node) - the arguments to the method
+   * 
+   * = FCALL = 
+   * Represents a method call without an explicit receiver that can be determined
+   * at compile-time to be a method call.
+   * 
+   * Members:
+   * * mid (id) - the method id
+   * * args (ARRAY node) - the arguments to the method
+   */
+
   {
     VALUE rb_cCALL = rb_define_class_under(rb_cNode, "CALL", rb_cNode);
     members = rb_ary_new();
@@ -2541,6 +2906,15 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFCALL, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
   }
+
+  /* Document-class: Node::VCALL
+   * Represents a local variable or a method call without an explicit receiver, to
+   * be determined at run-time.
+   * 
+   * Members:
+   * * mid (id) - the name of the variable or method
+   */
+
   {
     VALUE rb_cVCALL = rb_define_class_under(rb_cNode, "VCALL", rb_cNode);
     members = rb_ary_new();
@@ -2550,6 +2924,30 @@ void define_node_subclass_methods()
     rb_define_method(rb_cVCALL, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
   }
+
+  /* Document-class: Node::SUPER
+   * Represents the keyword 'super' when used with parens or with arguments.
+   * 
+   * Members:
+   * * args (ARRAY node) - the arguments to be passed to the base class
+   * 
+   * = ZSUPER = 
+   * Represents the keyword 'super' when used without parens nor arguments.  The
+   * arguments to the base class method are obtained from the arguments passed to
+   * the current method, which are store in the current frame.
+   * 
+   * Members:
+   * none
+   * 
+   * = ATTRASGN = 
+   * Represents attribute assignment in the form recv.mid = args or recv.mid=(args).
+   * 
+   * Members:
+   * * recv - the receiver of the method
+   * * mid (id) - the id of the attribute, with a trailing '=' sign
+   * * args - (ARRAY node) - the arguments to the method
+   */
+
   {
     VALUE rb_cSUPER = rb_define_class_under(rb_cNode, "SUPER", rb_cNode);
     members = rb_ary_new();
@@ -2566,6 +2964,28 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cZSUPER, "__member__", members);
     rb_define_singleton_method(rb_cZSUPER, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::SCOPE
+   * Represents a lexical scope.
+   * 
+   * A new scope is created when a method is invoked.  The scope node holds
+   * information about local variables and arguments to the method.
+   * 
+   * The first two variables in the local variable table are the implicit variables
+   * $_ and $~.
+   * 
+   * The next variables listed in the local variable table are the arguments to
+   * the method.  More information about the arguments to the method are stored in
+   * the ARGS node, which will either be the first node in the scope or the first
+   * node in the BLOCK held by the scope.
+   * 
+   * Members:
+   * * rval (node) - holds information about which class(es) to search for
+   *   constants in this scope
+   * * tbl (pointer to array of ID) - the names of the local variables
+   * * next - the first expression in the scope
+   */
+
   {
     VALUE rb_cSCOPE = rb_define_class_under(rb_cNode, "SCOPE", rb_cNode);
     members = rb_ary_new();
@@ -2579,6 +2999,37 @@ void define_node_subclass_methods()
     rb_define_method(rb_cSCOPE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
+
+  /* Document-class: Node::OP_ASGN1
+   * Represents bracket assignment of the form:
+   *   recv[index] += value or 
+   *   recv[index] ||= value or
+   *   recv[index] &&= value.
+   * 
+   * The index is obtained from args.body.
+   * 
+   * The value is obtained from args.head.
+   * 
+   * In the case of ||=, mid will be 0.  The rhs will be equal to the result of
+   * evaluating args.head if the lhs is false, otherwise the rhs will be equal to
+   * lhs.
+   * 
+   * In the case of &&=, mid will be 1.  The rhs will be equal to the lhs if lhs is
+   * false, otherwise the rhs will be equal to the result of evaluating args.head.
+   * 
+   * In all other cases, mid will be the name of the method to call to calculate
+   * value, such that the expression is equivalent to:
+   *   recv[args.body] = recv[args.body].mid(args.head)
+   * 
+   * In no case does ruby short-circuit the assignment.
+   * 
+   * Members:
+   * * recv (node) - the receiver of the assignment
+   * * mid (id) - 0, 1, or the name a method to call to calculate the value of the
+   *   rhs
+   * * args (ARGSCAT node) - the arguments to the assigment
+   */
+
   {
     VALUE rb_cOP_ASGN1 = rb_define_class_under(rb_cNode, "OP_ASGN1", rb_cNode);
     members = rb_ary_new();
@@ -2605,6 +3056,22 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOP_ASGN2, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
   }
+
+  /* Document-class: Node::OP_ASGN_AND
+   * Represents an expression of the form:
+   *   recv &&= value
+   * 
+   * Ruby will evaluate the expression left hand side of the assignment; if it is
+   * true, then it will assign the result of the expression on the right hand side
+   * to the receiver on the left hand side.
+   * 
+   * Members:
+   * * head (node) - an expression representing the left hand side of the
+   *   assignment
+   * * value (node) - an expression representing the assignment that should be
+   *   performed if the left hand side is true
+   */
+
   {
     VALUE rb_cOP_ASGN_AND = rb_define_class_under(rb_cNode, "OP_ASGN_AND", rb_cNode);
     members = rb_ary_new();
@@ -2616,6 +3083,24 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOP_ASGN_AND, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
   }
+
+  /* Document-class: Node::OP_ASGN_OR
+   * Represents an expression of the form:
+   *   recv ||= value
+   * 
+   * Ruby will evaluate the expression on the left hand side.  If it is undefined,
+   * nil, or false, then ruby will evaluate the expression on the right hand side
+   * and assign it to recv.  The expression will short-circuit if recv is defined
+   * and true (non-false, non-nil).
+   * 
+   * Members:
+   * * recv (node) - the receiver of the assignment
+   * * value (node) - the right hand side of the assignment
+   * * aid (id) - if this indicator is nonzero, ruby will check to see if the provided
+   *   expression is defined, otherwise it will assume that the provided expression
+   *   is defined.
+   */
+
   {
     VALUE rb_cOP_ASGN_OR = rb_define_class_under(rb_cNode, "OP_ASGN_OR", rb_cNode);
     members = rb_ary_new();
@@ -2629,6 +3114,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOP_ASGN_OR, "aid", node_aid, 0);
     rb_ary_push(members, rb_str_new2("aid"));
   }
+
+  /* Document-class: Node::MASGN
+   * Represents multiple assignment.
+   * 
+   * Members:
+   * * head (node) - TODO
+   * * args (node) - TODO
+   * * value (node) - TODO
+   */
+
   {
     VALUE rb_cMASGN = rb_define_class_under(rb_cNode, "MASGN", rb_cNode);
     members = rb_ary_new();
@@ -2642,6 +3137,15 @@ void define_node_subclass_methods()
     rb_define_method(rb_cMASGN, "args", node_args, 0);
     rb_ary_push(members, rb_str_new2("args"));
   }
+
+  /* Document-class: Node::LASGN
+   * Represents local variable assignment.
+   * 
+   * Members:
+   * * vid (id) - the name of the local variable
+   * * value (node) - the value to assign to the local variable
+   */
+
   {
     VALUE rb_cLASGN = rb_define_class_under(rb_cNode, "LASGN", rb_cNode);
     members = rb_ary_new();
@@ -2655,6 +3159,22 @@ void define_node_subclass_methods()
     rb_define_method(rb_cLASGN, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
   }
+
+  /* Document-class: Node::DASGN
+   * Represents dynamic local variable assignment.  Dynamic assignment differs from
+   * static assignment in that the slots for static local variables are allocated
+   * when the method is called, wereas slots for dynamic variables are allocated
+   * when the variable is first assigned to.  When searching for the variable,
+   * dynamic assignment searches backward up the stack to see if the variable
+   * exists in any previous block in the current frame; if it does, it assigns to
+   * the slot found in that block, otherwise it creates a new variable slot.  As a
+   * result, dynamic assignment is typically much slower than static assignment.
+   * 
+   * Members:
+   * * vid (id) - the name of the local variable
+   * * value (node) - the value to assign to the local variable
+   */
+
   {
     VALUE rb_cDASGN = rb_define_class_under(rb_cNode, "DASGN", rb_cNode);
     members = rb_ary_new();
@@ -2677,6 +3197,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDASGN_CURR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::GASGN
+   * Represents global variable assignment.
+   * 
+   * Members:
+   * * vid (id) - the name of the global variable, with a leading '$' character.
+   * * value (node) - an expression whose result is the new value of the global
+   *   variable
+   */
+
   {
     VALUE rb_cGASGN = rb_define_class_under(rb_cNode, "GASGN", rb_cNode);
     members = rb_ary_new();
@@ -2690,6 +3220,14 @@ void define_node_subclass_methods()
     rb_define_method(rb_cGASGN, "entry", node_entry, 0);
     rb_ary_push(members, rb_str_new2("entry"));
   }
+
+  /* Document-class: Node::IASGN
+   * Represents instance variable assignment.
+   * 
+   * * vid (id) - the name of the instance variable, with a leading '@' sign
+   * * value (node) - the value to assign to the instance variable
+   */
+
   {
     VALUE rb_cIASGN = rb_define_class_under(rb_cNode, "IASGN", rb_cNode);
     members = rb_ary_new();
@@ -2723,6 +3261,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCVDECL, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::CVASGN
+   * Represents class variable assignment.
+   * 
+   * Members:
+   * * vid (id) - the name of the class variable to assign
+   * * value (node) - an expression whose result is the new value of the class
+   *   variable
+   */
+
   {
     VALUE rb_cCVASGN = rb_define_class_under(rb_cNode, "CVASGN", rb_cNode);
     members = rb_ary_new();
@@ -2734,6 +3282,14 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCVASGN, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::LVAR
+   * Represents local variable retrieval.
+   * 
+   * Members:
+   * * vid (id) - the name of the local variable to retrieve.
+   */
+
   {
     VALUE rb_cLVAR = rb_define_class_under(rb_cNode, "LVAR", rb_cNode);
     members = rb_ary_new();
@@ -2745,6 +3301,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cLVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::DVAR
+   * Represents dynamic local variable retrieval.
+   * 
+   * See also DASGN.
+   * 
+   * Members:
+   * * vid (id) - the name of the local variable to retrieve.
+   */
+
   {
     VALUE rb_cDVAR = rb_define_class_under(rb_cNode, "DVAR", rb_cNode);
     members = rb_ary_new();
@@ -2754,6 +3320,15 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::GVAR
+   * Represents global variable retrieval.
+   * 
+   * Members:
+   * * vid (id) the name of the global variable to retrieve, with a leading '$'
+   *   character.
+   */
+
   {
     VALUE rb_cGVAR = rb_define_class_under(rb_cNode, "GVAR", rb_cNode);
     members = rb_ary_new();
@@ -2765,6 +3340,13 @@ void define_node_subclass_methods()
     rb_define_method(rb_cGVAR, "entry", node_entry, 0);
     rb_ary_push(members, rb_str_new2("entry"));
   }
+
+  /* Document-class: Node::IVAR
+   * Represents instance variable retrieval.
+   * 
+   * * vid (id) - the name of the instance variable to retrieve, with a leading '@' sign
+   */
+
   {
     VALUE rb_cIVAR = rb_define_class_under(rb_cNode, "IVAR", rb_cNode);
     members = rb_ary_new();
@@ -2774,6 +3356,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cIVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::CONST
+   * Represents a constant lookup in the current class.
+   * 
+   * The current class is the class in which the containing scope was defined.
+   * 
+   * Members:
+   * * vid (id) - the name of the constant to look up
+   */
+
   {
     VALUE rb_cCONST = rb_define_class_under(rb_cNode, "CONST", rb_cNode);
     members = rb_ary_new();
@@ -2783,6 +3375,14 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCONST, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::CVAR
+   * Represents a class variable retrieval.
+   * 
+   * Members:
+   * * vid (id) - the name of the class variable, with two leading '@' characters.
+   */
+
   {
     VALUE rb_cCVAR = rb_define_class_under(rb_cNode, "CVAR", rb_cNode);
     members = rb_ary_new();
@@ -2792,6 +3392,15 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::BLOCK_ARG
+   * Represents a block argument.
+   * 
+   * Members:
+   * * cnt - the index into the local variable table of the name of the block
+   *   argument, not including the implicit variables.
+   */
+
   {
     VALUE rb_cBLOCK_ARG = rb_define_class_under(rb_cNode, "BLOCK_ARG", rb_cNode);
     members = rb_ary_new();
@@ -2801,6 +3410,20 @@ void define_node_subclass_methods()
     rb_define_method(rb_cBLOCK_ARG, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
   }
+
+  /* Document-class: Node::COLON2
+   * Represents a constant lookup in a particular class.
+   * 
+   * This expressoin has the form:
+   *   klass::mid
+   * 
+   * Where klass is the result of evaluating the expression in the head member.
+   * 
+   * Members:
+   * * head (node) - an expression specifying the class in which to do the lookup
+   * * mid (id) - the name of the method or constant to call/look up
+   */
+
   {
     VALUE rb_cCOLON2 = rb_define_class_under(rb_cNode, "COLON2", rb_cNode);
     members = rb_ary_new();
@@ -2812,6 +3435,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCOLON2, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
   }
+
+  /* Document-class: Node::COLON3
+   * Represents a constant lookup or method call in class Object.
+   * 
+   * This expression has the form:
+   *   ::mid
+   * 
+   * Members:
+   * * mid (id) - the name of the method or constant to call/look up
+   */
+
   {
     VALUE rb_cCOLON3 = rb_define_class_under(rb_cNode, "COLON3", rb_cNode);
     members = rb_ary_new();
@@ -2843,6 +3477,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cBACK_REF, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
   }
+
+  /* Document-class: Node::HASH
+   * Represents a hash table.
+   * 
+   * Evaluation of this node creates a new Hash by evaluating the given expressions
+   * and placing them into the table.
+   * 
+   * Members:
+   * * head (ARRAY node) - an array of successive keys and values
+   */
+
   {
     VALUE rb_cHASH = rb_define_class_under(rb_cNode, "HASH", rb_cNode);
     members = rb_ary_new();
@@ -2852,6 +3497,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cHASH, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
   }
+
+  /* Document-class: Node::ZARRAY
+   * Represents an array of zero elements.
+   * 
+   * Evalation of this node creates a new array of length zero.
+   * 
+   * Members:
+   * none
+   */
+
   {
     VALUE rb_cZARRAY = rb_define_class_under(rb_cNode, "ZARRAY", rb_cNode);
     members = rb_ary_new();
@@ -2859,6 +3514,18 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cZARRAY, "__member__", members);
     rb_define_singleton_method(rb_cZARRAY, "members", node_s_members, 0);
   }
+
+  /* Document-class: Node::ARRAY
+   * Represents an array of elements.
+   * 
+   * Evaluation of this node creates a new Array by evalating the given expressions
+   * and placing them into the array.
+   * 
+   * Members:
+   * * head (node) - the first element of the array
+   * * next (node or 0) - the tail of the array
+   */
+
   {
     VALUE rb_cARRAY = rb_define_class_under(rb_cNode, "ARRAY", rb_cNode);
     members = rb_ary_new();
@@ -2872,6 +3539,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cARRAY, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
+
+  /* Document-class: Node::STR
+   * Represents a string object.
+   * 
+   * Duplicates the string stored in the node.
+   * 
+   * Members:
+   * * lit (object) - the string to be duplicated
+   */
+
   {
     VALUE rb_cSTR = rb_define_class_under(rb_cNode, "STR", rb_cNode);
     members = rb_ary_new();
@@ -2907,6 +3584,22 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDREGX_ONCE, "cflag", node_cflag, 0);
     rb_ary_push(members, rb_str_new2("cflag"));
   }
+
+  /* Document-class: Node::DSTR
+   * Represents a string object with interpolation.
+   * 
+   * The node is evaluated by duplicating the string stored in the 'lit' element,
+   * then iterating over the nodes stored in the 'next' element.  Each node found
+   * should evalate to an string, and each resulting string is appended onto the
+   * original string.
+   * 
+   * Interpolation is represented with the EVSTR node.
+   * 
+   * Members:
+   * * lit (object) - a string
+   * * next (ARRAY node) - a list of expressions to be appended onto the string
+   */
+
   {
     VALUE rb_cDSTR = rb_define_class_under(rb_cNode, "DSTR", rb_cNode);
     members = rb_ary_new();
@@ -2918,6 +3611,26 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDSTR, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
+
+  /* Document-class: Node::DXSTR
+   * Represents a string object with interpolation inside backticks, e.g.:
+   *   `lit#{next}`
+   * 
+   * The node is evaluated by duplicating the string stored in the 'lit' element,
+   * then iterating over the nodes stored in the 'next' element.  Each node found
+   * should evalate to an string, and each resulting string is appended onto the
+   * original string.
+   * 
+   * The resulting string is executed in a subshell and the output from its stdout
+   * stored in a string, which becomes the result of the expression.
+   * 
+   * Interpolation is represented with the EVSTR node.
+   * 
+   * Members:
+   * * lit (object) - a string
+   * * next (ARRAY node) - a list of expressions to be appended onto the string
+   */
+
   {
     VALUE rb_cDXSTR = rb_define_class_under(rb_cNode, "DXSTR", rb_cNode);
     members = rb_ary_new();
@@ -2929,6 +3642,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDXSTR, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
+
+  /* Document-class: Node::XSTR
+   * Represents a string object inside backticks, e.g.:
+   *   `lit`
+   * 
+   * The given string is executed in a subshell and the output from its stdout
+   * stored in a string.
+   * 
+   * Members:
+   * * lit (object) - the string to be executed
+   */
+
   {
     VALUE rb_cXSTR = rb_define_class_under(rb_cNode, "XSTR", rb_cNode);
     members = rb_ary_new();
@@ -2953,6 +3678,16 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cnt"));
   }
 #endif
+
+  /* Document-class: Node::LIT
+   * Represents a literal object.
+   * 
+   * The result of the expression is the object contained in this node.
+   * 
+   * Members:
+   * * lit (object) - the object
+   */
+
   {
     VALUE rb_cLIT = rb_define_class_under(rb_cNode, "LIT", rb_cNode);
     members = rb_ary_new();
@@ -2971,6 +3706,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cATTRSET, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
+
+  /* Document-class: Node::DEFN
+   * Represents a method definition, e.g.:
+   *   def mid
+   *     defn
+   *   end
+   * 
+   * Members:
+   * * mid (id) - the name of the method
+   * * defn - the body of the method
+   */
+
   {
     VALUE rb_cDEFN = rb_define_class_under(rb_cNode, "DEFN", rb_cNode);
     members = rb_ary_new();
@@ -2984,6 +3731,20 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDEFN, "noex", node_noex, 0);
     rb_ary_push(members, rb_str_new2("noex"));
   }
+
+  /* Document-class: Node::DEFS
+   * Represents a singleton method definition, e.g.:
+   *   def recv.mid
+   *     defn
+   *   end
+   * 
+   * Members:
+   * * recv (node) - the object to whose singleton class the new method is to be
+   *   added
+   * * mid (id) - the name of the method
+   * * defn - the body of the method
+   */
+
   {
     VALUE rb_cDEFS = rb_define_class_under(rb_cNode, "DEFS", rb_cNode);
     members = rb_ary_new();
@@ -2995,15 +3756,6 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDEFS, "recv", node_recv, 0);
     rb_ary_push(members, rb_str_new2("recv"));
     rb_define_method(rb_cDEFS, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-  }
-  {
-    VALUE rb_cUNDEF = rb_define_class_under(rb_cNode, "UNDEF", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_UNDEF] = rb_cUNDEF;
-    rb_iv_set(rb_cUNDEF, "__member__", members);
-    rb_define_singleton_method(rb_cUNDEF, "members", node_s_members, 0);
-    rb_define_method(rb_cUNDEF, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
   }
   {
@@ -3028,6 +3780,20 @@ void define_node_subclass_methods()
     rb_define_method(rb_cVALIAS, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
   }
+
+  /* Document-class: Node::SCLASS
+   * Represents the body of a singleton class definition, e.g.:
+   *   class << recv
+   *     body
+   *   end
+   * 
+   * The class definition is evaluated in a new lexical scope.
+   * 
+   * Members:
+   * * recv (node) - the object whose singleton class is to be modified
+   * * body (node) - the body of the class definition
+   */
+
   {
     VALUE rb_cSCLASS = rb_define_class_under(rb_cNode, "SCLASS", rb_cNode);
     members = rb_ary_new();
@@ -3039,6 +3805,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cSCLASS, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
   }
+
+  /* Document-class: Node::DEFINED
+   * Represents an expression using the 'defined?' keyword.
+   * 
+   * The result is either nil or a string describing the expression.
+   * 
+   * Members:
+   * * head (node) - the expression to inspect
+   */
+
   {
     VALUE rb_cDEFINED = rb_define_class_under(rb_cNode, "DEFINED", rb_cNode);
     members = rb_ary_new();
@@ -3075,19 +3851,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("argc"));
   }
   {
-    VALUE rb_cCREF = rb_define_class_under(rb_cNode, "CREF", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CREF] = rb_cCREF;
-    rb_iv_set(rb_cCREF, "__member__", members);
-    rb_define_singleton_method(rb_cCREF, "members", node_s_members, 0);
-    rb_define_method(rb_cCREF, "clss", node_clss, 0);
-    rb_ary_push(members, rb_str_new2("clss"));
-    rb_define_method(rb_cCREF, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
-    rb_define_method(rb_cCREF, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-  }
-  {
     VALUE rb_cBMETHOD = rb_define_class_under(rb_cNode, "BMETHOD", rb_cNode);
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_BMETHOD] = rb_cBMETHOD;
@@ -3116,6 +3879,15 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDMETHOD, "cval", node_cval, 0);
     rb_ary_push(members, rb_str_new2("cval"));
   }
+
+  /* Document-class: Node::NEWLINE
+   * Represents the termination of a line.  This is used for calling event hooks
+   * when a new line of code is reached.
+   * 
+   * Members:
+   * * next (node) - the expression on the next line
+   */
+
   {
     VALUE rb_cNEWLINE = rb_define_class_under(rb_cNode, "NEWLINE", rb_cNode);
     members = rb_ary_new();
@@ -3150,6 +3922,19 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("mid"));
     rb_define_method(rb_cFBODY, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
+  }
+  {
+    VALUE rb_cCREF = rb_define_class_under(rb_cNode, "CREF", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_CREF] = rb_cCREF;
+    rb_iv_set(rb_cCREF, "__member__", members);
+    rb_define_singleton_method(rb_cCREF, "members", node_s_members, 0);
+    rb_define_method(rb_cCREF, "clss", node_clss, 0);
+    rb_ary_push(members, rb_str_new2("clss"));
+    rb_define_method(rb_cCREF, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
+    rb_define_method(rb_cCREF, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
   }
   {
     VALUE rb_cCVAR2 = rb_define_class_under(rb_cNode, "CVAR2", rb_cNode);
@@ -3193,6 +3978,16 @@ void define_node_subclass_methods()
     rb_define_method(rb_cMODULE, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
   }
+
+  /* Document-class: Node::EVSTR
+   * Represents a single string interpolation.
+   * 
+   * Evaluates the given expression and converts its result to a string with #to_s.
+   * 
+   * Members:
+   * * body (node) - an expression to evaluate
+   */
+
   {
     VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
     members = rb_ary_new();
@@ -3201,6 +3996,15 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
     rb_define_method(rb_cEVSTR, "lit", node_lit, 0);
     rb_ary_push(members, rb_str_new2("lit"));
+  }
+  {
+    VALUE rb_cUNDEF = rb_define_class_under(rb_cNode, "UNDEF", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_UNDEF] = rb_cUNDEF;
+    rb_iv_set(rb_cUNDEF, "__member__", members);
+    rb_define_singleton_method(rb_cUNDEF, "members", node_s_members, 0);
+    rb_define_method(rb_cUNDEF, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
   }
 }
 

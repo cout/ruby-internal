@@ -3,9 +3,7 @@
 
 #include "ruby_version.h"
 
-#ifdef RUBY_HAS_YARV
-#include "yarvcore.h"
-#else
+#ifndef RUBY_HAS_YARV
 #include "env.h"
 #endif
 

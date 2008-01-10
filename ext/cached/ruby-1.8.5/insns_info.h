@@ -5,12 +5,12 @@
 
 #ifdef RUBY_HAS_YARV
 
-#include "vm.h"
 #include "ruby.h"
-#include "yarvcore.h"
+#include "vm_core.h"
+#include "vm.h"
 
 
-extern VALUE instruction_class[YARV_MAX_INSTRUCTION_SIZE];
+extern VALUE instruction_class[VM_INSTRUCTION_SIZE];
 void define_instruction_subclasses(VALUE rb_cInstruction);
 
 #endif

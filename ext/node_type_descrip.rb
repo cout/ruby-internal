@@ -85,7 +85,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'ATTRSET'     , 'VID'   , 'NONE'  , 'NONE'  ], 
   [ 'DEFN'        , 'DEFN'  , 'MID'   , 'NOEX'  ], 
   [ 'DEFS'        , 'DEFN'  , 'RECV'  , 'MID'   ], 
-  [ 'UNDEF'       , 'MID'   , 'NONE'  , 'NONE'  ], 
   [ 'ALIAS'       , '1ST'   , '2ND'   , 'NONE'  ], 
   [ 'VALIAS'      , '1ST'   , '2ND'   , 'NONE'  ], 
   [ 'SCLASS'      , 'RECV'  , 'BODY'  , 'NONE'  ], 
@@ -145,6 +144,17 @@ NODE_TYPE_DESCRIPS.concat [
   [ 'SVALUE'      , 'HEAD'  , 'NONE'  , 'NONE'  ],
 ]
 end
+end
+if RUBY_VERSION_CODE < 185 then
+# (0, 185)
+NODE_TYPE_DESCRIPS.concat [
+  [ 'UNDEF'       , 'MID'   , 'NONE'  , 'NONE'  ],
+]
+else
+# [185, oo)
+NODE_TYPE_DESCRIPS.concat [
+  [ 'UNDEF'       , 'BODY'   , 'NONE'  , 'NONE'  ],
+]
 end
 
 
