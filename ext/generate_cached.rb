@@ -20,6 +20,14 @@ end
 RUBY_SOURCE_DIR = dir
 $".push('ruby_source_dir.rb')
 
+ruby_include_path = File.join(RUBY_SOURCE_DIR, 'include')
+if not File.exist?(ruby_include_path) or \
+   not File.directory?(ruby_include_path) then
+  # pre-YARV
+  ruby_include_path = RUBY_SOURCE_DIR
+end
+RUBY_INCLUDE_DIR = ruby_include_path
+
 output_dir = "cached/ruby-#{RUBY_VERSION}"
 Dir.mkdir("cached") rescue Errno::EEXIST
 Dir.mkdir(output_dir) rescue Errno::EEXIST
