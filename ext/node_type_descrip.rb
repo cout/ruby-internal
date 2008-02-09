@@ -31,7 +31,6 @@ NODE_TYPE_DESCRIPS = [
   [ 'ENSURE'      , 'HEAD'  , 'ENSR'  , 'NONE'  ], 
   [ 'AND'         , '1ST'   , '2ND'   , 'NONE'  ], 
   [ 'OR'          , '1ST'   , '2ND'   , 'NONE'  ], 
-  [ 'NOT'         , 'BODY'  , 'NONE'  , 'NONE'  ], 
   [ 'DOT2'        , 'BEG'   , 'END'   , 'STATE' ], 
   [ 'DOT3'        , 'BEG'   , 'END'   , 'STATE' ], 
   [ 'FLIP2'       , 'CNT'   , 'BEG'   , 'END'   ], 
@@ -97,6 +96,7 @@ NODE_TYPE_DESCRIPS = [
 if RUBY_VERSION_CODE < 190 then
 # (0, 190)
 NODE_TYPE_DESCRIPS.concat [
+  [ 'NOT'         , 'BODY'  , 'NONE'  , 'NONE'  ], 
   [ 'DMETHOD'     , 'CVAL'  , 'NONE'  , 'NONE'  ], 
   [ 'NEWLINE'     , 'NTH'   , 'NEXT'  , 'NONE'  ], 
   [ 'METHOD'      , 'NOEX'  , 'BODY'  , 'NONE'  ], 
