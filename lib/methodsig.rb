@@ -311,13 +311,13 @@ class Node
     end
 
     def rest_arg
-      rest = self.body.arg_rest
-      return rest >= 0 ? rest - 1: nil
+      arg_rest = self.body.arg_rest
+      return arg_rest >= 0 ? arg_rest : nil
     end
 
     def block_arg
-      arg_block = self.arg_block
-      return arg_block >= 0 ? arg_block - 1 : nil
+      arg_block = self.body.arg_block
+      return arg_block >= 0 ? arg_block : nil
     end
 
     def set_optional_args(args, args_node, names)
@@ -327,7 +327,7 @@ class Node
       iseq.bytedecode(env, 0, opt_pc)
       expressions = env.expressions + env.stack
       expressions.sort!
-      opt_table = self.body.body.arg_opt_table
+      opt_table = self.body.arg_opt_table
       opt_table.pop
       first_opt_idx =
         names.size -
@@ -337,7 +337,7 @@ class Node
       opt_table.each_with_index do |pc, idx|
         name = names[first_opt_idx + idx]
         expr = expressions.find { |e| e.pc >= pc }
-        args[name] = Argument.new(name, expr.rhs, nil, false, false) # TODO
+        args[name] = Argument.new(name, expr.rhs.to_s, nil, false, false)
       end
     end
   end
