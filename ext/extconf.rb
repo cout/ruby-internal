@@ -30,12 +30,7 @@ create_makefile('nodewrap')
 
 append_to_makefile = ''
 
-# (nil and not configured => cached
-# '' => cached
-# not configured => cached
-
-if (not cmdline_ruby_source_path and not configured_ruby_source_dir) or \
-   cmdline_ruby_source_path == '' then
+if USING_CACHED_FILES then
 
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
