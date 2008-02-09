@@ -80,7 +80,9 @@ class Proc
           args.push(self.var.args.vid)
         end
         return Arguments.new(args, true, has_rest_arg ? args.size - 1: nil)
-      when Fixnum, nil # TODO: ?
+      when nil
+        return Arguments.new(nil, false, has_rest_arg ? 0 : nil)
+      when Fixnum
         return Arguments.new([], false, has_rest_arg ? 0 : nil)
       else
         raise "Unexpected node type: #{self.var.class}"
@@ -96,8 +98,6 @@ class Proc
         iseq.arg_opt_table.size + \
         (has_rest_arg ? 1 : 0) + \
         (has_block_arg ? 1 : 0)
-      puts "argc=#{iseq.argc}, opt_table.size=#{iseq.arg_opt_table.size}"
-      puts "has_rest_arg=#{has_rest_arg}, has_block_arg=#{has_block_arg}"
       names = local_vars[0...num_args]
       # TODO: masgn
       return Arguments.new(names, true, has_rest_arg ? -1 : nil)
