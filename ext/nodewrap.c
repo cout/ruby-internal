@@ -2316,10 +2316,9 @@ static VALUE inline_cache_vmstat(VALUE self)
 /* TODO Not quite sure how to get BEGIN nodes on 1.9.x... */
 #if RUBY_VERSION_CODE < 190
 extern NODE *ruby_eval_tree_begin;
-#endif
+
 extern NODE *ruby_eval_tree;
 
-#if RUBY_VERSION_CODE < 190
 static VALUE ruby_eval_tree_begin_getter()
 {
   if(ruby_safe_level >= 4)
@@ -2342,7 +2341,6 @@ static void ruby_eval_tree_begin_setter()
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_begin_setter() not implemented");
 }
-#endif
 
 static VALUE ruby_eval_tree_getter()
 {
@@ -2366,6 +2364,8 @@ static void ruby_eval_tree_setter()
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_setter() not implemented");
 }
+
+#endif
 
 /* ---------------------------------------------------------------------
  * Methods for printing class tree
@@ -2625,12 +2625,12 @@ void Init_nodewrap(void)
       "$ruby_eval_tree_begin",
       ruby_eval_tree_begin_getter,
       ruby_eval_tree_begin_setter);
-#endif
 
   rb_define_virtual_variable(
       "$ruby_eval_tree",
       ruby_eval_tree_getter,
       ruby_eval_tree_setter);
+#endif
 
   rb_define_method(rb_cModule, "real_superclass", real_superclass, 0);
   rb_define_method(rb_mKernel, "real_class", real_class, 0);
