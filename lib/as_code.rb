@@ -187,7 +187,7 @@ class Node
         "#{a.join(', ')}\n" +
         "#{'  '*indent}#{node.body.as_code(indent+1)}"
       else
-        node.body ? "\n#{'  '*indent}#{node.resq.as_code(indent+1)}" : ''
+        node.body ? "\n#{'  '*indent}#{node.body.as_code(indent+1)}" : ''
       end
     else
       # TODO: assuming node.args is false...

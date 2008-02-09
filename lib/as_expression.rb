@@ -504,14 +504,14 @@ class Node
       if begin_rescue then
         "#{node.head.as_expression}; rescue #{node.resq.as_expression(begin_rescue)}"
       else
-        if not node.resq or not node.resq.resq then
+        if not node.resq or not node.resq.body then
           "begin; #{node.head.as_expression}; rescue; end"
         else
           "#{node.head.as_paren_expression} rescue #{node.resq.as_expression(begin_rescue)}"
         end
       end
     else
-      if not node.resq or not node.resq.resq then
+      if not node.resq or not node.resq.body then
         "begin; rescue; end"
       else
         "rescue #{node.resq.as_expression(begin_rescue)}"
@@ -526,11 +526,11 @@ class Node
         a = node.args.to_a.map { |n| n.as_expression }
         "#{a.join(', ')}; #{node.resq.as_expression}"
       else
-        node.resq ? "; #{node.resq.as_expression}" : ''
+        node.body ? "; #{node.body.as_expression}" : ''
       end
     else
       # TODO: assuming node.args is false...
-      node.resq ? node.resq.as_expression : ''
+      node.body ? node.body.as_expression : ''
     end
   end
 
