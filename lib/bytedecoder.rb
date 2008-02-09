@@ -485,7 +485,6 @@ class VM
     end
 
     PREFIX_OPCODES = {
-      PUTNOT => '!'.intern,
     }
 
     PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
