@@ -24,7 +24,7 @@ srcs.uniq!
 $objs = srcs.map { |f| f.sub(/\.c$/, ".#{$OBJEXT}") }
 $CFLAGS << ' -Wall -g'
 if RUBY_VERSION_CODE >= 190 then
-$CPPFLAGS << " -I#{RUBY_SOURCE_DIR}"
+$CPPFLAGS << " -I#{RUBY_SOURCE_DIR.quote}"
 end
 create_makefile('nodewrap')
 
