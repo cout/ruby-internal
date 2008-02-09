@@ -64,6 +64,9 @@
     next if not File.exist?(file)
 
     File.open(file) do |input|
+      if input.respond_to?(:set_encoding) then
+        input.set_encoding(Encoding::ASCII_8BIT)
+      end
       while (line = input.gets) != nil do
         line.chomp!
         case line
