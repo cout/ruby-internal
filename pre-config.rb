@@ -1,3 +1,12 @@
+begin
+  require 'fileutils'
+rescue LoadError
+  require 'ftools'
+  FileUtils = File
+end
+
+FileUtils.rm 'ext/Makefile'
+
 ruby_source_path = config('ruby-source-path')
 ruby_include_path = config('ruby-include-path')
 

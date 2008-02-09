@@ -36,7 +36,7 @@ rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	@$(RUBY) -rftools -e 'File.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
+	@$(RUBY) -e 'begin; require "fileutils"; rescue LoadError; require "ftools"; FileUtils = File end; FileUtils.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", true)'
 END
 end
 
