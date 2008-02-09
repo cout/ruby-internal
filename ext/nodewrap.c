@@ -638,13 +638,13 @@ static VALUE module_remove_features(VALUE module, VALUE uninclude)
   }
 
   prev = uninclude;
-  mod = RCLASS(uninclude)->super;
+  mod = RCLASS_SUPER(uninclude);
 
   while(mod)
   {
     if(RCLASS(module)->m_tbl == RCLASS(mod)->m_tbl)
     {
-      RCLASS(prev)->super = RCLASS(mod)->super;
+      RCLASS_SUPER(prev) = RCLASS_SUPER(mod);
       rb_clear_cache();
       return module;
     }
@@ -655,7 +655,7 @@ static VALUE module_remove_features(VALUE module, VALUE uninclude)
     }
 
     prev = mod;
-    mod = RCLASS(mod)->super;
+    mod = RCLASS_SUPER(mod);
   }
 
   rb_raise(rb_eArgError, "Could not find included module");
@@ -730,7 +730,7 @@ static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-  return m->klass;
+  return METHOD_OCLASS(m);
 }
 
 /*
@@ -789,11 +789,11 @@ static VALUE method_dump(VALUE self, VALUE limit)
 
   arr = rb_ary_new();
   Data_Get_Struct(self, struct METHOD, method);
-  rb_ary_push(arr, rb_mod_name(method->klass));
+  rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));
 #if RUBY_VERSION_CODE >= 180
-  rb_ary_push(arr, rb_mod_name(method->rklass));
+  rb_ary_push(arr, rb_mod_name(METHOD_RCLASS(method)));
 #else
-  rb_ary_push(arr, rb_mod_name(method->oklass));
+  rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));
 #endif
   if(rb_class_of(self) == rb_cUnboundMethod)
   {
@@ -842,15 +842,10 @@ static VALUE method_load(VALUE klass, VALUE str)
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY_PTR(rarr);
-  method->klass =
+  METHOD_OCLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
-#if RUBY_VERSION_CODE >= 180
-  method->rklass =
+  METHOD_RCLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[1]);
-#else
-  method->oklass =
-    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[1]);
-#endif
   method->recv = arr[2];
   method->id = SYM2ID(arr[3]);
   method->oid = SYM2ID(arr[4]);
@@ -1542,11 +1537,11 @@ static VALUE superclass_name(VALUE module)
   }
   else
   {
-    VALUE super = RCLASS(module)->super;
+    VALUE super = RCLASS_SUPER(module);
 
     while(TYPE(super) == T_ICLASS)
     {
-      super = RCLASS(super)->super;
+      super = RCLASS_SUPER(super);
     }
 
     if(!super)
@@ -1582,11 +1577,17 @@ static int add_var_to_hash(ID key, VALUE value, VALUE hash)
 
 static VALUE class_variable_hash(VALUE module)
 {
+#if RUBY_VERSION_CODE < 190
   VALUE class_variables = rb_hash_new();
-  if (ROBJECT(module)->iv_tbl) {
-    st_foreach(RCLASS(module)->iv_tbl, add_var_to_hash, class_variables);
+  struct st_table * iv_tbl = ROBJECT(module)->iv_tbl;
+  if (iv_tbl)
+  {
+    st_foreach(iv_tbl, add_var_to_hash, class_variables);
   }
   return class_variables;
+#else
+#warning Not implemented yet -- class_variable_hash
+#endif
 }
 
 #if RUBY_VERSION_CODE >= 180
@@ -1606,7 +1607,7 @@ static VALUE create_class_restorer(VALUE klass)
   struct RClass * singleton_class = RCLASS(CLASS_OF(klass));
   struct Class_Restorer * class_restorer;
 
-  if(!singleton_class->iv_tbl)
+  if(!RCLASS_IV_TBL(singleton_class))
   {
     rb_raise(
         rb_eTypeError,
@@ -1615,8 +1616,8 @@ static VALUE create_class_restorer(VALUE klass)
 
   class_restorer = ALLOC(struct Class_Restorer);
   class_restorer->klass = CLASS_OF(klass);
-  class_restorer->m_tbl = *singleton_class->m_tbl;
-  class_restorer->iv_tbl = *singleton_class->iv_tbl;
+  class_restorer->m_tbl = *RCLASS_M_TBL(singleton_class);
+  class_restorer->iv_tbl = *RCLASS_IV_TBL(singleton_class);
 #ifndef RUBY_HAS_YARV
   class_restorer->thread_critical = rb_thread_critical;
 #endif
@@ -1628,8 +1629,8 @@ static VALUE create_class_restorer(VALUE klass)
 static void set_class_restore_state(VALUE klass)
 {
   struct RClass * singleton_class = RCLASS(CLASS_OF(klass));
-  singleton_class->iv_tbl->num_entries = 1;
-  singleton_class->m_tbl->num_entries = 0;
+  RCLASS_IV_TBL(singleton_class)->num_entries = 1;
+  RCLASS_M_TBL(singleton_class)->num_entries = 0;
 #ifndef RUBY_HAS_YARV
   rb_thread_critical = 1;
 #endif
@@ -1645,8 +1646,8 @@ static void restore_class(VALUE ruby_class_restorer)
       struct Class_Restorer,
       class_restorer);
   klass = RCLASS(class_restorer->klass);
-  *klass->m_tbl = class_restorer->m_tbl;
-  *klass->iv_tbl = class_restorer->iv_tbl;
+  *RCLASS_M_TBL(klass) = *RCLASS_M_TBL(class_restorer);
+  *RCLASS_IV_TBL(klass) = *RCLASS_IV_TBL(class_restorer);
 #ifndef RUBY_HAS_YARV
   rb_thread_critical = class_restorer->thread_critical;
 #endif
@@ -2109,7 +2110,6 @@ static VALUE iseq_each(VALUE self)
         case TS_IC:
         {
           NODE * ic = (NODE *)*seq;
-          ic->ic_klass = 0; /* TODO */
           rb_ary_push(args, wrap_node_as(ic, rb_cInlineCache));
           break;
         }
@@ -2381,8 +2381,9 @@ static void ruby_eval_tree_setter()
  */
 VALUE real_superclass(VALUE self)
 {
-  rb_include_module(rb_class_of(RCLASS(self)->super), rb_mKernel);
-  return RCLASS(self)->super;
+  VALUE super = RCLASS_SUPER(self);
+  rb_include_module(rb_class_of(super), rb_mKernel);
+  return super;
 }
 
 /*

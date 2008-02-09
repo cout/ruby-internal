@@ -21,5 +21,17 @@
 #define RSTRING_PTR(a) RSTRING(a)->ptr
 #endif
 
+#ifndef RCLASS_SUPER
+#define RCLASS_SUPER(c) RCLASS(c)->super
+#endif
+
+#ifndef RCLASS_IV_TBL
+#define RCLASS_IV_TBL(c) RCLASS(c)->iv_tbl
+#endif
+
+#ifndef RCLASS_M_TBL
+#define RCLASS_M_TBL(c) RCLASS(c)->m_tbl
+#endif
+
 #endif
 

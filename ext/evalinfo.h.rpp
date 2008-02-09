@@ -13,6 +13,8 @@
   vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"
   eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
 
+  have_oclass = false
+
   [ proc_c_location, vm_c_location, eval_c_location ].each do |file|
     next if not File.exist?(file)
 
@@ -30,6 +32,8 @@
           stopwrite = false
         when /^\}/
           stopwrite = true if write
+        when /VALUE oclass/
+          have_oclass = true;
         end
         puts line if write
         if stopwrite then
@@ -40,6 +44,19 @@
       end
     end
   end
+
+if have_oclass then
+puts %{
+#define METHOD_OCLASS(m) m->oclass
+#define METHOD_RCLASS(m) m->rclass
+}
+else
+puts %{
+#define METHOD_OCLASS(m) m->klass
+#define METHOD_RCLASS(m) m->rklass
+}
+end
+
   nil
 END
 
