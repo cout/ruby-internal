@@ -116,8 +116,10 @@ class Expression
         return 3
       when :<<, :>>
         return 4
-      when :>, :>=, :<, :<=, :==, :===
+      when :>, :>=, :<, :<=, :==, :===, :!=
         return 5
+      when :undef
+        return 6
       else
         raise ArgumentError, "Unknown op: #{@op}"
       end
@@ -466,6 +468,7 @@ class VM
       OPT_LTLT  => :<<,
       # OPT_GTGT  => :>>,
       OPT_EQ    => :==,
+      OPT_NEQ   => :!=,
       OPT_GT    => :>,
       OPT_GE    => :>=,
       OPT_LT    => :<,
@@ -485,6 +488,8 @@ class VM
     end
 
     PREFIX_OPCODES = {
+      OPT_NOT   => :!,
+      UNDEF     => :undef,
     }
 
     PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
@@ -730,6 +735,15 @@ class VM
           env.remember env.stack[dest]
         end
         env.stack[dest] = env.stack[-1]
+      end
+    end
+
+    class TOPN
+      # get nth stack entry from stack top
+      def bytedecode(env)
+        n = @operands[0]
+        idx = -(n+1)
+        env.stack[idx]
       end
     end
 
