@@ -2167,7 +2167,7 @@ void convert_modules_to_placeholders(VALUE array)
     else if(TYPE(v) == T_MODULE || TYPE(v) == T_CLASS)
     {
       VALUE p = rb_class_new_instance(0, 0, rb_cModulePlaceholder);
-      VALUE sym = rb_mod_name(p);
+      VALUE sym = rb_mod_name(v);
       rb_iv_set(p, "name", sym);
       RARRAY(array)->ptr[j] = p;
     }
