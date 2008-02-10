@@ -173,6 +173,13 @@ class TC_Nodewrap < Test::Unit::TestCase
     FOO = 1
     @foo = 2
     @@foo = 3
+
+    # Make sure we have enough instance variables to exceed
+    # ROBJECT_EMBED_LEN_MAX
+    @bar1 = 1
+    @bar2 = 2
+    @bar3 = 3
+
     class << self
       FOO = 4
       @foo = 5
@@ -208,18 +215,30 @@ class TC_Nodewrap < Test::Unit::TestCase
       assert_equal 5, TestClass.singleton_class.instance_eval('@foo')
       assert_equal 2, TestClass.instance_eval('@foo')
 
+      orig_test_class = TestClass
+      orig_test_class_iv = TestClass.instance_variables
       self.class.instance_eval { remove_const :TestClass }
 
-      Marshal.load(d)
-      c = TestClass
+      c = Marshal.load(d)
+      assert_equal(TestClass, c)
+      assert_not_equal(orig_test_class, c)
       assert_equal Class, c.class
+
       a = c.ancestors
       assert a.include?(Object)
       assert a.include?(Kernel)
       assert a.include?(Foo)
       assert a.include?(c)
 
-      # Constant lookup
+      # Class instance variables
+      assert_equal orig_test_class_iv, c.instance_variables
+      result = c.instance_eval do
+        @foo
+      end
+      assert_equal 2, result
+
+      # Constant lookup (constants are really just special instance
+      # variables)
       assert_equal 1, c::FOO
 
       # Constant lookup in singleton class
@@ -227,12 +246,6 @@ class TC_Nodewrap < Test::Unit::TestCase
         FOO
       end
       assert_equal 4, result
-
-      # Class instance variable lookup
-      result = c.instance_eval do
-        @foo
-      end
-      assert_equal 2, result
 
       # Singleton class instance variable lookup
       result = class << c
