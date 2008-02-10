@@ -27,7 +27,6 @@ static VALUE rb_mNodewrap = Qnil;
 #define ruby_safe_level rb_safe_level()
 VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
-VALUE iseq_compile(VALUE self, NODE *node);
 static VALUE rb_cInstruction = Qnil;
 static VALUE rb_cModulePlaceholder = Qnil;
 static VALUE rb_cInlineCache = Qnil;
@@ -1166,7 +1165,12 @@ static VALUE node_eval(VALUE node, VALUE self)
 
 #ifdef RUBY_HAS_YARV
   {
-    VALUE iseq = iseq_compile(self, n);
+    VALUE iseq = rb_iseq_new(
+        n,
+        rb_str_new2("<compiled>"),
+        Qnil,
+        self,
+        ISEQ_TYPE_TOP);
     return rb_iseq_eval(iseq);
   }
 #else
