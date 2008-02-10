@@ -1581,17 +1581,17 @@ static int add_var_to_hash(ID key, VALUE value, VALUE hash)
 
 static VALUE class_variable_hash(VALUE module)
 {
-#if RUBY_VERSION_CODE < 190
   VALUE class_variables = rb_hash_new();
+#if RUBY_VERSION_CODE < 190
   struct st_table * iv_tbl = ROBJECT(module)->iv_tbl;
   if (iv_tbl)
   {
     st_foreach(iv_tbl, add_var_to_hash, class_variables);
   }
-  return class_variables;
 #else
-#warning Not implemented yet -- class_variable_hash
+  rb_ivar_foreach(module, add_var_to_hash, class_variables);
 #endif
+  return class_variables;
 }
 
 #if RUBY_VERSION_CODE >= 180
@@ -1650,8 +1650,8 @@ static void restore_class(VALUE ruby_class_restorer)
       struct Class_Restorer,
       class_restorer);
   klass = RCLASS(class_restorer->klass);
-  *RCLASS_M_TBL(klass) = *RCLASS_M_TBL(class_restorer);
-  *RCLASS_IV_TBL(klass) = *RCLASS_IV_TBL(class_restorer);
+  *RCLASS_M_TBL(klass) = class_restorer->m_tbl;
+  *RCLASS_IV_TBL(klass) = class_restorer->iv_tbl;
 #ifndef RUBY_HAS_YARV
   rb_thread_critical = class_restorer->thread_critical;
 #endif
