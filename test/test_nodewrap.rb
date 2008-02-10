@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'test/unit/ui/console/testrunner'
+require 'rbconfig'
 
 dir = File.dirname(__FILE__)
 $:.unshift(dir) if not $:.include?(dir)
@@ -136,12 +137,21 @@ class TC_Nodewrap < Test::Unit::TestCase
     assert_equal m.call, m2.call
   end
 
+  MAJOR = Config::CONFIG['MAJOR'].to_i
+  MINOR = Config::CONFIG['MINOR'].to_i
+  TEENY = Config::CONFIG['TEENY'].to_i
+  RUBY_VERSION_CODE = MAJOR * 100 + MINOR * 10 + TEENY
+
   def test_ruby_eval_tree
-    assert Node === $ruby_eval_tree
+    if RUBY_VERSION_CODE < 190 then
+      assert Node === $ruby_eval_tree
+    end
   end
 
   def test_ruby_eval_tree_begin
-    assert_equal nil, $ruby_eval_tree_begin
+    if RUBY_VERSION_CODE < 190 then
+      assert_equal nil, $ruby_eval_tree_begin
+    end
   end
 
   def test_proc_unbind
