@@ -33,5 +33,17 @@
 #define RCLASS_M_TBL(c) RCLASS(c)->m_tbl
 #endif
 
+#if RUBY_VERSION_CODE >= 190
+#define METHOD_OCLASS(m) m->oclass
+#else
+#define METHOD_OCLASS(m) m->klass
+#endif
+
+#if RUBY_VERSION_CODE >= 190
+#define METHOD_RCLASS(m) m->rclass
+#else
+#define METHOD_RCLASS(m) m->rklass
+#endif
+
 #endif
 

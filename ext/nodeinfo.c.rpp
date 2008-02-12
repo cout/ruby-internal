@@ -62,7 +62,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       return Qnil;
 #ruby <<END
   require 'read_node_h.rb'
-  require 'node_help.rb'
+  require 'nodes.rb'
   require 'node_type_descrip.rb'
 
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
@@ -473,8 +473,8 @@ VALUE node_s_members(VALUE klass)
 void define_node_subclass_methods()
 {
   /* For rdoc: rb_cNode = rb_define_class("Node", rb_cObject); */
-  VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node"));
-  VALUE members;
+  /* VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node")); */
+  /* VALUE members; */
   int j;
 
   for(j = 0; j < NODE_LAST; ++j)
@@ -483,6 +483,8 @@ void define_node_subclass_methods()
   }
 
 #ruby <<END
+  nodes = Nodes.new
+
   NODE_TYPE_DESCRIPS.each do |descrip|
 
     case descrip.name
@@ -495,11 +497,9 @@ void define_node_subclass_methods()
     end
     node_type = "rb_c#{name}"
 
-    if NODE_HELP.include?(name) then
+    if nodes.include?(name) then
       doc = "\n  /* Document-class: Node::#{name}\n"
-      NODE_HELP[name].each do |line|
-        doc << "   * #{line}\n"
-      end
+      doc << nodes[name].desc
       doc << "   */\n\n"
       puts doc
     end

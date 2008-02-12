@@ -43,6 +43,10 @@ static VALUE rb_cMethod = Qnil;
 static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
+#if RUBY_VERSION_CODE < 190
+static VALUE rb_cVarmap = Qnil;
+#endif
+
 #if RUBY_VERSION_CODE >= 180
 struct Class_Restorer
 {
@@ -2313,6 +2317,23 @@ static VALUE inline_cache_vmstat(VALUE self)
 #endif
 
 /* ---------------------------------------------------------------------
+ * Methods for Varmap
+ * ---------------------------------------------------------------------
+ */
+
+#if RUBY_VERSION_CODE < 190
+static VALUE varmap_get(VALUE vid)
+{
+  rb_raise(rb_eNotImpError, "varmap_set not implemented");
+}
+
+static VALUE varmap_set(VALUE vid, VALUE value)
+{
+  rb_raise(rb_eNotImpError, "varmap_set not implemented");
+}
+#endif
+
+/* ---------------------------------------------------------------------
  * Eval tree
  * ---------------------------------------------------------------------
  */
@@ -2688,6 +2709,12 @@ void Init_nodewrap(void)
   rb_ary_push(inline_cache_members, rb_str_new2("vmstat"));
   rb_iv_set(rb_cInlineCache, "__member__", inline_cache_members);
   rb_define_singleton_method(rb_cInlineCache, "members", node_s_members, 0);
+#endif
+
+#if RUBY_VERSION_CODE < 190
+  rb_cVarmap = rb_define_class("Varmap", rb_cObject);
+  rb_define_method(rb_cVarmap, "[]", varmap_get, 1);
+  rb_define_method(rb_cVarmap, "[]=", varmap_set, 2);
 #endif
 }
 
