@@ -61,9 +61,10 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_NONE:
       return Qnil;
 #ruby <<END
-  require 'read_node_h.rb'
-  require 'nodes.rb'
-  require 'node_type_descrip.rb'
+  require 'read_node_h'
+  require 'nodes'
+  require 'node_type_descrip'
+  require 'ruby_version_code'
 
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts <<-END
@@ -445,10 +446,6 @@ static VALUE node_#{node_elem_name}(VALUE self)
       END
     when /\.(cfunc)$/
       puts <<-END
-/*
- * Return the Node's _#{node_elem_name}_ member.  The return type is an
- * integer representation of the #{node_elem_name}'s pointer.
- */
 static VALUE node_#{node_elem_name}(VALUE self)
 {
   NODE * n;
@@ -488,26 +485,21 @@ void define_node_subclass_methods()
   }
 
 #ruby <<END
-  NODE_TYPE_DESCRIPS.each do |descrip|
+  nodes.each do |key, node|
 
-    case descrip.name
-    when 'LAST'
-      next
-    when 'NIL', 'TRUE', 'FALSE'
-      name = "#{descrip.name}NODE"
-    else
-      name = descrip.name
+    version_range = node.version_range
+    next if not version_range.includes?(RUBY_VERSION_CODE)
+
+    node_type = "rb_c#{node.name}"
+
+    doc = "\n  /* Document-class: Node::#{node.name}"
+    node.desc.each_line do |line|
+      doc << "\n   * #{line.chomp}"
     end
-    node_type = "rb_c#{name}"
+    doc << "\n   */\n"
+    puts doc
 
-    if nodes.include?(name) then
-      doc = "\n  /* Document-class: Node::#{name}\n"
-      doc << nodes[name].desc
-      doc << "   */\n\n"
-      puts doc
-    end
-
-    if name == 'ALLOCA' then
+    if node.name == 'ALLOCA' then
       puts <<-END
 #if defined(C_ALLOCA) || RUBY_VERSION_CODE >= 190
       END
@@ -515,20 +507,26 @@ void define_node_subclass_methods()
 
     puts <<-END
   {
-    VALUE #{node_type} = rb_define_class_under(rb_cNode, "#{name}", rb_cNode);
+    VALUE #{node_type} = rb_define_class_under(rb_cNode, "#{node.name}", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_#{descrip.name}] = #{node_type};
+    rb_cNodeSubclass[NODE_#{node.name}] = #{node_type};
     rb_iv_set(#{node_type}, "__member__", members);
     rb_define_singleton_method(#{node_type}, "members", node_s_members, 0);
     END
-    [descrip.node1, descrip.node2, descrip.node3].each do |nen|
-      next if nen == 'NONE'
-      nen = nen.downcase
-      mname = nen
-      mname = 'first' if nen == '1st'
-      mname = 'second' if nen == '2nd'
+    node.members.each do |member_name, member|
+      mname = member_name
+      mname = 'first' if member_name == '1st'
+      mname = 'second' if member_name == '2nd'
+      if member.desc then
+        doc = "\n    /* Document-method: #{mname}"
+        member.desc.each_line do |line|
+          doc << "\n     * #{line.chomp}"
+        end
+        doc << "\n     */\n"
+        puts doc
+      end
       puts <<-END
-    rb_define_method(#{node_type}, "#{mname}", node_#{nen}, 0);
+    rb_define_method(#{node_type}, "#{mname}", node_#{member_name}, 0);
     rb_ary_push(members, rb_str_new2("#{mname}"));
       END
     end
@@ -536,7 +534,7 @@ void define_node_subclass_methods()
   }
     END
 
-    if name == 'ALLOCA' then
+    if node.name == 'ALLOCA' then
       puts <<-END
 #endif
       END
