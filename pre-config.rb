@@ -5,7 +5,7 @@ rescue LoadError
   FileUtils = File
 end
 
-FileUtils.rm 'ext/Makefile'
+FileUtils.rm_f 'ext/Makefile'
 
 ruby_source_path = config('ruby-source-path')
 ruby_include_path = config('ruby-include-path')
