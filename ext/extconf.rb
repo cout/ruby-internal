@@ -35,7 +35,7 @@ if USING_CACHED_FILES then
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
-#{dest_file}: #{rpp_file} #{rb_files.join(' ')}
+#{dest_file}: cached/ruby-#{RUBY_VERISON}/#{dest_file}
 	@$(RUBY) -e 'begin; require "fileutils"; rescue LoadError; require "ftools"; FileUtils = File end; FileUtils.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", :verbose)'
 END
 end
@@ -45,7 +45,7 @@ else
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
-#{dest_file}: #{rpp_file} #{rb_files.join(' ')}
+#{dest_file}: #{rpp_file} #{rb_files.join(' ')} nodes.yaml
 	$(RUBY) rubypp.rb #{rpp_file} #{dest_file}
 END
 end
