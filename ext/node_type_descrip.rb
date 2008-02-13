@@ -6,11 +6,16 @@ NODE_TYPE_DESCRIPS = []
 
 nodes = Nodes.new
 nodes.each do |name, node|
-  members = node['members']
+  members = node['members'] || {}
   version_range = node['version_range']
   if version_range.includes?(RUBY_VERSION_CODE) then
-    member_names = members.keys.map { |m| m.upcase }
-    NODE_TYPE_DESCRIPS << [ node.name, *member_names ]
+    node_name = node['name'].upcase
+    member_names = [
+      (members.keys[0] || 'NONE').upcase,
+      (members.keys[1] || 'NONE').upcase,
+      (members.keys[2] || 'NONE').upcase,
+    ]
+    NODE_TYPE_DESCRIPS << [ node_name, *member_names ]
   end
 end
 
