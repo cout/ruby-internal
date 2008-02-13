@@ -45,7 +45,7 @@ static void init_node_type_descrips()
     {
       if(node_type_descrips[descrip->nt])
       {
-        rb_raise(rb_eRuntimeError, "duplicate entry for %d\n", descrip->nt);
+        rb_raise(rb_eRuntimeError, "duplicate entry for node type %d (%s is also %s)\n", descrip->nt, descrip->name, node_type_descrips[descrip->nt]->name);
       }
       else
       {
