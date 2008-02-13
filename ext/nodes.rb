@@ -29,10 +29,15 @@ class NodeVersionRange
     else
       return false if version_code >= @range_end
     end
+
+    return true
   end
 end
 
 class Nodes
+  NodeInfo = Struct.new(:name, :desc, :members, :version_range)
+  MemberInfo = Struct.new(:desc, :type)
+
   def initialize(filename = nil)
     if not filename then
       dir = File.dirname(__FILE__)
@@ -42,18 +47,32 @@ class Nodes
 
     @nodes = {}
     nodes.each do |name, node|
-      members = node['members']
+      members = {}
+      (node['members'] || {}).each do |member_name, member|
+        member ||= {}
+        members[member_name] = MemberInfo.new(
+            member['desc'],
+            member['type'])
+      end
       version_range = NodeVersionRange.new(node['version'])
-      @nodes[name] = {
-        'name' => name.gsub(/\(.*\)/, ''),
-        'members' => members,
-        'version_range' => version_range,
-      }
+      @nodes[name] = NodeInfo.new(
+          name.gsub(/\(.*\)/, ''),
+          node['desc'],
+          members,
+          version_range)
     end
   end
 
   def each(&block)
     @nodes.each(&block)
+  end
+
+  def [](name)
+    @nodes[name]
+  end
+
+  def include?(name)
+    @nodes.include?(name)
   end
 end
 
