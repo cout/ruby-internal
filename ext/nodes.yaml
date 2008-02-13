@@ -241,6 +241,12 @@ CVASGN:
       type: id
       desc: the name of the class variable to assign
 
+CVDECL:
+  desc: |
+  members:
+    value:
+    vid:
+
 DASGN:
   desc: |
     Represents dynamic local variable assignment.  Dynamic assignment
@@ -414,18 +420,18 @@ ENSURE:
 
 EVSTR:
   desc: |
+  members:
+    lit:
+  version: '(0, 180)'
+
+EVSTR(2):
+  desc: |
     Represents a single string interpolation.
     Evaluates the given expression and converts its result to a string with #to_s.
   members:
     body:
       type: node
       desc: an expression to evaluate
-  version: '(0, 180)'
-
-EVSTR(2):
-  desc: |
-  members:
-    lit:
   version: '[180, oo)'
 
 'FALSE':
