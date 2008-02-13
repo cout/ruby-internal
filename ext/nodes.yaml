@@ -12,15 +12,15 @@ ALLOCA:
 AND:
   desc: |
     Represents a logical 'and' of the form\:
-      first && second
+      1st && 2nd
     The expression will short-circuit and yield the result of the left
     hand side if it is false or nil, else it will evaluate the right
     hand side and use it as the result of the expression.
   members:
-    second:
+    2nd:
       type: node
       desc: the expression on the right hand side
-    first:
+    1st:
       type: node
       desc: the expression on the left hand side
 
@@ -31,7 +31,7 @@ ARGSCAT:
       a, b, *value
     Evaluates head and to create an array.  Evaluates body and performs
     a splat operation on the result to create another array (see SPLAT).
-    Concatenates the the second array onto the end of the first to
+    Concatenates the the 2nd array onto the end of the 1st to
     produce the result.
   members:
     head:
@@ -58,7 +58,7 @@ ARRAY:
     alen:
     head:
       type: node
-      desc: the first element of the array
+      desc: the 1st element of the array
     next:
       type: node or 0
       desc: the tail of the array
@@ -116,19 +116,19 @@ BLOCK:
   desc: |
     Represents a block of code (a succession of multiple expressions).
     A single block node can hold two expressions\: one expression to be
-    evaluated and second expression, which may be another BLOCK.
-    The first node in the block may be of type ARGS, in which case it
+    evaluated and 2nd expression, which may be another BLOCK.
+    The 1st node in the block may be of type ARGS, in which case it
     represents the arguments to the current method.
-    The second node in the block may be of type BLOCK_ARG, in which case
+    The 2nd node in the block may be of type BLOCK_ARG, in which case
     it represents an explicit block argument.
     The result of the block is the last expression evaluated.
   members:
     head:
       type: node
-      desc: the first expression in the block of code
+      desc: the 1st expression in the block of code
     next:
       type: node
-      desc: the second expression in the block of code
+      desc: the 2nd expression in the block of code
 
 BLOCK_ARG:
   desc: |
@@ -246,7 +246,7 @@ DASGN:
     Represents dynamic local variable assignment.  Dynamic assignment
     differs from static assignment in that the slots for static local
     variables are allocated when the method is called, wereas slots for
-    dynamic variables are allocated when the variable is first assigned
+    dynamic variables are allocated when the variable is 1st assigned
     to.  When searching for the variable, dynamic assignment searches
     backward up the stack to see if the variable exists in any previous
     block in the current frame; if it does, it assigns to the slot found
@@ -707,15 +707,15 @@ OP_ASGN_OR:
 OR:
   desc: |
     Represents a logical 'or' of the form\:
-      first || second
+      1st || 2nd
     The expression will short-circuit and yield the result of the left
     hand side if it is true, else it will evaluate the right hand side
     and use it as the result of the expression.
   members:
-    second:
+    2nd:
       type: node
       desc: the expression on the right hand side
-    first:
+    1st:
       type: node
       desc: the expression on the left hand side
 
@@ -727,7 +727,7 @@ REGX:
   desc: |
   members:
     cflag:
-  version: '[170, oo)'
+  version: '[170, 190)'
 
 RESBODY:
   desc: |
@@ -747,7 +747,7 @@ RESTARY:
   desc: |
   members:
     head:
-  version: '[170, oo)'
+  version: '[170, 190)'
 
 RETRY:
   desc: |
@@ -768,7 +768,7 @@ REXPAND:
   desc: |
   members:
     head:
-  version: '[170, oo)'
+  version: '[170, 190)'
 
 SCLASS:
   desc: |
@@ -791,18 +791,18 @@ SCOPE:
     Represents a lexical scope.
     A new scope is created when a method is invoked.  The scope node
     holds information about local variables and arguments to the method.
-    The first two variables in the local variable table are the implicit
+    The 1st two variables in the local variable table are the implicit
     variables $_ and $~.
     The next variables listed in the local variable table are the
     arguments to the method.  More information about the arguments to
     the method are stored in the ARGS node, which will either be the
-    first node in the scope or the first node in the BLOCK held by the
+    1st node in the scope or the 1st node in the BLOCK held by the
     scope.
   members:
     tbl:
       type: pointer to array of ID
       desc: |
-        the names of the local variables* next the first expression in
+        the names of the local variables* next the 1st expression in
         the scope
     rval:
       type: node
@@ -855,7 +855,7 @@ SVALUE:
       lhs = a, b, c
     The argument to this node is an Array.
     If it is length 0, returns nil.
-    If it is length 1, returns the first element in the array.
+    If it is length 1, returns the 1st element in the array.
     Otherwise, returns the array.
   members:
     head:
@@ -970,6 +970,7 @@ NEWLINE:
     next:
       type: node
       desc: the expression on the next line
+  version: (0, 190)
 
 NOT:
   desc: |
