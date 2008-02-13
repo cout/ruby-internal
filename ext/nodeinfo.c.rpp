@@ -470,11 +470,16 @@ VALUE node_s_members(VALUE klass)
   return rb_iv_get(klass, "__member__");
 }
 
+#ruby <<END
+  nodes = Nodes.new
+  nil
+END
+
 void define_node_subclass_methods()
 {
   /* For rdoc: rb_cNode = rb_define_class("Node", rb_cObject); */
-  /* VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node")); */
-  /* VALUE members; */
+  VALUE rb_cNode = rb_const_get(rb_cObject, rb_intern("Node"));
+  VALUE members;
   int j;
 
   for(j = 0; j < NODE_LAST; ++j)
@@ -483,8 +488,6 @@ void define_node_subclass_methods()
   }
 
 #ruby <<END
-  nodes = Nodes.new
-
   NODE_TYPE_DESCRIPS.each do |descrip|
 
     case descrip.name
