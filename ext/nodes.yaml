@@ -124,6 +124,8 @@ BACK_REF:
 BEGIN:
   desc: |
    Represents a begin/end block.
+
+   TODO: Need an example
   members:
     body: the body of code inside the block
 
@@ -147,11 +149,14 @@ BLOCK:
 
 BLOCK_ARG:
   desc: |
-    Represents a block argument.  argument, not including the implicit
-    variables.
+    Represents a block argument in a method definition, e.g.:
+      def foo(&arg)
+      end
   members:
     cnt:
-      desc: the index into the local variable table of the name of the block
+      desc: |
+        the index into the local variable table of the name of the block
+        argument, not including the implicit variables.
 
 BLOCK_PASS:
   desc: |
