@@ -5,5 +5,3 @@ if config('without-tests') != 'yes' then
   run_tests()
 end
 
-generate_rdoc()
-

@@ -10,7 +10,7 @@ def list_files(dir, pattern)
   return arr
 end
 
-def generate_rdoc
+def generate_rdoc(*options)
   begin
     require 'rdoc/rdoc'
   rescue LoadError
@@ -24,10 +24,10 @@ def generate_rdoc
   rdoc_files.concat list_files('lib', /\.rb$/) if File.exist?('lib')
   rdoc_files.concat list_files('ext', /\.c$/)  if File.exist?('ext')
   rdoc_files.reject! { |file| file =~ %r{^ext/cached/} }
-  r.document(rdoc_files)
+  r.document(options + rdoc_files)
 end
 
 if __FILE__ == $0 then
-  generate_rdoc()
+  generate_rdoc(*ARGV)
 end
 
