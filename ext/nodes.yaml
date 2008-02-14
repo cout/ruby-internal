@@ -1,8 +1,12 @@
 ALIAS:
   desc: |
+    Represents an alias expression of the form:
+      alias 1st 2nd
+    where 2nd is the name of an existing method and 1st is the name of
+    its new alias.
   members:
-    1st:
-    2nd:
+    1st: the name of an exiting method
+    2nd: the name of its new alias
 
 ALLOCA:
   desc: |
@@ -11,7 +15,7 @@ ALLOCA:
 
 AND:
   desc: |
-    Represents a logical 'and' of the form\:
+    Represents a logical 'and' of the form:
       first && second
     The expression will short-circuit and yield the result of the left
     hand side if it is false or nil, else it will evaluate the right
@@ -27,10 +31,10 @@ AND:
 ARGSCAT:
   desc: |
     Represents the concatenation of a list of arguments and a splatted
-    value, e.g.\:
+    value, e.g.:
       a, b, *value
-    Evaluates head and to create an array.  Evaluates body and performs
-    a splat operation on the result to create another array (see SPLAT).
+    Evaluates head to create an array.  Evaluates body and performs a
+    splat operation on the result to create another array (see SPLAT).
     Concatenates the the second array onto the end of the first to
     produce the result.
   members:
@@ -45,9 +49,14 @@ ARGSCAT:
 
 ARGSPUSH:
   desc: |
+    Represents the splat portion of the index in an expression:
+      obj[arg, arg, *head] = body
+    Evaluates head to create an array.  Evaluates body and pushes the
+    result onto the end of the array, which will then be used to form
+    the arguments of the method call.
   members:
-    head:
-    body:
+    head: a splat expression
+    body: the rhs of the assignment
 
 ARRAY:
   desc: |
@@ -81,9 +90,9 @@ ARGS:
 
 ATTRASGN:
   desc: |
-    Represents attribute assignment in the form\:
+    Represents attribute assignment in the form:
       recv.mid = args
-    or\:
+    or:
       recv.mid=(args).
   members:
     recv:
@@ -98,8 +107,13 @@ ATTRASGN:
 
 ATTRSET:
   desc: |
+    Represents an attribute writer method, which can added to a class by
+    using attr_writer:
+      attr_writer :attribute
+    Its reader counterpart is IVAR.
   members:
     vid:
+      desc: the name of the attribute, with a leading '@' sign
 
 BACK_REF:
   desc: |
@@ -109,13 +123,14 @@ BACK_REF:
 
 BEGIN:
   desc: |
+   Represents a begin/end block.
   members:
-    body:
+    body: the body of code inside the block
 
 BLOCK:
   desc: |
     Represents a block of code (a succession of multiple expressions).
-    A single block node can hold two expressions\: one expression to be
+    A single block node can hold two expressions: one expression to be
     evaluated and second expression, which may be another BLOCK.
     The first node in the block may be of type ARGS, in which case it
     represents the arguments to the current method.
@@ -158,12 +173,33 @@ BREAK:
       type: node
       desc: the value to be used as the "return" value of the loop, 0 if  nil is to be used.
 
-CFUNC:
+CALL:
+  desc: |
+    Represents a method call in the form recv.mid(args).
+  members:
+    args:
+      type: ARRAY node
+      desc: the arguments to the method
+    mid:
+      type: id
+      desc: the method id
+    recv:
+      type: node
+      desc: the receiver of the method
+
+CASE:
   desc: |
   members:
-    cfnc:
-    tval:
-    argc:
+    head:
+    body:
+    next:
+
+CFUNC:
+  desc: |
+    A placeholder for a function implemented in C.
+  members:
+    cfnc: the function pointer of the C function
+    argc: the number of arguments the function takes, or -1 or -2
 
 CDECL:
   desc: |
@@ -182,7 +218,7 @@ CLASS:
 COLON2:
   desc: |
     Represents a constant lookup in a particular class.  This expression
-    has the form\:
+    has the form:
       klass::mid
     Where klass is the result of evaluating the expression in the head member.
   members:
@@ -196,7 +232,7 @@ COLON2:
 COLON3:
   desc: |
     Represents a constant lookup or method call in class Object.  This
-    expression has the form\:
+    expression has the form:
       ::mid
   members:
     mid:
@@ -318,7 +354,7 @@ DMETHOD:
 
 DOT2:
   desc: |
-    Represents a range created with the form\:
+    Represents a range created with the form:
       beg..end
     Creates a range which does not exclude the range end.
   members:
@@ -332,7 +368,7 @@ DOT2:
 
 DOT3:
   desc: |
-    Represents a range created with the form\:
+    Represents a range created with the form:
       beg...end
     Creates a range which excludes the range end.
   members:
@@ -392,7 +428,7 @@ DVAR:
 DXSTR:
   desc: |
     Represents a string object with interpolation inside backticks,
-    e.g.\:
+    e.g.:
       `lit#{next}`
 
     The node is evaluated by duplicating the string stored in the 'lit'
@@ -477,12 +513,12 @@ FLIP3:
 
 FOR:
   desc: |
-    Represents a loop constructed with the 'for' keyword, e.g.\:
+    Represents a loop constructed with the 'for' keyword, e.g.:
       for var in iter do
         body
       end
 
-    This is equivalent to\:
+    This is equivalent to:
       iter.each do |*args|
       assign args to var
       body
@@ -561,7 +597,7 @@ IFUNC:
 
 ITER:
   desc: |
-    Represents an iteration loop, e.g.\:
+    Represents an iteration loop, e.g.:
       iter do |*args|
         assign args to var
         body
@@ -581,6 +617,16 @@ ITER:
         an assignment node which assigns the next value in the sequence
         to a variable, which may or may not be local.  May also be a
         multiple assignment.
+
+IVAR:
+  desc: |
+    Represents an attribute reader method, which can added to a class by
+    using attr_reader:
+      attr_reader :attribute
+    Its writer counterpart is ATTRSET.
+  members:
+    vid:
+      desc: the name of the attribute, with a leading '@' sign
 
 LASGN:
   desc: |
@@ -654,7 +700,7 @@ METHOD:
   members:
     noex:
     body:
-  version: (0, 190)
+  version: '(0, 190)'
 
 METHOD(2):
   desc: |
@@ -671,17 +717,102 @@ MODULE:
     body:
   version: '[180, oo)'
 
+NEWLINE:
+  desc: |
+    Represents the termination of a line.  This is used for calling
+    event hooks when a new line of code is reached.
+  members:
+    next:
+      type: node
+      desc: the expression on the next line
+  version: (0, 190)
+
+NEXT:
+  desc: |
+    Represents the 'next' keyword.
+    Causes control to be transferred to the end of the loop, causing the
+    next value in the sequence to be retrieved.
+  members:
+    stts:
+
+NIL:
+  desc: |
+    Represents the keyword 'nil'.
+  members:
+
+NOT:
+  desc: |
+    Represents a logical negation.
+  members:
+    body:
+      type: node
+      desc: the value to negate.
+  version: (0, 190)
+
+NTH_REF:
+  desc: |
+    Represents the nth match data item, e.g. $1, $2, etc.
+  members:
+    nth: the index of the match data item to retrieve
+    cnt: the index into the local variable table where the match data is stored
+
+OP_ASGN1:
+  desc: |
+    Represents bracket assignment of the form:
+      recv[index] += value or 
+      recv[index] ||= value or
+      recv[index] &&= value.
+
+    The index is obtained from args.body.
+
+    The value is obtained from args.head.
+
+    In the case of ||=, mid will be 0.  The rhs will be equal to the
+    result of evaluating args.head if the lhs is false, otherwise the
+    rhs will be equal to lhs.
+
+    In the case of &&=, mid will be 1.  The rhs will be equal to the lhs
+    if lhs is false, otherwise the rhs will be equal to the result of
+    evaluating args.head.  In all other cases, mid will be the name of
+    the method to call to calculate value, such that the expression is
+    equivalent to:
+      recv[args.body] = recv[args.body].mid(args.head)
+
+    In no case does ruby short-circuit the assignment.
+
+  members:
+    args:
+      type: ARGSCAT node
+      desc: the arguments to the assigment
+    mid:
+      type: id
+      desc: |
+        0, 1, or the name a method to call to calculate the value of the
+        rhs
+    recv:
+      type: node
+      desc: the receiver of the assignment
+
+OP_ASGN2:
+  desc: |
+  members:
+    vid:
+    recv:
+    value:
+
 OP_ASGN_AND:
   desc: |
-    Represents an expression of the form\:
+    Represents an expression of the form:
       recv &&= value
-    Ruby will evaluate the expression left hand side of the assignment; if it is
-    true, then it will assign the result of the expression on the right hand side
-    to the receiver on the left hand side.
+    Ruby will evaluate the expression on the left hand side of the
+    assignment; if it is true, then it will assign the result of the
+    expression on the right hand side to the receiver on the left hand
+    side.
   members:
-    head:
+    recv:
       type: node
-      desc: an expression representing the left hand side of the  assignment
+      desc: |
+        an expression representing the left hand side of the assignment
     value:
       type: node
       desc: |
@@ -690,7 +821,7 @@ OP_ASGN_AND:
 
 OP_ASGN_OR:
   desc: |
-    Represents an expression of the form\:
+    Represents an expression of the form:
       recv ||= value
     Ruby will evaluate the expression on the left hand side.  If it is
     undefined, nil, or false, then ruby will evaluate the expression on
@@ -710,9 +841,14 @@ OP_ASGN_OR:
       type: node
       desc: the receiver of the assignment
 
+OPT_N:
+  desc: |
+  members:
+    body:
+
 OR:
   desc: |
-    Represents a logical 'or' of the form\:
+    Represents a logical 'or' of the form:
       first || second
     The expression will short-circuit and yield the result of the left
     hand side if it is true, else it will evaluate the right hand side
@@ -727,6 +863,12 @@ OR:
 
 POSTEXE:
   desc: |
+  members:
+
+REDO:
+  desc: |
+    Represents the 'redo' keyword.  Causes control to be transferred to
+    the beginning of the loop.  The loop assignment is not repeated.
   members:
 
 RESBODY:
@@ -824,7 +966,7 @@ SELF:
 
 SPLAT:
   desc: |
-    Represents the splat (*) operation as an rvalue, e.g.\:
+    Represents the splat (*) operation as an rvalue, e.g.:
       *head
     If the argument is an array, returns self.
     If the argument is nil, returns [nil].
@@ -912,7 +1054,7 @@ VCALL:
 
 WHILE:
   desc: |
-    Represents a loop constructed with the 'while' keyword, e.g.\:
+    Represents a loop constructed with the 'while' keyword, e.g.:
       while cond do
         body
       end
@@ -927,7 +1069,7 @@ WHILE:
 
 XSTR:
   desc: |
-    Represents a string object inside backticks, e.g.\:
+    Represents a string object inside backticks, e.g.:
       `lit`
     The given string is executed in a subshell and the output from its
     stdout stored in a string.
@@ -968,38 +1110,6 @@ TO_ARY:
       desc: the object to convert to an array
   version: '[180, oo)'
 
-NEWLINE:
-  desc: |
-    Represents the termination of a line.  This is used for calling
-    event hooks when a new line of code is reached.
-  members:
-    next:
-      type: node
-      desc: the expression on the next line
-  version: (0, 190)
-
-NOT:
-  desc: |
-    Represents a logical negation.
-  members:
-    body:
-      type: node
-      desc: the value to negate.
-  version: (0, 190)
-
-NTH_REF:
-  desc: |
-  members:
-    nth:
-    cnt:
-
-CASE:
-  desc: |
-  members:
-    head:
-    body:
-    next:
-
 WHEN:
   desc: |
   members:
@@ -1007,97 +1117,18 @@ WHEN:
     body:
     next:
 
-REDO:
+VALIAS:
   desc: |
-    Represents the 'redo' keyword.  Causes control to be transferred to
-    the beginning of the loop.  The loop assignment is not repeated.
+    Represents an alias expression of the form:
+      alias 1st 2nd
+    where 2nd is the name of a variable and 1st is the name of its new
+    alias.
   members:
-
-NEXT:
-  desc: |
-    Represents the 'next' keyword.
-    Causes control to be transferred to the end of the loop, causing the
-    next value in the sequence to be retrieved.
+    1st:
+    2nd:
   members:
-    stts:
-
-OP_ASGN1:
-  desc: |
-    Represents bracket assignment of the form\:
-      recv[index] += value or 
-      recv[index] ||= value or
-      recv[index] &&= value.
-
-    The index is obtained from args.body.
-
-    The value is obtained from args.head.
-
-    In the case of ||=, mid will be 0.  The rhs will be equal to the
-    result of evaluating args.head if the lhs is false, otherwise the
-    rhs will be equal to lhs.
-
-    In the case of &&=, mid will be 1.  The rhs will be equal to the lhs
-    if lhs is false, otherwise the rhs will be equal to the result of
-    evaluating args.head.  In all other cases, mid will be the name of
-    the method to call to calculate value, such that the expression is
-    equivalent to\:
-      recv[args.body] = recv[args.body].mid(args.head)
-
-    In no case does ruby short-circuit the assignment.
-
-  members:
-    args:
-      type: ARGSCAT node
-      desc: the arguments to the assigment
-    mid:
-      type: id
-      desc: |
-        0, 1, or the name a method to call to calculate the value of the
-        rhs
-    recv:
-      type: node
-      desc: the receiver of the assignment
-
-OP_ASGN2:
-  desc: |
-  members:
-    vid:
-    recv:
-    value:
-
-OPT_N:
-  desc: |
-  members:
-    body:
-
-IVAR:
-  desc: |
-    Represents instance variable retrieval.
-  members:
-    vid:
-      type: id
-      desc: |
-        the name of the instance variable to retrieve, with a leading
-        '@' sign
-
-CALL:
-  desc: |
-    Represents a method call in the form recv.mid(args).
-  members:
-    args:
-      type: ARRAY node
-      desc: the arguments to the method
-    mid:
-      type: id
-      desc: the method id
-    recv:
-      type: node
-      desc: the receiver of the method
-
-NIL:
-  desc: |
-    Represents the keyword 'nil'.
-  members:
+    1st: the name of an exiting variable
+    2nd: the name of its new alias
 
 ZARRAY:
   desc: |
