@@ -117,9 +117,21 @@ ATTRSET:
 
 BACK_REF:
   desc: |
+    Represents one of the regex back reference variables:
+    * $& - last match
+    * $` - pre
+    * $' - post
+    * $+ - last
+  #'
   members:
     nth:
+      desc: |
+        the integer representation of the character of the variable to
+        reference, one of '&', '`', '\'', or '+'
     cnt:
+      desc: |
+        the index into the local variable table where the match data is
+        stored
 
 BEGIN:
   desc: |
@@ -160,9 +172,19 @@ BLOCK_ARG:
 
 BLOCK_PASS:
   desc: |
+    Represents an object being passed to a method as a block, e.g.:
+      foo(&bar)
+    The body node is first evaluates to get an object, then #to_proc to
+    convert it into a proc if necessary.  The iter node is then
+    evaluated to call a method, passing the proc as a block parameter to
+    the method.
   members:
     body:
+      type: node
+      desc: the object to pass as a block
     iter:
+      type: node
+      desc: an expression which calls a method
 
 BMETHOD:
   desc: |
@@ -758,8 +780,12 @@ NTH_REF:
   desc: |
     Represents the nth match data item, e.g. $1, $2, etc.
   members:
-    nth: the index of the match data item to retrieve
-    cnt: the index into the local variable table where the match data is stored
+    nth:
+      desc: |
+        the index of the match data item to retrieve
+    cnt:
+      desc: |
+        the index into the local variable table where the match data is stored
 
 OP_ASGN1:
   desc: |
