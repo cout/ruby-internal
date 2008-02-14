@@ -210,15 +210,15 @@ class Node
     end
   end
 
-  define_expression(:TRUENODE) do |node|
+  define_expression(:TRUE) do |node|
     "true"
   end
 
-  define_expression(:FALSENODE) do |node|
+  define_expression(:FALSE) do |node|
     "false"
   end
 
-  define_expression(:NILNODE) do |node|
+  define_expression(:NIL) do |node|
     "nil"
   end
 
