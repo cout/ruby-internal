@@ -215,12 +215,12 @@ CALL:
       desc: the receiver of the method
 
 CASE:
+  desc: |
     Represents the value portion of a case/end block, e.g.:
       case head
       body
       end
       next
-  desc: |
   members:
     head:
       desc: the value to select on
@@ -241,9 +241,13 @@ CFUNC:
 
 CDECL:
   desc: |
+    Represents constant assignment of the form:
+      vid = value
   members:
     value:
+      desc: the value to be assigned to the constant
     vid:
+      desc: the name of the constant to be assigned, all uppercase
 
 CLASS:
   desc: |
@@ -280,7 +284,8 @@ COLON3:
 CONST:
   desc: |
     Represents a constant lookup in the current class.  The current
-    class is the class in which the containing scope was defined.
+    class is the class in which the containing scope was defined.  The
+    result of the expression is the value of the constant.
   members:
     vid:
       type: id
@@ -296,7 +301,8 @@ CREF:
 
 CVAR:
   desc: |
-    Represents a class variable retrieval.
+    Represents a class variable retrieval.  The result of the expression
+    is the value of the class variable.
   members:
     vid:
       type: id
@@ -343,9 +349,15 @@ DASGN:
 
 DASGN_CURR:
   desc: |
+    Represents dynamic local variable assignment in the current frame.
+    See DASGN for a description of how dynamic assignment works.
   members:
     value:
+      type: node
+      desc: the value to assign to the local variable
     vid:
+      type: id
+      desc: the name of the local variable
 
 DEFINED:
   desc: |
@@ -420,26 +432,59 @@ DOT3:
 
 DREGX:
   desc: |
+    Represents a regular expresion with interpolation.  The node is
+    evaluated by duplicating the regex stored in the 'lit' element, then
+    iterating over the nodes stored in the 'next' element.  Each node
+    found should evaluate to a string, and each resulting string is
+    appended onto the original string.  Interpolation is represented
+    with the EVSTR node.
   members:
     lit:
+      type: object
+      desc: a string
     next:
+      type: ARRAY node
+      desc: a list of expressions to be appended onto the string
     cflag:
+      desc: |
+        a bitfield containing the options used in the regular
+        expression.  Valid values include:
+        * RE_OPTION_IGNORECASE
+        * RE_OPTION_EXTENDED
+        * RE_OPTION_MULTILINE
+        * RE_OPTION_SINGLELINE
+        * RE_OPTION_LONGEST
+        * RE_MAY_IGNORECASE
+        * RE_OPTIMIZE_ANCHOR
+        * RE_OPTIMIZE_EXACTN
+        * RE_OPTIMIZE_NO_BM
+        * RE_OPTIMIZE_BMATCH
 
 DREGX_ONCE:
   desc: |
+    Represents a regular expression with interpolation with the 'once'
+    flag set.  The regular expression is only interpolated the first
+    time it is encountered.
   members:
     lit:
+      type: object
+      desc: a string
     next:
+      type: ARRAY node
+      desc: a list of expressions to be appended onto the string
     cflag:
+      desc: |
+        a bitfield containing the options used in the regular
+        expression.  See DREGX for a list of valid values.
 
 DSTR:
   desc: |
     Represents a string object with interpolation.  The node is
     evaluated by duplicating the string stored in the 'lit' element,
     then iterating over the nodes stored in the 'next' element.  Each
-    node found should evalate to an string, and each resulting string is
-    appended onto the original string.  Interpolation is represented
-    with the EVSTR node.
+    node found should evalate to a string, and each resulting string is
+    appended onto the regex.  Interpolation is represented with the
+    EVSTR node.
   members:
     lit:
       type: object
@@ -450,6 +495,15 @@ DSTR:
 
 DSYM:
   desc: |
+    Represents a symbol with interpolation, e.g.:
+      :"#{next}"
+
+    The node is evaluated by duplicating the string stored in the 'lit'
+    element, then iterating over the nodes stored in the 'next' element.
+    Each node found should evalate to a string, and each resulting
+    string is appended onto the original string.  The final resulting
+    string is then converted into a symbol.  Interpolation is
+    represented with the EVSTR node.
   members:
     lit:
     next:
