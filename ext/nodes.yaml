@@ -766,8 +766,22 @@ MASGN:
 
 MATCH:
   desc: |
+    Represents a regular expression match in a conditional, e.g.:
+      if /lit/ then
+        ...
+      end
+
+    This expression is equivalent to:
+      if /lit/ =~ $_ then
+        ...
+      end
+
+    On ruby 1.8 and newer, this type of expression causes ruby to emit a
+    warning, unless script is running with -e.
+
   members:
-    head:
+    lit:
+      desc: the regular expression to use in the condition.
 
 MATCH2:
   desc: |
