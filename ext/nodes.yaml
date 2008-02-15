@@ -10,8 +10,16 @@ ALIAS:
 
 ALLOCA:
   doc: |
+    A node used for temporary allocation of memory on platforms that do
+    not support alloca.
+
   members:
-    lit:
+    cfunc:
+      doc: a pointer to the allocated memory
+    node:
+      doc: a pointer to the previously allocated temporary node
+    cnt:
+      doc: the number of bytes allocated
 
 AND:
   doc: |
@@ -736,10 +744,17 @@ IF:
 
 IFUNC:
   doc: |
+    A temporary node used in iteration.
+
   members:
     cfnc:
+      doc: a pointer to the C function to which to yield
     tval:
-    argc:
+      doc: |
+        the user-specified data to be passed as the second argument to
+        cfnc
+    state:
+      doc: always 0
 
 ITER:
   doc: |
@@ -1119,6 +1134,7 @@ RETURN:
 
 REXPAND:
   doc: |
+    No longer used.
   members:
     head:
   version: '[170, 180)'
