@@ -35,15 +35,23 @@
 
 #if RUBY_VERSION_CODE >= 190
 #define METHOD_OCLASS(m) m->oclass
+#elif RUBY_VERSION_CODE < 170
+#define METHOD_OCLASS(m) m->oklass
 #else
 #define METHOD_OCLASS(m) m->klass
 #endif
 
 #if RUBY_VERSION_CODE >= 190
 #define METHOD_RCLASS(m) m->rclass
+#elif RUBY_VERSION_CODE < 170
+#define METHOD_RCLASS(m) m->klass
 #else
 #define METHOD_RCLASS(m) m->rklass
 #endif
 
+#ifndef NEW_NODE
+#define NEW_NODE(t,a0,a1,a2) \
+rb_node_newnode((t),(VALUE)(a0),(VALUE)(a1),(VALUE)(a2))
 #endif
 
+#endif
