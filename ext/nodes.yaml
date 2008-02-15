@@ -1,5 +1,5 @@
 ALIAS:
-  desc: |
+  doc: |
     Represents an alias expression of the form:
       alias 1st 2nd
     where 2nd is the name of an existing method and 1st is the name of
@@ -9,12 +9,12 @@ ALIAS:
     2nd: the name of its new alias
 
 ALLOCA:
-  desc: |
+  doc: |
   members:
     lit:
 
 AND:
-  desc: |
+  doc: |
     Represents a logical 'and' of the form:
       first && second
     The expression will short-circuit and yield the result of the left
@@ -23,13 +23,13 @@ AND:
   members:
     2nd:
       type: node
-      desc: the expression on the right hand side
+      doc: the expression on the right hand side
     1st:
       type: node
-      desc: the expression on the left hand side
+      doc: the expression on the left hand side
 
 ARGSCAT:
-  desc: |
+  doc: |
     Represents the concatenation of a list of arguments and a splatted
     value, e.g.:
       a, b, *value
@@ -40,15 +40,15 @@ ARGSCAT:
   members:
     head:
       type: ARRAY node
-      desc: a list of fixed arguments
+      doc: a list of fixed arguments
     body:
       type: node
-      desc: |
+      doc: |
         the last argument, which will be splatted onto the end of the
         fixed arguments
 
 ARGSPUSH:
-  desc: |
+  doc: |
     Represents the splat portion of the index in an expression:
       obj[arg, arg, *head] = body
     Evaluates head to create an array.  Evaluates body and pushes the
@@ -59,7 +59,7 @@ ARGSPUSH:
     body: the rhs of the assignment
 
 ARRAY:
-  desc: |
+  doc: |
     Represents an array of elements.  Evaluation of this node creates a
     new Array by evalating the given expressions and placing them into
     the array.
@@ -67,56 +67,56 @@ ARRAY:
     alen:
     head:
       type: node
-      desc: the first element of the array
+      doc: the first element of the array
     next:
       type: node or 0
-      desc: the tail of the array
+      doc: the tail of the array
 
 ARGS:
-  desc: |
+  doc: |
     Represents the arguments to a method.
   members:
     rest:
       type: node
-      desc: an assignment node to assign the rest arg, if it is present
+      doc: an assignment node to assign the rest arg, if it is present
     opt:
       type: BLOCK node
-      desc: |
+      doc: |
         a list of assignment nodes to assign default values to the
         optional arguments if no argument is specified
     cnt:
       type: int
-      desc: the number of required arguments
+      doc: the number of required arguments
 
 ATTRASGN:
-  desc: |
+  doc: |
     Represents attribute assignment in the form:
       recv.mid = args
     or:
       recv.mid=(args).
   members:
     recv:
-      desc: the receiver of the method
+      doc: the receiver of the method
     args:
       type: ARRAY node
-      desc: the arguments to the method
+      doc: the arguments to the method
     mid:
       type: id
-      desc: the id of the attribute, with a trailing '=' sign
+      doc: the id of the attribute, with a trailing '=' sign
   version: '[180, oo)'
 
 ATTRSET:
-  desc: |
+  doc: |
     Represents an attribute writer method, which can added to a class by
     using attr_writer:
       attr_writer :attribute
     Its reader counterpart is IVAR.
   members:
     vid:
-      desc: the name of the attribute, with a leading '@' sign
+      doc: the name of the attribute, with a leading '@' sign
 
 BACK_REF:
-  desc: |
+  doc: |
     Represents one of the regex back reference variables:
     * $& - last match
     * $` - pre
@@ -125,16 +125,16 @@ BACK_REF:
   #'
   members:
     nth:
-      desc: |
+      doc: |
         the integer representation of the character of the variable to
         reference, one of '&', '`', '\'', or '+'
     cnt:
-      desc: |
+      doc: |
         the index into the local variable table where the match data is
         stored
 
 BEGIN:
-  desc: |
+  doc: |
    Represents a begin/end block.
 
    TODO: Need an example
@@ -142,7 +142,7 @@ BEGIN:
     body: the body of code inside the block
 
 BLOCK:
-  desc: |
+  doc: |
     Represents a block of code (a succession of multiple expressions).
     A single block node can hold two expressions: one expression to be
     evaluated and second expression, which may be another BLOCK.
@@ -154,24 +154,24 @@ BLOCK:
   members:
     head:
       type: node
-      desc: the first expression in the block of code
+      doc: the first expression in the block of code
     next:
       type: node
-      desc: the second expression in the block of code
+      doc: the second expression in the block of code
 
 BLOCK_ARG:
-  desc: |
+  doc: |
     Represents a block argument in a method definition, e.g.:
       def foo(&arg)
       end
   members:
     cnt:
-      desc: |
+      doc: |
         the index into the local variable table of the name of the block
         argument, not including the implicit variables.
 
 BLOCK_PASS:
-  desc: |
+  doc: |
     Represents an object being passed to a method as a block, e.g.:
       foo(&bar)
     The body node is first evaluates to get an object, then #to_proc to
@@ -181,41 +181,41 @@ BLOCK_PASS:
   members:
     body:
       type: node
-      desc: the object to pass as a block
+      doc: the object to pass as a block
     iter:
       type: node
-      desc: an expression which calls a method
+      doc: an expression which calls a method
 
 BMETHOD:
-  desc: |
+  doc: |
   members:
     cval:
 
 BREAK:
-  desc: |
+  doc: |
     Represents the 'break' keyword.  Causes control to be transferred
     out of the current loop.
   members:
     stts:
       type: node
-      desc: the value to be used as the "return" value of the loop, 0 if  nil is to be used.
+      doc: the value to be used as the "return" value of the loop, 0 if  nil is to be used.
 
 CALL:
-  desc: |
+  doc: |
     Represents a method call in the form recv.mid(args).
   members:
     args:
       type: ARRAY node
-      desc: the arguments to the method
+      doc: the arguments to the method
     mid:
       type: id
-      desc: the method id
+      doc: the method id
     recv:
       type: node
-      desc: the receiver of the method
+      doc: the receiver of the method
 
 CASE:
-  desc: |
+  doc: |
     Represents the value portion of a case/end block, e.g.:
       case head
       body
@@ -223,34 +223,34 @@ CASE:
       next
   members:
     head:
-      desc: the value to select on
+      doc: the value to select on
     body:
       type: WHEN node
-      desc: |
+      doc: |
         a linked list of nodes, each node representing a when
         conditional
     next:
       the next node to evaluate in the syntax tree
 
 CFUNC:
-  desc: |
+  doc: |
     A placeholder for a function implemented in C.
   members:
     cfnc: the function pointer of the C function
     argc: the number of arguments the function takes, or -1 or -2
 
 CDECL:
-  desc: |
+  doc: |
     Represents constant assignment of the form:
       vid = value
   members:
     value:
-      desc: the value to be assigned to the constant
+      doc: the value to be assigned to the constant
     vid:
-      desc: the name of the constant to be assigned, all uppercase
+      doc: the name of the constant to be assigned, all uppercase
 
 CLASS:
-  desc: |
+  doc: |
   members:
     super:
     cpath:
@@ -258,7 +258,7 @@ CLASS:
   version: '[180, oo)'
 
 COLON2:
-  desc: |
+  doc: |
     Represents a constant lookup in a particular class.  This expression
     has the form:
       klass::mid
@@ -266,33 +266,33 @@ COLON2:
   members:
     head:
       type: node
-      desc: an expression specifying the class in which to do the lookup
+      doc: an expression specifying the class in which to do the lookup
     mid:
       type: id
-      desc: the name of the method or constant to call/look up
+      doc: the name of the method or constant to call/look up
 
 COLON3:
-  desc: |
+  doc: |
     Represents a constant lookup or method call in class Object.  This
     expression has the form:
       ::mid
   members:
     mid:
       type: id
-      desc: the name of the method or constant to call/look up
+      doc: the name of the method or constant to call/look up
 
 CONST:
-  desc: |
+  doc: |
     Represents a constant lookup in the current class.  The current
     class is the class in which the containing scope was defined.  The
     result of the expression is the value of the constant.
   members:
     vid:
       type: id
-      desc: the name of the constant to look up
+      doc: the name of the constant to look up
 
 CREF:
-  desc: |
+  doc: |
   members:
     clss:
     next:
@@ -300,35 +300,35 @@ CREF:
   version: (0, 190)
 
 CVAR:
-  desc: |
+  doc: |
     Represents a class variable retrieval.  The result of the expression
     is the value of the class variable.
   members:
     vid:
       type: id
-      desc: the name of the class variable, with two leading '@' characters.
+      doc: the name of the class variable, with two leading '@' characters.
 
 CVASGN:
-  desc: |
+  doc: |
     Represents class variable assignment.
   members:
     value:
       type: node
-      desc: |
+      doc: |
         an expression whose result is the new value of the class
         variable
     vid:
       type: id
-      desc: the name of the class variable to assign
+      doc: the name of the class variable to assign
 
 CVDECL:
-  desc: |
+  doc: |
   members:
     value:
     vid:
 
 DASGN:
-  desc: |
+  doc: |
     Represents dynamic local variable assignment.  Dynamic assignment
     differs from static assignment in that the slots for static local
     variables are allocated when the method is called, wereas slots for
@@ -342,34 +342,34 @@ DASGN:
   members:
     value:
       type: node
-      desc: the value to assign to the local variable
+      doc: the value to assign to the local variable
     vid:
       type: id
-      desc: the name of the local variable
+      doc: the name of the local variable
 
 DASGN_CURR:
-  desc: |
+  doc: |
     Represents dynamic local variable assignment in the current frame.
     See DASGN for a description of how dynamic assignment works.
   members:
     value:
       type: node
-      desc: the value to assign to the local variable
+      doc: the value to assign to the local variable
     vid:
       type: id
-      desc: the name of the local variable
+      doc: the name of the local variable
 
 DEFINED:
-  desc: |
+  doc: |
     Represents an expression using the 'defined?' keyword.  The result
     is either nil or a string describing the expression.
   members:
     head:
       type: node
-      desc: the expression to inspect
+      doc: the expression to inspect
 
 DEFN:
-  desc: |
+  doc: |
     Represents a method definition, e.g.:
       def mid
         defn
@@ -378,11 +378,11 @@ DEFN:
     defn:
     mid:
       type: id
-      desc: the name of the method* defn the body of the method
+      doc: the name of the method* defn the body of the method
     noex:
 
 DEFS:
-  desc: |
+  doc: |
     Represents a singleton method definition, e.g.:
       def recv.mid
         defn
@@ -391,47 +391,47 @@ DEFS:
     defn:
     recv:
       type: node
-      desc: the object to whose singleton class the new method is to be  added
+      doc: the object to whose singleton class the new method is to be  added
     mid:
       type: id
-      desc: the name of the method* defn the body of the method
+      doc: the name of the method* defn the body of the method
 
 DMETHOD:
-  desc: |
+  doc: |
   members:
     cval:
   version: (0, 190)
 
 DOT2:
-  desc: |
+  doc: |
     Represents a range created with the form:
       beg..end
     Creates a range which does not exclude the range end.
   members:
     beg:
       type: node
-      desc: the beginning of the range
+      doc: the beginning of the range
     end:
       type: node
-      desc: the end of the range
+      doc: the end of the range
     state:
 
 DOT3:
-  desc: |
+  doc: |
     Represents a range created with the form:
       beg...end
     Creates a range which excludes the range end.
   members:
     beg:
       type: node
-      desc: the beginning of the range
+      doc: the beginning of the range
     end:
       type: node
-      desc: the end of the range
+      doc: the end of the range
     state:
 
 DREGX:
-  desc: |
+  doc: |
     Represents a regular expresion with interpolation.  The node is
     evaluated by duplicating the regex stored in the 'lit' element, then
     iterating over the nodes stored in the 'next' element.  Each node
@@ -441,12 +441,12 @@ DREGX:
   members:
     lit:
       type: object
-      desc: a string
+      doc: a string
     next:
       type: ARRAY node
-      desc: a list of expressions to be appended onto the string
+      doc: a list of expressions to be appended onto the string
     cflag:
-      desc: |
+      doc: |
         a bitfield containing the options used in the regular
         expression.  Valid values include:
         * RE_OPTION_IGNORECASE
@@ -461,24 +461,24 @@ DREGX:
         * RE_OPTIMIZE_BMATCH
 
 DREGX_ONCE:
-  desc: |
+  doc: |
     Represents a regular expression with interpolation with the 'once'
     flag set.  The regular expression is only interpolated the first
     time it is encountered.
   members:
     lit:
       type: object
-      desc: a string
+      doc: a string
     next:
       type: ARRAY node
-      desc: a list of expressions to be appended onto the string
+      doc: a list of expressions to be appended onto the string
     cflag:
-      desc: |
+      doc: |
         a bitfield containing the options used in the regular
         expression.  See DREGX for a list of valid values.
 
 DSTR:
-  desc: |
+  doc: |
     Represents a string object with interpolation.  The node is
     evaluated by duplicating the string stored in the 'lit' element,
     then iterating over the nodes stored in the 'next' element.  Each
@@ -488,13 +488,13 @@ DSTR:
   members:
     lit:
       type: object
-      desc: a string
+      doc: a string
     next:
       type: ARRAY node
-      desc: a list of expressions to be appended onto the string
+      doc: a list of expressions to be appended onto the string
 
 DSYM:
-  desc: |
+  doc: |
     Represents a symbol with interpolation, e.g.:
       :"#{next}"
 
@@ -510,15 +510,15 @@ DSYM:
   version: '[180, oo)'
 
 DVAR:
-  desc: |
+  doc: |
     Represents dynamic local variable retrieval.  See also DASGN.
   members:
     vid:
       type: id
-      desc: the name of the local variable to retrieve.
+      doc: the name of the local variable to retrieve.
 
 DXSTR:
-  desc: |
+  doc: |
     Represents a string object with interpolation inside backticks,
     e.g.:
       `lit#{next}`
@@ -535,40 +535,40 @@ DXSTR:
   members:
     lit:
       type: object
-      desc: a string
+      doc: a string
     next:
       type: ARRAY node
-      desc: a list of expressions to be appended onto the string
+      doc: a list of expressions to be appended onto the string
 
 ENSURE:
-  desc: |
+  doc: |
   members:
     head:
     ensr:
 
 EVSTR:
-  desc: |
+  doc: |
   members:
     lit:
   version: '(0, 180)'
 
 EVSTR(2):
-  desc: |
+  doc: |
     Represents a single string interpolation.
     Evaluates the given expression and converts its result to a string with #to_s.
   members:
     body:
       type: node
-      desc: an expression to evaluate
+      doc: an expression to evaluate
   version: '[180, oo)'
 
 'FALSE':
-  desc: |
+  doc: |
     Represents the keyword 'false'.
   members:
 
 FBODY:
-  desc: |
+  doc: |
   members:
     orig:
     mid:
@@ -576,7 +576,7 @@ FBODY:
   version: (0, 190)
 
 FBODY(2):
-  desc: |
+  doc: |
   members:
     body:
     oid:
@@ -584,27 +584,27 @@ FBODY(2):
   version: '[190, oo)'
 
 FCALL:
-  desc: |
+  doc: |
   members:
     args:
     mid:
 
 FLIP2:
-  desc: |
+  doc: |
   members:
     cnt:
     beg:
     end:
 
 FLIP3:
-  desc: |
+  doc: |
   members:
     cnt:
     beg:
     end:
 
 FOR:
-  desc: |
+  doc: |
     Represents a loop constructed with the 'for' keyword, e.g.:
       for var in iter do
         body
@@ -621,74 +621,74 @@ FOR:
   members:
     body:
       type: node
-      desc: the body of the loop
+      doc: the body of the loop
     iter:
       type: node
-      desc: the sequence over which to iterate
+      doc: the sequence over which to iterate
     var:
       type: node
-      desc: |
+      doc: |
         an assignment node which assigns the next value in the sequence
         to a variable, which may or may not be local.  May also be a
         multiple assignment.
 
 GASGN:
-  desc: |
+  doc: |
     Represents global variable assignment.
   members:
     value:
       type: node
-      desc: an expression whose result is the new value of the global variable
+      doc: an expression whose result is the new value of the global variable
     vid:
       type: id
-      desc: the name of the global variable, with a leading '$' character.
+      doc: the name of the global variable, with a leading '$' character.
     entry:
 
 GVAR:
-  desc: |
+  doc: |
     Represents global variable retrieval.
   members:
     vid:
       type: id
-      desc: the name of the global variable to retrieve, with a leading '$'
+      doc: the name of the global variable to retrieve, with a leading '$'
     entry:
 
 HASH:
-  desc: |
+  doc: |
     Represents a hash table.  Evaluation of this node creates a new Hash
     by evaluating the given expressions and placing them into the table.
   members:
     head:
       type: ARRAY node
-      desc: an array of successive keys and values
+      doc: an array of successive keys and values
 
 IASGN:
-  desc: |
+  doc: |
     Represents instance variable assignment.
   members:
     value:
       type: node
-      desc: the value to assign to the instance variable
+      doc: the value to assign to the instance variable
     vid:
       type: id
-      desc: the name of the instance variable, with a leading '@' sign
+      doc: the name of the instance variable, with a leading '@' sign
 
 IF:
-  desc: |
+  doc: |
   members:
     body:
     else:
     cond:
 
 IFUNC:
-  desc: |
+  doc: |
   members:
     cfnc:
     tval:
     argc:
 
 ITER:
-  desc: |
+  doc: |
     Represents an iteration loop, e.g.:
       iter do |*args|
         assign args to var
@@ -699,73 +699,73 @@ ITER:
   members:
     body:
       type: node
-      desc: the body of the loop
+      doc: the body of the loop
     iter:
       type: node
-      desc: an expression which calls the desired iteration method,  usually recv.each
+      doc: an expression which calls the desired iteration method,  usually recv.each
     var:
       type: node
-      desc: |
+      doc: |
         an assignment node which assigns the next value in the sequence
         to a variable, which may or may not be local.  May also be a
         multiple assignment.
 
 IVAR:
-  desc: |
+  doc: |
     Represents an attribute reader method, which can added to a class by
     using attr_reader:
       attr_reader :attribute
     Its writer counterpart is ATTRSET.
   members:
     vid:
-      desc: the name of the attribute, with a leading '@' sign
+      doc: the name of the attribute, with a leading '@' sign
 
 LASGN:
-  desc: |
+  doc: |
     Represents local variable assignment.
   members:
     value:
       type: node
-      desc: the value to assign to the local variable
+      doc: the value to assign to the local variable
     vid:
       type: id
-      desc: the name of the local variable
+      doc: the name of the local variable
     cnt:
 
 LIT:
-  desc: |
+  doc: |
     Represents a literal object.  The result of the expression is the
     object contained in this node.
   members:
     lit:
       type: object
-      desc: the object
+      doc: the object
 
 LVAR:
-  desc: |
+  doc: |
     Represents local variable retrieval.
   members:
     vid:
       type: id
-      desc: the name of the local variable to retrieve.
+      doc: the name of the local variable to retrieve.
     cnt:
 
 MASGN:
-  desc: |
+  doc: |
     Represents multiple assignment.
   members:
     args:
       type: node
-      desc: TODO
+      doc: TODO
     head:
       type: node
-      desc: TODO
+      doc: TODO
     value:
       type: node
-      desc: TODO
+      doc: TODO
 
 MATCH:
-  desc: |
+  doc: |
     Represents a regular expression match in a conditional, e.g.:
       if /lit/ then
         ...
@@ -781,35 +781,35 @@ MATCH:
 
   members:
     lit:
-      desc: the regular expression to use in the condition.
+      doc: the regular expression to use in the condition.
 
 MATCH2:
-  desc: |
+  doc: |
   members:
     recv:
     value:
 
 MATCH3:
-  desc: |
+  doc: |
   members:
     recv:
     value:
 
 MEMO:
-  desc: |
+  doc: |
   members:
     lit:
     tval:
 
 METHOD:
-  desc: |
+  doc: |
   members:
     noex:
     body:
   version: '(0, 190)'
 
 METHOD(2):
-  desc: |
+  doc: |
   members:
     body:
     clss:
@@ -817,24 +817,24 @@ METHOD(2):
   version: '[190, oo)'
 
 MODULE:
-  desc: |
+  doc: |
   members:
     cpath:
     body:
   version: '[180, oo)'
 
 NEWLINE:
-  desc: |
+  doc: |
     Represents the termination of a line.  This is used for calling
     event hooks when a new line of code is reached.
   members:
     next:
       type: node
-      desc: the expression on the next line
+      doc: the expression on the next line
   version: (0, 190)
 
 NEXT:
-  desc: |
+  doc: |
     Represents the 'next' keyword.
     Causes control to be transferred to the end of the loop, causing the
     next value in the sequence to be retrieved.
@@ -842,32 +842,32 @@ NEXT:
     stts:
 
 NIL:
-  desc: |
+  doc: |
     Represents the keyword 'nil'.
   members:
 
 NOT:
-  desc: |
+  doc: |
     Represents a logical negation.
   members:
     body:
       type: node
-      desc: the value to negate.
+      doc: the value to negate.
   version: (0, 190)
 
 NTH_REF:
-  desc: |
+  doc: |
     Represents the nth match data item, e.g. $1, $2, etc.
   members:
     nth:
-      desc: |
+      doc: |
         the index of the match data item to retrieve
     cnt:
-      desc: |
+      doc: |
         the index into the local variable table where the match data is stored
 
 OP_ASGN1:
-  desc: |
+  doc: |
     Represents bracket assignment of the form:
       recv[index] += value or 
       recv[index] ||= value or
@@ -893,25 +893,25 @@ OP_ASGN1:
   members:
     args:
       type: ARGSCAT node
-      desc: the arguments to the assigment
+      doc: the arguments to the assigment
     mid:
       type: id
-      desc: |
+      doc: |
         0, 1, or the name a method to call to calculate the value of the
         rhs
     recv:
       type: node
-      desc: the receiver of the assignment
+      doc: the receiver of the assignment
 
 OP_ASGN2:
-  desc: |
+  doc: |
   members:
     vid:
     recv:
     value:
 
 OP_ASGN_AND:
-  desc: |
+  doc: |
     Represents an expression of the form:
       recv &&= value
     Ruby will evaluate the expression on the left hand side of the
@@ -921,16 +921,16 @@ OP_ASGN_AND:
   members:
     recv:
       type: node
-      desc: |
+      doc: |
         an expression representing the left hand side of the assignment
     value:
       type: node
-      desc: |
+      doc: |
         an expression representing the assignment that should be
         performed if the left hand side is true
 
 OP_ASGN_OR:
-  desc: |
+  doc: |
     Represents an expression of the form:
       recv ||= value
     Ruby will evaluate the expression on the left hand side.  If it is
@@ -940,24 +940,24 @@ OP_ASGN_OR:
   members:
     aid:
       type: id
-      desc: |
+      doc: |
         if this indicator is nonzero, ruby will check to see if the
         provided expression is defined, otherwise it will assume that
         the provided expression is defined.
     value:
       type: node
-      desc: the right hand side of the assignment
+      doc: the right hand side of the assignment
     recv:
       type: node
-      desc: the receiver of the assignment
+      doc: the receiver of the assignment
 
 OPT_N:
-  desc: |
+  doc: |
   members:
     body:
 
 OR:
-  desc: |
+  doc: |
     Represents a logical 'or' of the form:
       first || second
     The expression will short-circuit and yield the result of the left
@@ -966,53 +966,53 @@ OR:
   members:
     2nd:
       type: node
-      desc: the expression on the right hand side
+      doc: the expression on the right hand side
     1st:
       type: node
-      desc: the expression on the left hand side
+      doc: the expression on the left hand side
 
 POSTEXE:
-  desc: |
+  doc: |
   members:
 
 REDO:
-  desc: |
+  doc: |
     Represents the 'redo' keyword.  Causes control to be transferred to
     the beginning of the loop.  The loop assignment is not repeated.
   members:
 
 RESBODY:
-  desc: |
+  doc: |
   members:
     head:
     body:
     args:
 
 RESCUE:
-  desc: |
+  doc: |
   members:
     head:
     resq:
     else:
 
 RESTARY:
-  desc: |
+  doc: |
   members:
     head:
   version: '[170, 180]'
 
 RESTARY2:
-  desc: |
+  doc: |
   members:
     head:
   version: '(170, 180]'
 
 RETRY:
-  desc: |
+  doc: |
   members:
 
 RETURN:
-  desc: |
+  doc: |
     Represents the 'return' keyword.  Evaluation of this node results in
     a return from the current method.  If no argument is supplied,
     returns nil, otherwise returns the result of the supplied
@@ -1020,16 +1020,16 @@ RETURN:
   members:
     stts:
       type: node or 0
-      desc: an expression representing the value to return
+      doc: an expression representing the value to return
 
 REXPAND:
-  desc: |
+  doc: |
   members:
     head:
   version: '[170, 180)'
 
 SCLASS:
-  desc: |
+  doc: |
     Represents the body of a singleton class definition, e.g.:
       class << recv
         body
@@ -1039,13 +1039,13 @@ SCLASS:
   members:
     body:
       type: node
-      desc: the body of the class definition
+      doc: the body of the class definition
     recv:
       type: node
-      desc: the object whose singleton class is to be modified
+      doc: the object whose singleton class is to be modified
 
 SCOPE:
-  desc: |
+  doc: |
     Represents a lexical scope.
     A new scope is created when a method is invoked.  The scope node
     holds information about local variables and arguments to the method.
@@ -1059,23 +1059,23 @@ SCOPE:
   members:
     tbl:
       type: pointer to array of ID
-      desc: |
+      doc: |
         the names of the local variables* next the first expression in
         the scope
     rval:
       type: node
-      desc: |
+      doc: |
         holds information about which class(es) to search for  constants
         in this scope
     next:
 
 SELF:
-  desc: |
+  doc: |
     Represents the keyword 'self'.
   members:
 
 SPLAT:
-  desc: |
+  doc: |
     Represents the splat (*) operation as an rvalue, e.g.:
       *head
     If the argument is an array, returns self.
@@ -1085,28 +1085,28 @@ SPLAT:
   members:
     head:
       type: node
-      desc: the argument to splat.
+      doc: the argument to splat.
   version: '[180, oo)'
 
 STR:
-  desc: |
+  doc: |
     Represents a string object.  Duplicates the string stored in the
     node.
   members:
     lit:
       type: object
-      desc: the string to be duplicated
+      doc: the string to be duplicated
 
 SUPER:
-  desc: |
+  doc: |
     Represents the keyword 'super' when used with parens or with arguments.
   members:
     args:
       type: ARRAY node
-      desc: the arguments to be passed to the base class
+      doc: the arguments to be passed to the base class
      
 SVALUE:
-  desc: |
+  doc: |
     Represents the collection of multiple values of the right hand side
     of an assignment into a single value, for use in single assignment,
     e.g.:
@@ -1118,28 +1118,28 @@ SVALUE:
   members:
     head:
       type: node
-      desc: an expression which returns an Array.
+      doc: an expression which returns an Array.
   version: '[180, 190)'
 
 'TRUE':
-  desc: |
+  doc: |
     Represents the keyword 'true'.
   members:
 
 UNDEF:
-  desc: |
+  doc: |
   members:
     head:
   version: '(0, 185)'
 
 UNDEF:
-  desc: |
+  doc: |
   members:
     body:
   version: '[185, oo)'
 
 UNTIL:
-  desc: |
+  doc: |
     Represents a loop constructed with the 'until' keyword, e.g.:
       until cond do
         body
@@ -1147,23 +1147,23 @@ UNTIL:
   members:
     body:
       type: node
-      desc: the body of the loop
+      doc: the body of the loop
     cond:
       type: node
-      desc: a condition to terminate the loop when it becomes true
+      doc: a condition to terminate the loop when it becomes true
     state:
 
 VCALL:
-  desc: |
+  doc: |
     Represents a local variable or a method call without an explicit
     receiver, to be determined at run-time.
   members:
     mid:
       type: id
-      desc: the name of the variable or method
+      doc: the name of the variable or method
 
 WHILE:
-  desc: |
+  doc: |
     Represents a loop constructed with the 'while' keyword, e.g.:
       while cond do
         body
@@ -1171,14 +1171,14 @@ WHILE:
   members:
     body:
       type: node
-      desc: the body of the loop
+      doc: the body of the loop
     cond:
       type: node
-      desc: a condition to terminate the loop when it becomes false
+      doc: a condition to terminate the loop when it becomes false
     state:
 
 XSTR:
-  desc: |
+  doc: |
     Represents a string object inside backticks, e.g.:
       `lit`
     The given string is executed in a subshell and the output from its
@@ -1186,23 +1186,23 @@ XSTR:
   members:
     lit:
       type: object
-      desc: the string to be executed
+      doc: the string to be executed
 
 YIELD:
-  desc: |
+  doc: |
     Represents the 'yield' keyword.  When evaluated, causes control of
     the program to be transferred to the block passed by the calling
     scope.
   members:
     head:
       type: node
-      desc: the value to yield
+      doc: the value to yield
     state:
       type: int
-      desc: if nonzero, splats the value before yielding
+      doc: if nonzero, splats the value before yielding
 
 ZSUPER:
-  desc: |
+  doc: |
     Represents the keyword 'super' when used without parens nor
     arguments.  The arguments to the base class method are obtained from
     the arguments passed to the current method, which are store in the
@@ -1210,18 +1210,18 @@ ZSUPER:
   members:
 
 TO_ARY:
-  desc: |
+  doc: |
     Represents a conversion from one object type to an array type.
     Evaluation of this node converts its argument to an array by calling
     \#to_ary on the argument.
   members:
     head:
       type: node
-      desc: the object to convert to an array
+      doc: the object to convert to an array
   version: '[180, oo)'
 
 WHEN:
-  desc: |
+  doc: |
     Represents either a conditional in a case/end block:
       case value
       when head
@@ -1253,15 +1253,15 @@ WHEN:
 
   members:
     head:
-      desc: a value to compare against, or a condition to be tested
+      doc: a value to compare against, or a condition to be tested
     body:
-      desc: an expression to evaluate if the condition evaluates to true
+      doc: an expression to evaluate if the condition evaluates to true
     next:
       type: false or WHEN node
-      desc: the next expression to be evaluated if the condition is false
+      doc: the next expression to be evaluated if the condition is false
 
 VALIAS:
-  desc: |
+  doc: |
     Represents an alias expression of the form:
       alias 1st 2nd
     where 2nd is the name of a variable and 1st is the name of its new
@@ -1274,7 +1274,7 @@ VALIAS:
     2nd: the name of its new alias
 
 ZARRAY:
-  desc: |
+  doc: |
     Represents an array of zero elements.  Evalation of this node
     creates a new array of length zero.
   members:

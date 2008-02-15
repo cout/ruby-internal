@@ -493,7 +493,7 @@ void define_node_subclass_methods()
     node_type = "rb_c#{node.name}"
 
     doc = "\n  /* Document-class: Node::#{node.name}"
-    node.desc.each_line do |line|
+    node.doc.each_line do |line|
       doc << "\n   * #{line.chomp}"
     end
     doc << "\n   */\n"
@@ -517,9 +517,9 @@ void define_node_subclass_methods()
       mname = member_name
       mname = 'first' if member_name == '1st'
       mname = 'second' if member_name == '2nd'
-      if member.desc then
+      if member.doc then
         doc = "\n    /* Document-method: #{mname}"
-        member.desc.each_line do |line|
+        member.doc.each_line do |line|
           doc << "\n     * #{line.chomp}"
         end
         doc << "\n     */\n"
