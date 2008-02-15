@@ -1031,8 +1031,12 @@ OP_ASGN_OR:
 
 OPT_N:
   doc: |
+    Represents the top-level loop when the -n or -p options are used
+    with the interpreter.
+
   members:
     body:
+      doc: the body of the loop
 
 OR:
   doc: |
@@ -1075,12 +1079,14 @@ RESCUE:
 
 RESTARY:
   doc: |
+    No longer used.
   members:
     head:
   version: '[170, 180]'
 
 RESTARY2:
   doc: |
+    No longer used.
   members:
     head:
   version: '(170, 180]'
