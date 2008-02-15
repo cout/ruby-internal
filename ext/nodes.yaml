@@ -215,11 +215,22 @@ CALL:
       desc: the receiver of the method
 
 CASE:
+    Represents the value portion of a case/end block, e.g.:
+      case head
+      body
+      end
+      next
   desc: |
   members:
     head:
+      desc: the value to select on
     body:
+      type: WHEN node
+      desc: |
+        a linked list of nodes, each node representing a when
+        conditional
     next:
+      the next node to evaluate in the syntax tree
 
 CFUNC:
   desc: |
@@ -1143,10 +1154,43 @@ TO_ARY:
 
 WHEN:
   desc: |
+    Represents either a conditional in a case/end block:
+      case value
+      when head
+        body
+      next
+      end
+
+    or the first element of a a case/end block with no conditional:
+      case
+      when head
+        body
+      next
+      end
+
+    In the first case, value is evaluated and head is evaluated, and
+    they are compared using head === value.  If the result is true, then
+    body is evaluated and no more when conditions are tried, otherwise
+    the interpreter evaluates the next node.
+
+    In the second case, head is tested using rtest(value).  If the
+    result is true, then body is evaluated and no more when conditions
+    are tried, otherwise the interpreter evaluates the next node.
+
+    If the condition evaluates to false and there are no more when
+    conditions to try, the result of the expression is nil.
+
+    If the next expression to try is not a WHEN node, then it represents
+    an else element and is evaluated unconditionally.
+
   members:
     head:
+      desc: a value to compare against, or a condition to be tested
     body:
+      desc: an expression to evaluate if the condition evaluates to true
     next:
+      type: false or WHEN node
+      desc: the next expression to be evaluated if the condition is false
 
 VALIAS:
   desc: |
