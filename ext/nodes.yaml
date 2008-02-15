@@ -310,7 +310,8 @@ CVAR:
 
 CVASGN:
   doc: |
-    Represents class variable assignment.
+    Represents class variable assignment in a method context.
+
   members:
     value:
       type: node
@@ -323,9 +324,19 @@ CVASGN:
 
 CVDECL:
   doc: |
+    Represents class variable assignment in a class context.
+
+    A warning is emitted if the variable already exists.
+
   members:
     value:
+      type: node
+      doc: |
+        an expression whose result is the new value of the class
+        variable
     vid:
+      type: id
+      doc: the name of the class variable to assign
 
 DASGN:
   doc: |
