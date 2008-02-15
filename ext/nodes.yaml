@@ -548,8 +548,11 @@ ENSURE:
 
 EVSTR:
   doc: |
+    Represents a single string interpolation.
+    Evaluates the given expression and converts its result to a string with #to_s.
   members:
     lit:
+      doc: a string containing an expression to evaluate
   version: '(0, 180)'
 
 EVSTR(2):
@@ -585,9 +588,19 @@ FBODY(2):
 
 FCALL:
   doc: |
+    Represents a method call in the form:
+      mid(args).
+
+    This makes a method call on an object using self as the implicit
+    receiver.
+
   members:
     args:
+      type: ARRAY node
+      doc: the arguments to the method
     mid:
+      type: id
+      doc: the method id
 
 FLIP2:
   doc: |
@@ -675,10 +688,40 @@ IASGN:
 
 IF:
   doc: |
+    Represents a conditional of the form:
+      if cond then
+        body
+      end
+
+    or the form:
+      if cond then
+        body
+      else
+        else
+      end
+
+    The condition is first evaluated.  If it is true, then body is
+    evaluated, otherwise else is evaluated.  The result is the value of
+    the expression evaluated, or nil if there was no expression
+    present.
+
+    A conditional block using elsif has another IF node as the else
+    expression.
+        
   members:
-    body:
-    else:
     cond:
+      type: node
+      doc: the condition to evaluate
+    body:
+      type: false or node
+      doc: |
+        the expression to evaluate if the expression is true, or false
+        if the expression is empty
+    else:
+      type: false or node
+      doc: |
+        the expression to evaluate if the expression is false, or false
+        if the expression is empty
 
 IFUNC:
   doc: |
