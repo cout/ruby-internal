@@ -1212,14 +1212,28 @@ SVALUE:
 
 UNDEF:
   doc: |
+    Represents an expression using the undef keyword, e.g.:
+      undef :mid
+
+    This causes the method identified by mid in the current class to be
+    undefined.
+
   members:
-    head:
+    mid:
+      doc: the id of the method to undefine
   version: '(0, 185)'
 
-UNDEF:
+UNDEF(2):
   doc: |
+    Represents an expression using the undef keyword, e.g.:
+      undef :mid
+
+    This causes the method identified by mid in the current class to be
+    undefined.
+
   members:
     body:
+      doc: an expression returning the id of the method to undefine
   version: '[185, oo)'
 
 UNTIL:
@@ -1350,9 +1364,6 @@ VALIAS:
       alias 1st 2nd
     where 2nd is the name of a variable and 1st is the name of its new
     alias.
-  members:
-    1st:
-    2nd:
   members:
     1st: the name of an exiting variable
     2nd: the name of its new alias
