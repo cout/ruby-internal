@@ -782,18 +782,53 @@ MATCH:
   members:
     lit:
       doc: the regular expression to use in the condition.
+    value:
+      doc: the value to compare against
 
 MATCH2:
   doc: |
+    Represents a match in a conditional with a regular expression using
+    interpolation, e.g.:
+      if /#{recv}/ then
+        ...
+      end
+
+    which is equivalent to:
+      if /#{recv}/ =~ $_ then
+        ...
+      end
+
+    or a match with a regular expression on the left hand side and an
+    expression on the right hand side, e.g.:
+
+      /recv/ =~ value
+
   members:
     recv:
+      doc: |
+        the regular expression on the left hand side of the match
+        operator
     value:
+      doc: |
+        the expression on the right hand side of the match operator, or
+        an expression returning $_ if there is nothing on the right hand
+        side
 
 MATCH3:
   doc: |
+    Represents a regular expression match of the form:
+      recv =~ /value/
+
+    where recv is an expression that returns an object and value is a
+    regular expression literal.
+
   members:
     recv:
+      type: node
+      doc: the left hand side of the match
     value:
+      type: LIT node
+      doc: the right hand side of the match
 
 MEMO:
   doc: |
