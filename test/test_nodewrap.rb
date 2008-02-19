@@ -231,7 +231,7 @@ class TC_Nodewrap < Test::Unit::TestCase
       assert a.include?(c)
 
       # Class instance variables
-      assert_equal orig_test_class_iv, c.instance_variables
+      assert_equal orig_test_class_iv.sort, c.instance_variables.sort
       result = c.instance_eval do
         @foo
       end
@@ -301,6 +301,7 @@ class TC_Nodewrap < Test::Unit::TestCase
       m = o.method(:foo)
       n = m.body
       # puts "dumping first method"
+      # p sample_code
       # pp o.method(:foo).body
       d = Marshal.dump(n)
       n2 = Marshal.load(d)
