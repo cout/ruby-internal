@@ -85,19 +85,19 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case node_elem_ref
     when /\.node/
       puts <<-END
-      {
-      int node_type;
-      if(#{node_elem_name == "next" ? 1 : 0} && nd_type(n) == NODE_OP_ASGN2)
-      {
-        /* All children of NODE_OP_ASGN2 are NODE_OP_ASGN2_ARG */
-        node_type = NODE_OP_ASGN2_ARG;
-      }
-      else
-      {
-        node_type = nd_type(n->nd_#{node_elem_name});
-      }
       if(n->nd_#{node_elem_name})
       {
+        int node_type;
+        if(#{node_elem_name == "next" ? 1 : 0} && nd_type(n) == NODE_OP_ASGN2)
+        {
+          /* All children of NODE_OP_ASGN2 are NODE_OP_ASGN2_ARG */
+          node_type = NODE_OP_ASGN2_ARG;
+        }
+        else
+        {
+          node_type = nd_type(n->nd_#{node_elem_name});
+        }
+
         dump_node_or_iseq_to_hash(
           (VALUE)n->nd_#{node_elem_name},
           node_type,
@@ -107,7 +107,6 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
       else
       {
         return Qnil;
-      }
       }
       END
     when /\.value$/
@@ -140,6 +139,12 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
               INT2NUM(((struct RBasic *)(n->nd_#{node_elem_name}))->flags),
               path);
         }
+
+        case T_NODE:
+          rb_raise(
+              rb_eRuntimeError,
+              "Wrong node elem #{node_elem_name} for node type %d",
+              nd_type(n));
         
         default:
           /* TODO: would like to dump flags, not type */
