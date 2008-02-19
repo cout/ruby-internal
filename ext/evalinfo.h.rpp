@@ -45,18 +45,6 @@
     end
   end
 
-if have_oclass then
-puts %{
-#define METHOD_OCLASS(m) m->oclass
-#define METHOD_RCLASS(m) m->rclass
-}
-else
-puts %{
-#define METHOD_OCLASS(m) m->klass
-#define METHOD_RCLASS(m) m->rklass
-}
-end
-
   nil
 END
 
