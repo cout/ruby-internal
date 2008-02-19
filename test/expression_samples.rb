@@ -138,6 +138,7 @@ EXPRESSION_SAMPLES = {
   # TODO: defs
   :defined                 => 'defined?(NilClass)',
   # TODO: match3
+  :op_asgn2                => '1.foo += 1', # TODO
 }
 
 

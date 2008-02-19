@@ -35,8 +35,8 @@ class NodeVersionRange
 end
 
 class Nodes
-  NodeInfo = Struct.new(:name, :desc, :members, :version_range)
-  MemberInfo = Struct.new(:desc, :type)
+  NodeInfo = Struct.new(:name, :doc, :members, :version_range)
+  MemberInfo = Struct.new(:doc, :type)
 
   def initialize(filename = nil)
     if not filename then
@@ -51,13 +51,13 @@ class Nodes
       (node['members'] || {}).each do |member_name, member|
         member ||= {}
         members[member_name] = MemberInfo.new(
-            member['desc'],
+            member['doc'],
             member['type'])
       end
       version_range = NodeVersionRange.new(node['version'])
       @nodes[name] = NodeInfo.new(
           name.gsub(/\(.*\)/, ''),
-          node['desc'],
+          node['doc'],
           members,
           version_range)
     end

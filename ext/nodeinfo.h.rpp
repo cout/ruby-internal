@@ -29,5 +29,8 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
 VALUE node_s_members(VALUE klass);
 void define_node_subclass_methods();
 
+#define NODE_OP_ASGN2_ARG NODE_LAST + 1
+#define NUM_NODE_TYPE_DESCRIPS NODE_OP_ASGN2_ARG + 1
+
 #endif
 

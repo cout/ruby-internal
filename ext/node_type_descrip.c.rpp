@@ -30,7 +30,7 @@ nil
 END
 };
 
-static Node_Type_Descrip * node_type_descrips[NODE_LAST];
+static Node_Type_Descrip * node_type_descrips[NUM_NODE_TYPE_DESCRIPS];
 static int node_type_descrips_initialized = 0;
 
 static void init_node_type_descrips()

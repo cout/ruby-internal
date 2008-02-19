@@ -13,6 +13,8 @@ ALLOCA:
     A node used for temporary allocation of memory on platforms that do
     not support alloca.
 
+    It should never be evaluated as an expression.
+
   members:
     cfunc:
       doc: a pointer to the allocated memory
@@ -115,8 +117,8 @@ ATTRASGN:
 
 ATTRSET:
   doc: |
-    Represents an attribute writer method, which can added to a class by
-    using attr_writer:
+    A placeholder for an attribute writer method, which can added to a
+    class by using attr_writer:
       attr_writer :attribute
     Its reader counterpart is IVAR.
   members:
@@ -130,12 +132,12 @@ BACK_REF:
     * $` - pre
     * $' - post
     * $+ - last
-  #'
   members:
     nth:
       doc: |
         the integer representation of the character of the variable to
         reference, one of '&', '`', '\'', or '+'
+      #'
     cnt:
       doc: |
         the index into the local variable table where the match data is
@@ -172,6 +174,7 @@ BLOCK_ARG:
     Represents a block argument in a method definition, e.g.:
       def foo(&arg)
       end
+
   members:
     cnt:
       doc: |
@@ -182,10 +185,12 @@ BLOCK_PASS:
   doc: |
     Represents an object being passed to a method as a block, e.g.:
       foo(&bar)
+
     The body node is first evaluates to get an object, then #to_proc to
     convert it into a proc if necessary.  The iter node is then
     evaluated to call a method, passing the proc as a block parameter to
     the method.
+
   members:
     body:
       type: node
@@ -196,13 +201,25 @@ BLOCK_PASS:
 
 BMETHOD:
   doc: |
+    A placeholder for a method defined using define_method, e.g.:
+      define_method(:foo) {
+        ...
+      }
+
+    See also DMETHOD.
+
   members:
     cval:
+      doc: |
+        the Proc object passed to define_method, which contains the body
+        of the method
+  version: (0, 190)
 
 BREAK:
   doc: |
     Represents the 'break' keyword.  Causes control to be transferred
     out of the current loop.
+
   members:
     stts:
       type: node
@@ -243,6 +260,7 @@ CASE:
 CFUNC:
   doc: |
     A placeholder for a function implemented in C.
+
   members:
     cfnc: the function pointer of the C function
     argc: the number of arguments the function takes, or -1 or -2
@@ -251,6 +269,7 @@ CDECL:
   doc: |
     Represents constant assignment of the form:
       vid = value
+
   members:
     value:
       doc: the value to be assigned to the constant
@@ -259,18 +278,43 @@ CDECL:
 
 CLASS:
   doc: |
+    Represents a class definition, e.g.:
+      class cpath
+        body
+      end
+
+    or:
+      class cpath < super
+        body
+      end
+
+    The class definition is evaluated in a new lexical scope.
+
+    The result of the expression is the last expression evaluated in the
+    body.
+
   members:
     super:
+      type: node or false
+      doc: |
+        an expression returning the base class, or false if there is no
+        base class specified
     cpath:
+      type: COLON2 or COLON3 node
+      doc: the name of the class to define
     body:
-  version: '[180, oo)'
+      type: node
+      doc: the body of the class definition
 
 COLON2:
   doc: |
     Represents a constant lookup in a particular class.  This expression
     has the form:
       klass::mid
-    Where klass is the result of evaluating the expression in the head member.
+
+    where klass is the result of evaluating the expression in the head
+    member.
+
   members:
     head:
       type: node
@@ -284,6 +328,7 @@ COLON3:
     Represents a constant lookup or method call in class Object.  This
     expression has the form:
       ::mid
+
   members:
     mid:
       type: id
@@ -294,6 +339,7 @@ CONST:
     Represents a constant lookup in the current class.  The current
     class is the class in which the containing scope was defined.  The
     result of the expression is the value of the constant.
+
   members:
     vid:
       type: id
@@ -301,10 +347,19 @@ CONST:
 
 CREF:
   doc: |
+    A temporary node used to store the value of ruby_cref or
+    ruby_top_cref and later restore it.  The cref holds a reference to
+    the cbase, which, among other things, is used for constant and class
+    variable lookup.
+
+    It should never be evaluated as an expression.
   members:
     clss:
-    next:
+      doc: the new class to use for the cbase.
     body:
+      doc: always 0 (false)
+    next:
+      doc: the previous value of ruby_cref or ruby_top_cref
   version: (0, 190)
 
 CVAR:
@@ -395,10 +450,11 @@ DEFN:
       end
   members:
     defn:
+      doc: the body of the method definition
     mid:
-      type: id
       doc: the name of the method* defn the body of the method
     noex:
+      doc: the flags which should be used to define the method
 
 DEFS:
   doc: |
@@ -417,8 +473,17 @@ DEFS:
 
 DMETHOD:
   doc: |
+    A placeholder for a method defined using define_method where the
+    passed block is created from a Method object, e.g.:
+      define_method(:name, method(:foo))
+
+    See also BMETHOD.
+
   members:
     cval:
+      doc: |
+        the Method object passed to define_method, which contains the
+        body of the method
   version: (0, 190)
 
 DOT2:
@@ -568,7 +633,10 @@ ENSURE:
 EVSTR:
   doc: |
     Represents a single string interpolation.
-    Evaluates the given expression and converts its result to a string with #to_s.
+
+    Evaluates the given expression and converts its result to a string
+    with #to_s.
+
   members:
     lit:
       doc: a string containing an expression to evaluate
@@ -577,7 +645,10 @@ EVSTR:
 EVSTR(2):
   doc: |
     Represents a single string interpolation.
-    Evaluates the given expression and converts its result to a string with #to_s.
+
+    Evaluates the given expression and converts its result to a string
+    with #to_s.
+
   members:
     body:
       type: node
@@ -591,18 +662,38 @@ EVSTR(2):
 
 FBODY:
   doc: |
+    A placeholder for a method alias, which can be added to a class by
+    using alias or alias_method:
+      alias old new
+
   members:
     orig:
+      type: id
+      doc: the original name of the method
     mid:
+      type: id
+      doc: the name of the method
     head:
+      type: SCOPE node
+      doc: the method body
   version: (0, 190)
 
 FBODY(2):
   doc: |
+    A placeholder for a method alias, which can be added to a class by
+    using alias or alias_method:
+      alias old new
+
   members:
     body:
+      type: SCOPE node
+      doc: the method body
     oid:
+      type: id
+      doc: the original name of the method
     cnt:
+      doc: the method's flags
+    #'
   version: '[190, oo)'
 
 FCALL:
@@ -667,6 +758,7 @@ FOR:
 GASGN:
   doc: |
     Represents global variable assignment.
+
   members:
     value:
       type: node
@@ -679,6 +771,7 @@ GASGN:
 GVAR:
   doc: |
     Represents global variable retrieval.
+
   members:
     vid:
       type: id
@@ -689,6 +782,7 @@ HASH:
   doc: |
     Represents a hash table.  Evaluation of this node creates a new Hash
     by evaluating the given expressions and placing them into the table.
+
   members:
     head:
       type: ARRAY node
@@ -697,6 +791,7 @@ HASH:
 IASGN:
   doc: |
     Represents instance variable assignment.
+
   members:
     value:
       type: node
@@ -763,15 +858,22 @@ ITER:
         assign args to var
         body
       end
+
     A new block is created so that dynamic variables created inside the
     loop do not persist once the loop has terminated.
+
+    If the iter node is a POSTEXE node, indicates that the expression
+    should be evaluated when the program terminates.
+
   members:
     body:
       type: node
       doc: the body of the loop
     iter:
       type: node
-      doc: an expression which calls the desired iteration method,  usually recv.each
+      doc: |
+        an expression which calls the desired iteration method, usually
+        recv.each
     var:
       type: node
       doc: |
@@ -781,8 +883,8 @@ ITER:
 
 IVAR:
   doc: |
-    Represents an attribute reader method, which can added to a class by
-    using attr_reader:
+    A placeholder for an attribute reader method, which can added to a
+    class by using attr_reader:
       attr_reader :attribute
     Its writer counterpart is ATTRSET.
   members:
@@ -901,31 +1003,73 @@ MATCH3:
 
 MEMO:
   doc: |
+    A node used for temporary storage.
+    
+    It is used by the rb_protect function so that the cont_protect
+    variable can be restored when the function returns.
+
+    It is also used in the Enumerable module and by autoload as a
+    temporary placeholder.
+
+    It should never be evaluated as an expression.
+
+    It holds up to three nodes or ruby objects, depending on how it is
+    used.
+
   members:
-    lit:
-    tval:
 
 METHOD:
   doc: |
+    A placeholder for a method entry in a class's method table.
+  #'
   members:
     noex:
+      doc: the method's flags
+    #'
     body:
+      doc: the body of the method
   version: '(0, 190)'
 
 METHOD(2):
   doc: |
+    A placeholder for a method entry in a class's method table.
+
+    On ruby 1.9 this node type is also known as RUBY_VM_METHOD_NODE.
+    Its use differs from that of NODE_METHOD in that it is used as the
+    body of another METHOD node and is used to store the method's
+    instruction sequence.
+  #'
   members:
     body:
+      doc: the body of the method
     clss:
+      doc: |
+        the class to which the method was added or the instruction
+        sequence used to implement this method
     noex:
+      doc: the method's flags
+  #'
   version: '[190, oo)'
 
 MODULE:
   doc: |
+    Represents a module definition, e.g.:
+      module cpath
+        body
+      end
+
+    The module definition is evaluated in a new lexical scope.
+
+    The result of the expression is the last expression evaluated in the
+    body.
+
   members:
     cpath:
+      type: COLON2 or COLON3 node
+      doc: the name of the module to define
     body:
-  version: '[180, oo)'
+      type: node
+      doc: the body of the module definition
 
 NEWLINE:
   doc: |
@@ -1009,13 +1153,50 @@ OP_ASGN1:
 
 OP_ASGN2:
   doc: |
+    Represents attribute assignment of the form:
+      recv.attr op value
+
+    where recv is the receiver of the attr method, attr is the attribute
+    to which to assign, op is an assignment operation (e.g. +=), and
+    value is the value to assign to the attribute.
+
+    The 'next' member of this class is also of type OP_ASGN2, though it
+    has different members than its parent.  This child node is
+    documented under OP_ASGN2_ARG.
+
+  members:
+    recv:
+      doc: the receiver of the attribute
+    next:
+      doc: |
+        another node of type OP_ASGN2 which contains more information
+        about the assignment operation than can fit in this node alone
+    value:
+      doc: the value to assign to the attribute
+
+OP_ASGN2_ARG:
+  doc: |
+    Actually a node of type OP_ASGN2, this is a placeholder for
+    additional information about the assignment than can fit in a single
+    OP_ASGN2 node.
+
   members:
     vid:
-    recv:
-    value:
+      doc: |
+        The method to call on the receiver to retrieve the attribute
+
+    aid:
+      doc: |
+        The method to call on the receiver to set the attribute
+
+    mid:
+      doc: |
+        The operation to apply to the attribute before setting it.  May
+        be 0 (false) to indicate "logical or" or 1 (nil) to indicate
+        "logical and".
 
 OP_ASGN_AND:
-  doc: |
+  doc: |  
     Represents an expression of the form:
       recv &&= value
     Ruby will evaluate the expression on the left hand side of the
@@ -1081,6 +1262,12 @@ OR:
 
 POSTEXE:
   doc: |
+    Represents the END keyword, e.g.:
+      END { ... }
+
+    Indicating that the enclosing ITER node is to be excecuted only
+    once, when the program terminates.
+
   members:
 
 REDO:
@@ -1119,6 +1306,8 @@ RESTARY2:
 
 RETRY:
   doc: |
+    Represents the retry keyword.
+
   members:
 
 RETURN:
@@ -1145,7 +1334,11 @@ SCLASS:
       class << recv
         body
       end
+
     The class definition is evaluated in a new lexical scope.
+
+    The result of the expression is the last expression evaluated in the
+    body.
 
   members:
     body:
@@ -1158,15 +1351,18 @@ SCLASS:
 SCOPE:
   doc: |
     Represents a lexical scope.
+
     A new scope is created when a method is invoked.  The scope node
     holds information about local variables and arguments to the method.
     The first two variables in the local variable table are the implicit
     variables $_ and $~.
+
     The next variables listed in the local variable table are the
     arguments to the method.  More information about the arguments to
     the method are stored in the ARGS node, which will either be the
     first node in the scope or the first node in the BLOCK held by the
     scope.
+
   members:
     tbl:
       type: pointer to array of ID
@@ -1179,6 +1375,8 @@ SCOPE:
         holds information about which class(es) to search for  constants
         in this scope
     next:
+      type: node
+      doc: the body of the lexical scope
 
 SELF:
   doc: |
@@ -1332,6 +1530,10 @@ ZSUPER:
     arguments.  The arguments to the base class method are obtained from
     the arguments passed to the current method, which are store in the
     current frame.
+
+    Can also be a placeholder for a method when its implementation is
+    deferred to the base class.
+
   members:
 
 TO_ARY:

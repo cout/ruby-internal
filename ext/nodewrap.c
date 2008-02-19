@@ -1196,10 +1196,10 @@ static VALUE node_eval(VALUE node, VALUE self)
  * ---------------------------------------------------------------------
  */
 
-void dump_node_to_hash(NODE * n, VALUE node_hash)
+void dump_node_to_hash(NODE * n, int node_type, VALUE node_hash)
 {
   VALUE s1 = Qnil, s2 = Qnil, s3 = Qnil;
-  Node_Type_Descrip const *descrip = node_type_descrip(nd_type(n));
+  Node_Type_Descrip const *descrip = node_type_descrip(node_type);
   VALUE nd_file;
   VALUE arr;
 
@@ -1236,7 +1236,7 @@ void dump_node_to_hash(NODE * n, VALUE node_hash)
   rb_hash_aset(node_hash, node_id(n), arr);
 }
 
-void dump_node_or_iseq_to_hash(VALUE n, VALUE node_hash)
+void dump_node_or_iseq_to_hash(VALUE n, int node_type, VALUE node_hash)
 {
 #ifdef RUBY_HAS_YARV
   if(TYPE(n) == T_DATA && CLASS_OF(n) == rb_cISeq)
@@ -1245,7 +1245,7 @@ void dump_node_or_iseq_to_hash(VALUE n, VALUE node_hash)
   }
 #endif
 
-  dump_node_to_hash((NODE *)n, node_hash);
+  dump_node_to_hash((NODE *)n, node_type, node_hash);
 }
 
 NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE id_hash)
@@ -1321,7 +1321,7 @@ static VALUE node_to_hash(NODE * n)
 {
   VALUE node_hash;
   node_hash = rb_hash_new();
-  dump_node_to_hash(n, node_hash);
+  dump_node_to_hash(n, nd_type(n), node_hash);
   return node_hash;
 }
 
