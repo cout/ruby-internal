@@ -1017,10 +1017,35 @@ MATCH:
     warning, unless script is running with -e.
 
   members:
+    head:
+      doc: the regular expression to use in the condition.
+    value:
+      doc: the value to compare against
+
+  version: '(0, 180)'
+
+MATCH(2):
+  doc: |
+    Represents a regular expression match in a conditional, e.g.:
+      if /lit/ then
+        ...
+      end
+
+    This expression is equivalent to:
+      if /lit/ =~ $_ then
+        ...
+      end
+
+    On ruby 1.8 and newer, this type of expression causes ruby to emit a
+    warning, unless script is running with -e.
+
+  members:
     lit:
       doc: the regular expression to use in the condition.
     value:
       doc: the value to compare against
+
+  version: '[180, oo)'
 
 MATCH2:
   doc: |
