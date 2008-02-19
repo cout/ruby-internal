@@ -306,6 +306,39 @@ CLASS:
       type: node
       doc: the body of the class definition
 
+  version: '[180, oo)'
+
+CLASS(2):
+  doc: |
+    Represents a class definition, e.g.:
+      class cname
+        body
+      end
+
+    or:
+      class cname < super
+        body
+      end
+
+    The class definition is evaluated in a new lexical scope.
+
+    The result of the expression is the last expression evaluated in the
+    body.
+
+  members:
+    super:
+      type: node or false
+      doc: |
+        an expression returning the base class, or false if there is no
+        base class specified
+    cname:
+      doc: the name of the class to define
+    body:
+      type: node
+      doc: the body of the class definition
+
+  version: '(0, 180)'
+
 COLON2:
   doc: |
     Represents a constant lookup in a particular class.  This expression
@@ -1103,6 +1136,29 @@ MODULE:
     body:
       type: node
       doc: the body of the module definition
+
+  version: '[180, oo)'
+
+MODULE(2):
+  doc: |
+    Represents a module definition, e.g.:
+      module cname
+        body
+      end
+
+    The module definition is evaluated in a new lexical scope.
+
+    The result of the expression is the last expression evaluated in the
+    body.
+
+  members:
+    cname:
+      doc: the name of the module to define
+    body:
+      type: node
+      doc: the body of the module definition
+
+  version: '(0, 180)'
 
 NEWLINE:
   doc: |
