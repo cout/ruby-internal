@@ -286,6 +286,18 @@ class Node
     raise "Not implemented"
   end
 
+  define_expression(:OP_ASGN2) do |node|
+    recv = node.recv.as_expression
+    attr = node.next.vid # TODO: we assume it's the same as aid
+    op = case node.next.mid
+    when false then '||'
+    when nil then '&&'
+    else node.next.mid
+    end
+    value = node.value.as_expression
+    "#{recv}.#{attr} #{op}= #{value}"
+  end
+
   define_expression(:CDECL) do |node|
     "#{node.vid} = #{node.value.as_expression}"
   end
