@@ -729,17 +729,35 @@ FCALL:
 
 FLIP2:
   doc: |
+    Represents part of an awk-like flip-flop expression of the form:
+      if beg..end then
+        body
+      end
   members:
     cnt:
+      doc: |
+        the index into the local variable table of the special variable
+        to use in the flip-flop expression (usually 2 for $_)
     beg:
+      doc: the beginning of the range
     end:
+      doc: the end of the range
 
 FLIP3:
   doc: |
+    Represents part of a sed-like flip-flop expression of the form:
+      if beg..end then
+        body
+      end
   members:
     cnt:
+      doc: |
+        the index into the local variable table of the special variable
+        to use in the flip-flop expression (usually 2 for $_)
     beg:
+      doc: the beginning of the range
     end:
+      doc: the end of the range
 
 FOR:
   doc: |
