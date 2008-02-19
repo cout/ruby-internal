@@ -626,9 +626,24 @@ DXSTR:
 
 ENSURE:
   doc: |
+    Represents an ensure expression, e.g.:
+      begin
+        head
+      ensure
+        ensr
+      end
+
+    The head expression is first evaluated.  After the expression is
+    evaluated, whether or not the expression raises an exception, the
+    ensr expression is evaluated.
+
+    See also RESCUE and RESBDOY.
+
   members:
     head:
+      doc: the expression to protect
     ensr:
+      doc: the expression to evaluate after the head is evaluated
 
 EVSTR:
   doc: |
