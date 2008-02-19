@@ -1278,17 +1278,62 @@ REDO:
 
 RESBODY:
   doc: |
+    Represents the rescue portion of a rescue expression (see RESCUE for
+    examples).
+
+    If the head node of the rescue expresion raises an exception, the
+    resq node is evaluated.  The resq node is of type RESBDOY.
+    
+    As it is evaluated, the type of the exception is tested against the
+    class(es) listed in the args node.  If there is a match, the body
+    node is evaluated, otherwise the head node is evaluated.  The head
+    node is either another RESBDOY node or false (0).
+
   members:
     head:
+      doc: the next rescue
     body:
+      doc: the expresion to evaluate if the exception type matches
     args:
+      doc: the expression type to match against
 
 RESCUE:
   doc: |
+    Represents part of a rescue expression of the form:
+      head rescue expr
+
+    or the longer form:
+      begin
+        head
+      rescue exception
+        expr
+      end
+
+    or the form using the else keyword:
+      begin
+        head
+      rescue exception
+        expr
+      else
+        else_expr
+      end
+
+    The head expression is first evaluated, and if an exception is
+    raised, evaluates the resq node.  If no exception is raised, the
+    else node is evaluated if it is not false (0).
+
+    The resq node will be a RESBDOY node, which will test the exception
+    to see if it matches one of the expected types.  If it does it will
+    handle the exception, otherwise it will allow the expression to pass
+    to the outer scope.
+
   members:
     head:
+      doc: the body of the block to evaluate
     resq:
+      doc: the expression to be evaluated if an exception is raised
     else:
+      doc: the expression to be evaluated if no exception is raised
 
 RESTARY:
   doc: |
