@@ -43,7 +43,7 @@ class Nodes
       dir = File.dirname(__FILE__)
       filename = File.join(dir, 'nodes.yaml')
     end
-    nodes = YAML.load_file(filename)
+    nodes = File.open(filename) { |io| YAML.load(io) }
 
     @nodes = {}
     nodes.each do |name, node|
