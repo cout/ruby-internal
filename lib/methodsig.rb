@@ -189,9 +189,10 @@ class Node
 
     def argument_names
       local_vars = self.local_vars
-      num_required_args = self.next.head.cnt
+      args = self.args_node
+      num_required_args = args.cnt
       num_optional_args = 0
-      opt = self.next.head.opt
+      opt = args.opt
       while opt do
         num_optional_args += 1
         opt = opt.next
@@ -206,7 +207,7 @@ class Node
 
     def args_node
       if self.next.class == Node::ARGS then
-        return self.body.next
+        return self.next
       elsif self.next.head.class == Node::ARGS then
         return self.next.head
       else
