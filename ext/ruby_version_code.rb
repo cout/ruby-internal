@@ -1,5 +1,3 @@
-require 'ruby_source_dir'
-
 # We could use rbconfig, but it might not be generated yet (or
 # correctly)
 

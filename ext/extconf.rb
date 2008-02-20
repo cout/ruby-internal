@@ -1,12 +1,11 @@
 require 'mkmf'
 require 'ruby_version_code'
 
-cmdline_ruby_source_path = arg_config('--ruby-source-path')
-configured_ruby_source_dir = nil
-begin
+using_cached_files = arg_config('--using-cached-files')
+if using_cached_files.nil? then
   require 'ruby_source_dir'
-  configured_ruby_source_dir = RUBY_SOURCE_DIR
-rescue InstallError
+else
+  USING_CACHED_FILES = true
 end
 
 rb_files = Dir['*.rb']

@@ -24,5 +24,10 @@ if ruby_source_path then
   end
 end
 
-@options['config-opt'] << "--ruby-source-path=#{@config['ruby-source-path']}"
+if ruby_source_path.nil? then
+  @options['config-opt'] << "--using-cached-files"
+else
+  @options['config-opt'] << "--using-cached-files"
+end
+
 @options['config-opt'] << "--ruby-include-path=#{@config['ruby-include-path']}"
