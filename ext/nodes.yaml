@@ -1704,7 +1704,7 @@ TO_ARY:
     head:
       type: node
       doc: the object to convert to an array
-  version: '[180, oo)'
+  version: '(180, oo)'
 
 WHEN:
   doc: |
