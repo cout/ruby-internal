@@ -1,18 +1,29 @@
 require 'mkmf'
 require 'ruby_version_code'
 
-using_cached_files = arg_config('--using-cached-files')
-if using_cached_files.nil? then
-  require 'ruby_source_dir'
+ruby_source_path = with_config('--ruby-source-path')
+
+if ruby_source_path.nil? then
+  # if the user did not specify the source dir, then see if we have one
+  # configured
+  begin
+    require 'ruby_source_dir'
+    # if we got here, then we successfuly loaded the configuration
+  rescue InstallError
+    # otherwise, assume we are using cached files
+    USING_CACHED_FILES = true
+  end
 else
-  USING_CACHED_FILES = true
+  # the user did specify the source path
+  USING_CACHED_FILES = false
+  RUBY_SOURCE_DIR = ruby_source_path
 end
 
 rb_files = Dir['*.rb']
-
 rpp_files = Dir['*.rpp']
 generated_files = rpp_files.map { |f| f.sub(/\.rpp$/, '') }
 
+# Append the generated C files to the list of source files
 srcs = Dir['*.c']
 generated_files.each do |f|
   if f =~ /\.c$/ then
@@ -21,16 +32,26 @@ generated_files.each do |f|
 end
 srcs.uniq!
 $objs = srcs.map { |f| f.sub(/\.c$/, ".#{$OBJEXT}") }
-$CFLAGS << ' -Wall -g'
+
+# Turn on warnings and debugging by default on gcc
+if CONFIG['CC'] == 'gcc' then
+  $CFLAGS << ' -Wall -g'
+end
+
+# Include the ruby source directory in the source if we are using 1.9
+# TODO: This means we can't build a gem for 1.9 (yet)
 if RUBY_VERSION_CODE >= 190 then
 $CPPFLAGS << " -I#{RUBY_SOURCE_DIR.quote}"
 end
+
+# Create the makefile
 create_makefile('nodewrap')
 
 append_to_makefile = ''
 
 if USING_CACHED_FILES then
 
+# -- Using cached files --
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
@@ -41,6 +62,8 @@ end
 
 else
 
+# -- Generating files --
+
 rpp_files.each do |rpp_file|
 dest_file = rpp_file.sub(/\.rpp$/, '')
 append_to_makefile << <<END
@@ -49,9 +72,10 @@ append_to_makefile << <<END
 END
 end
 
-
 end
 
+# Dependencies
+# TODO: we could be smarter about this
 generated_headers = generated_files.select { |x| x =~ /\.h$/ }
 append_to_makefile << <<END
 $(OBJS): #{generated_headers.join(' ')}
@@ -60,6 +84,7 @@ clean_generated_files:
 	@$(RM) #{generated_files.join(' ')}
 END
 
+# Append it all to the makefile
 File.open('Makefile', 'a') do |makefile|
   makefile.puts(append_to_makefile)
 end

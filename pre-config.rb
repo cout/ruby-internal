@@ -16,18 +16,13 @@ if ruby_source_path then
     if not File.exist?(ruby_include_path) or \
        not File.directory?(ruby_include_path) then
       # pre-YARV
-      puts "Could not find #{ruby_include_path}"
       ruby_include_path = ruby_source_path
     end
 
     set_config('ruby-include-path', ruby_include_path)
   end
+
+  @options['config-opt'] << "--ruby-source-path=#{@config['ruby-source-path']}"
+  @options['config-opt'] << "--ruby-include-path=#{@config['ruby-include-path']}"
 end
 
-if ruby_source_path.nil? then
-  @options['config-opt'] << "--using-cached-files"
-else
-  @options['config-opt'] << "--using-cached-files"
-end
-
-@options['config-opt'] << "--ruby-include-path=#{@config['ruby-include-path']}"
