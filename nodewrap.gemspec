@@ -23,6 +23,7 @@ hierarchies from one Ruby process and load them into another.
     'ext/*.h',
     'ext/*.rpp',
     'ext/*.rb',
+    'ext/*.yaml',
     'ext/MANIFEST',
     'ext/cached/ruby-*/*.c',
     'ext/cached/ruby-*/*.c',
