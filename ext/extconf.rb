@@ -1,7 +1,7 @@
 require 'mkmf'
 require 'ruby_version_code'
 
-ruby_source_path = with_config('--ruby-source-path')
+ruby_source_path = arg_config('--ruby-source-path')
 
 if ruby_source_path.nil? then
   # if the user did not specify the source dir, then see if we have one
