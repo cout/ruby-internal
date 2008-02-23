@@ -4588,25 +4588,6 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cMEMO, "members", node_s_members, 0);
   }
 
-  /* Document-class: Node::TO_ARY
-   * Represents a conversion from one object type to an array type.
-   * Evaluation of this node converts its argument to an array by calling
-   * \#to_ary on the argument.
-   */
-  {
-    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
-    rb_iv_set(rb_cTO_ARY, "__member__", members);
-    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
-
-    /* Document-method: head
-     * the object to convert to an array
-     */
-    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-  }
-
   /* Document-class: Node::XSTR
    * Represents a string object inside backticks, e.g.:
    *   `lit`
