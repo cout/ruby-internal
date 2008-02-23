@@ -16,9 +16,9 @@ ALLOCA:
     It should never be evaluated as an expression.
 
   members:
-    cfunc:
+    cfnc:
       doc: a pointer to the allocated memory
-    node:
+    value:
       doc: a pointer to the previously allocated temporary node
     cnt:
       doc: the number of bytes allocated
