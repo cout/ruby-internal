@@ -4306,17 +4306,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cALLOCA, "__member__", members);
     rb_define_singleton_method(rb_cALLOCA, "members", node_s_members, 0);
 
-    /* Document-method: node
-     * a pointer to the previously allocated temporary node
-     */
-    rb_define_method(rb_cALLOCA, "node", node_node, 0);
-    rb_ary_push(members, rb_str_new2("node"));
-
-    /* Document-method: cfunc
+    /* Document-method: cfnc
      * a pointer to the allocated memory
      */
-    rb_define_method(rb_cALLOCA, "cfunc", node_cfunc, 0);
-    rb_ary_push(members, rb_str_new2("cfunc"));
+    rb_define_method(rb_cALLOCA, "cfnc", node_cfnc, 0);
+    rb_ary_push(members, rb_str_new2("cfnc"));
+
+    /* Document-method: value
+     * a pointer to the previously allocated temporary node
+     */
+    rb_define_method(rb_cALLOCA, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
 
     /* Document-method: cnt
      * the number of bytes allocated

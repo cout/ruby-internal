@@ -56,6 +56,8 @@ struct METHOD {
     NODE *body;
 };
 
+#define METHOD_OCLASS(m) m->oklass
+#define METHOD_RCLASS(m) m->klass
 
 #endif
 

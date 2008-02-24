@@ -52,12 +52,12 @@
     end
   end
 
-  nil
-
   puts <<-END
 #define METHOD_OCLASS(m) m->#{oclass_member}
 #define METHOD_RCLASS(m) m->#{rclass_member}
   END
+
+  nil
 END
 
 #endif
