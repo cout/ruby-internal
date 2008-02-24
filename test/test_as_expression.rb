@@ -199,6 +199,12 @@ class TC_As_Expression < Test::Unit::TestCase
   @@foo = 10
 
   FOO = 57
+
+  class ObjectWithFooAccessor
+    attr_accessor :foo
+  end
+
+  OWFA = ObjectWithFooAccessor.new
 end
 
 if __FILE__ == $0 then

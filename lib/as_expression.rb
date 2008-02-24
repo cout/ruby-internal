@@ -439,7 +439,9 @@ class Node
   end
 
   define_expression(:ITER) do |node|
-    "#{node.iter.as_expression} { #{node.body.as_expression} }"
+    iter = node.iter.as_expression
+    body = node.body ? (node.body.as_expression + " ") : ""
+    "#{iter} { #{body} }"
   end
 
   define_expression(:WHILE) do |node|

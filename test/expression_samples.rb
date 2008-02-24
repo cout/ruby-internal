@@ -130,7 +130,7 @@ EXPRESSION_SAMPLES = {
   :case_when_empty_body    => 'case 42; when TrueClass; when Fixnum then 42; end',
   # TODO: alias
   # TODO: valias
-  :undef                   => 'undef :a',
+  :undef                   => 'define_method(:a) { }; undef :a',
   # TODO: class
   # TODO: sclass
   # TODO: scope
@@ -138,7 +138,7 @@ EXPRESSION_SAMPLES = {
   # TODO: defs
   :defined                 => 'defined?(NilClass)',
   # TODO: match3
-  :op_asgn2                => '1.foo += 1', # TODO
+  :op_asgn2                => 'OWFA.foo = 0; OWFA.foo += 1',
 }
 
 
