@@ -30,6 +30,12 @@ class Node
     end
   end
 
+  class LIT < Node
+    def to_a
+      return [ self ]
+    end
+  end
+
   if defined?(TO_ARY) then
     class TO_ARY < Node
       def to_a
