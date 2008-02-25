@@ -716,13 +716,13 @@ FBODY:
 
   members:
     orig:
-      type: id
-      doc: the original name of the method
+      type: object
+      doc: the origin class
     mid:
       type: id
       doc: the name of the method
     head:
-      type: SCOPE node
+      type: node
       doc: the method body
   version: (0, 190)
 
@@ -734,7 +734,7 @@ FBODY(2):
 
   members:
     body:
-      type: SCOPE node
+      type: node
       doc: the method body
     oid:
       type: id
