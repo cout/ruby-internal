@@ -548,6 +548,7 @@ void define_node_subclass_methods()
     members = rb_ary_new();
     rb_cNodeSubclass[NODE_#{node.name}] = #{node_type};
     rb_iv_set(#{node_type}, "__member__", members);
+    rb_iv_set(#{node_type}, "__type__", INT2NUM(NODE_#{node.name}));
     rb_define_singleton_method(#{node_type}, "members", node_s_members, 0);
     END
     node.members.each do |member_name, member|

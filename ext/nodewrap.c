@@ -468,6 +468,23 @@ static VALUE node_inspect(VALUE node)
 #endif
 }
 
+/*
+ * call-seq:
+ *   node.nd_type => NodeType
+ *
+ * Returns a NodeType structure representing the type of the node.
+ */
+static VALUE node_s_type(VALUE self)
+{
+  const Node_Type_Descrip * descrip;
+  descrip = node_type_descrip(
+      NUM2INT(rb_iv_get(self, "__type__")));
+  return rb_struct_new(
+      rb_cNodeType,
+      rb_str_new2(descrip->name),
+      INT2NUM(descrip->nt));
+}
+
 /* ---------------------------------------------------------------------
  * NodeType methods
  * ---------------------------------------------------------------------
@@ -2509,6 +2526,8 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "eval", node_eval, 1);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
   rb_define_method(rb_cNode, "inspect", node_inspect, 0);
+  rb_define_singleton_method(rb_cNode, "type", node_s_type, 0);
+
   rb_define_singleton_method(rb_cNode, "compile_string", node_compile_string, -1);
 #ifdef RUBY_HAS_YARV
   rb_define_method(rb_cNode, "bytecode_compile", node_bytecode_compile, -1);
