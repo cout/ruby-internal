@@ -1174,9 +1174,13 @@ static VALUE binding_body(VALUE self)
  *
  * Evaluate a node with the given object as self and returns the result.
  */
-static VALUE node_eval(VALUE node, VALUE self)
+static VALUE node_eval(int argc, VALUE * argv, VALUE node)
 {
   NODE * n = unwrap_node(node);
+
+  VALUE self;
+  VALUE cref = Qnil;
+  rb_scan_args(argc, argv, "11", &self, &cref);
 
   if(ruby_safe_level >= 2)
   {
@@ -1185,6 +1189,13 @@ static VALUE node_eval(VALUE node, VALUE self)
   }
 
 #ifdef RUBY_HAS_YARV
+  if(RTEST(cref))
+  {
+    rb_raise(
+        rb_eArgError,
+        "Cannot set cref on YARV");
+  }
+  else
   {
     VALUE iseq = rb_iseq_new(
         n,
@@ -1203,6 +1214,12 @@ static VALUE node_eval(VALUE node, VALUE self)
     proc = create_proc(rb_cProc, Qnil, n, 0);
     Data_Get_Struct(proc, struct BLOCK, b);
     b->self = self;
+
+    if(RTEST(cref))
+    {
+      b->cref = unwrap_node(cref);
+    }
+
     return rb_funcall(proc, rb_intern("call"), 0);
   }
 #endif
@@ -2361,7 +2378,7 @@ extern NODE *ruby_eval_tree_begin;
 
 extern NODE *ruby_eval_tree;
 
-static VALUE ruby_eval_tree_begin_getter()
+static VALUE ruby_eval_tree_begin_getter(ID id, void * data, struct global_entry * entry)
 {
   if(ruby_safe_level >= 4)
   {
@@ -2379,12 +2396,12 @@ static VALUE ruby_eval_tree_begin_getter()
   }
 }
 
-static void ruby_eval_tree_begin_setter()
+static void ruby_eval_tree_begin_setter(VALUE val, ID id, void * data, struct global_entry * entry)
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_begin_setter() not implemented");
 }
 
-static VALUE ruby_eval_tree_getter()
+static VALUE ruby_eval_tree_getter(ID id, void * data, struct global_entry * entry)
 {
   if(ruby_safe_level >= 4)
   {
@@ -2402,9 +2419,65 @@ static VALUE ruby_eval_tree_getter()
   }
 }
 
-static void ruby_eval_tree_setter()
+static void ruby_eval_tree_setter(VALUE val, ID id, void * data, struct global_entry * entry)
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_setter() not implemented");
+}
+
+static VALUE ruby_top_cref_getter(ID id, void * data, struct global_entry * entry)
+{
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get top cref");
+  }
+
+  if(ruby_eval_tree_begin)
+  {
+    return wrap_node(ruby_eval_tree_begin);
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
+static void ruby_top_cref_setter(VALUE val, ID id, void * data, struct global_entry * entry)
+{
+  if(ruby_safe_level >= 2)
+  {
+    rb_raise(rb_eSecurityError, "Insecure: can't set top cref");
+  }
+
+  ruby_top_cref = unwrap_node(val);
+}
+
+static VALUE ruby_cref_getter(ID id, void * data, struct global_entry * entry)
+{
+  if(ruby_safe_level >= 4)
+  {
+    /* no access to potentially sensitive data from the sandbox */
+    rb_raise(rb_eSecurityError, "Insecure: can't get current cref");
+  }
+
+  if(ruby_eval_tree)
+  {
+    return wrap_node(ruby_eval_tree);
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+
+static void ruby_cref_setter(VALUE val, ID id, void * data, struct global_entry * entry)
+{
+  if(ruby_safe_level >= 2)
+  {
+    rb_raise(rb_eSecurityError, "Insecure: can't set current cref");
+  }
+
+  ruby_cref = unwrap_node(val);
 }
 
 #endif
@@ -2523,7 +2596,7 @@ void Init_nodewrap(void)
   rb_define_method(rb_cNode, "nd_line", node_nd_line, 0);
   rb_define_method(rb_cNode, "nd_type", node_nd_type, 0);
   rb_define_method(rb_cNode, "members", node_members, 0);
-  rb_define_method(rb_cNode, "eval", node_eval, 1);
+  rb_define_method(rb_cNode, "eval", node_eval, -1);
   rb_define_method(rb_cNode, "[]", node_bracket, 1);
   rb_define_method(rb_cNode, "inspect", node_inspect, 0);
   rb_define_singleton_method(rb_cNode, "type", node_s_type, 0);
@@ -2674,6 +2747,16 @@ void Init_nodewrap(void)
       "$ruby_eval_tree",
       ruby_eval_tree_getter,
       ruby_eval_tree_setter);
+
+  rb_define_virtual_variable(
+      "$ruby_top_cref",
+      ruby_top_cref_getter,
+      ruby_top_cref_setter);
+
+  rb_define_virtual_variable(
+      "$ruby_cref",
+      ruby_cref_getter,
+      ruby_cref_setter);
 #endif
 
   rb_define_method(rb_cModule, "real_superclass", real_superclass, 0);
