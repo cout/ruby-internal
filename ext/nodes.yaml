@@ -121,9 +121,12 @@ ATTRSET:
     class by using attr_writer:
       attr_writer :attribute
     Its reader counterpart is IVAR.
+
   members:
     vid:
       doc: the name of the attribute, with a leading '@' sign
+
+  is_method_node: true
 
 BACK_REF:
   doc: |
@@ -213,7 +216,10 @@ BMETHOD:
       doc: |
         the Proc object passed to define_method, which contains the body
         of the method
+
   version: (0, 190)
+
+  is_method_node: true
 
 BREAK:
   doc: |
@@ -264,6 +270,8 @@ CFUNC:
   members:
     cfnc: the function pointer of the C function
     argc: the number of arguments the function takes, or -1 or -2
+
+  is_method_node: true
 
 CDECL:
   doc: |
@@ -517,7 +525,10 @@ DMETHOD:
       doc: |
         the Method object passed to define_method, which contains the
         body of the method
+
   version: (0, 190)
+
+  is_method_node: true
 
 DOT2:
   doc: |
@@ -936,7 +947,7 @@ ITER:
       type: node
       doc: the body of the loop
     iter:
-      type: node
+      type: CALL node or FCALL node
       doc: |
         an expression which calls the desired iteration method, usually
         recv.each
@@ -953,9 +964,12 @@ IVAR:
     class by using attr_reader:
       attr_reader :attribute
     Its writer counterpart is ATTRSET.
+
   members:
     vid:
       doc: the name of the attribute, with a leading '@' sign
+
+  is_method_node: true
 
 LASGN:
   doc: |
@@ -1537,6 +1551,8 @@ SCOPE:
       type: node
       doc: the body of the lexical scope
 
+  is_method_node: true
+
 SELF:
   doc: |
     Represents the keyword 'self'.
@@ -1694,6 +1710,8 @@ ZSUPER:
     deferred to the base class.
 
   members:
+
+  is_method_node: true
 
 TO_ARY:
   doc: |
