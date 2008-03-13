@@ -1202,7 +1202,6 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
       b->cref = unwrap_node(cref);
     }
 
-    rb_p(proc);
     return rb_funcall(proc, rb_intern("call"), 0);
   }
 #endif
