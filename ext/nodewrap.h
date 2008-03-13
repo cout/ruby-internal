@@ -15,6 +15,8 @@ VALUE wrap_node_as(NODE * n, VALUE klass);
 VALUE node_id(NODE * n);
 NODE * id_to_node(VALUE id);
 
+VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref);
+
 void dump_node_or_iseq_to_hash(VALUE n, int node_type, VALUE node_hash);
 VALUE load_node_or_iseq_from_hash(VALUE node_id, VALUE node_hash, VALUE id_hash);
 

@@ -1168,6 +1168,46 @@ static VALUE binding_body(VALUE self)
  * ---------------------------------------------------------------------
  */
 
+VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
+{
+#ifdef RUBY_HAS_YARV
+  if(RTEST(cref))
+  {
+    rb_raise(
+        rb_eArgError,
+        "Cannot set cref on YARV");
+  }
+  else
+  {
+    VALUE iseq = rb_iseq_new(
+        node,
+        rb_str_new2("<compiled>"),
+        Qnil,
+        self,
+        ISEQ_TYPE_TOP);
+    return rb_iseq_eval(iseq);
+  }
+#else
+  {
+    /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
+    struct BLOCK * b;
+    VALUE proc;
+
+    proc = create_proc(rb_cProc, Qnil, node, 0);
+    Data_Get_Struct(proc, struct BLOCK, b);
+    b->self = self;
+
+    if(RTEST(cref))
+    {
+      b->cref = unwrap_node(cref);
+    }
+
+    rb_p(proc);
+    return rb_funcall(proc, rb_intern("call"), 0);
+  }
+#endif
+}
+
 /*
  * call-seq:
  *   node.eval(Object) => Object
@@ -1185,44 +1225,10 @@ static VALUE node_eval(int argc, VALUE * argv, VALUE node)
   if(ruby_safe_level >= 2)
   {
     /* evaluating a node can cause a crash */
-    rb_raise(rb_eSecurityError, "Insecure: can't add method");
+    rb_raise(rb_eSecurityError, "Insecure: can't eval node");
   }
 
-#ifdef RUBY_HAS_YARV
-  if(RTEST(cref))
-  {
-    rb_raise(
-        rb_eArgError,
-        "Cannot set cref on YARV");
-  }
-  else
-  {
-    VALUE iseq = rb_iseq_new(
-        n,
-        rb_str_new2("<compiled>"),
-        Qnil,
-        self,
-        ISEQ_TYPE_TOP);
-    return rb_iseq_eval(iseq);
-  }
-#else
-  {
-    /* Ruby doesn't give us access to rb_eval, so we have to fake it. */
-    struct BLOCK * b;
-    VALUE proc;
-
-    proc = create_proc(rb_cProc, Qnil, n, 0);
-    Data_Get_Struct(proc, struct BLOCK, b);
-    b->self = self;
-
-    if(RTEST(cref))
-    {
-      b->cref = unwrap_node(cref);
-    }
-
-    return rb_funcall(proc, rb_intern("call"), 0);
-  }
-#endif
+  return eval_ruby_node(n, self, cref);
 }
 
 /* ---------------------------------------------------------------------
