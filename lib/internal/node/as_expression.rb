@@ -1,32 +1,6 @@
-require 'nodewrap'
-require 'methodsig'
-require 'procsig'
-require 'node_to_a'
+require 'internal/node'
+require 'internal/node/to_a'
 require 'rbconfig'
-
-if defined?(VM::InstructionSequence) then
-  require 'bytedecoder'
-
-  class VM
-    class InstructionSequence
-      def as_expression
-        env = Nodewrap::ByteDecoder::Environment.new(local_table())
-        opt_pc = self.opt_pc
-        self.bytedecode(env, opt_pc)
-        expressions = env.expressions + env.stack
-        if expressions.length == 0 then
-          return nil
-        elsif expressions.length == 1 and
-           expressions[0].is_a?(Nodewrap::ByteDecoder::Expression::Literal) and
-           expressions[0].value == nil then
-          return nil
-        else
-          return expressions.join('; ')
-        end
-      end
-    end
-  end
-end
 
 class Node
   public
@@ -641,44 +615,5 @@ class Node
     ZARRAY => true,
     HASH   => true,
   }
-end
-
-module MethodAsExpression
-  # It doesn't entirely make sense to have Method#as_expression, because
-  # a method definition isn't an expression.  We have one anyway, to be
-  # consistent with Proc.
-  def as_expression
-    sig = self.signature
-    if self.body.respond_to?(:body) then
-      # YARV
-      body_expression = self.body.body.as_expression
-    else
-      # pre-YARV
-      body_expression = self.body.as_expression
-    end
-    if body_expression then
-      return "def #{sig.name}(#{sig.param_list}); #{body_expression}; end"
-    else
-      return "def #{sig.name}(#{sig.param_list}); end"
-    end
-  end
-end
-
-class Method
-  include MethodAsExpression
-end
-
-class UnboundMethod
-  include MethodAsExpression
-end
-
-class Proc
-  def as_expression
-    sig = self.signature
-    body_expression = self.body ? self.body.as_expression : nil
-    s = sig.args.unspecified ? "" : sig.to_s + ' '
-    b = body_expression ? body_expression + ' ' : ''
-    return "proc { #{s}#{b}}"
-  end
 end
 

@@ -1,4 +1,7 @@
-require 'nodewrap'
+require 'internal/vm/iseq'
+require 'internal/vm/instruction'
+require 'internal/vm/inline_cache'
+require 'internal/vm/constants'
 
 module Nodewrap
 
