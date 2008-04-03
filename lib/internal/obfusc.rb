@@ -16,7 +16,7 @@
 #   
 #   puts foo()
 #
-#   $ ruby -rnwobfusc test.rb > test2.rb
+#   $ ruby -rinternal/obfusc test.rb > test2.rb
 #   $ ruby test2.rb
 #   2
 

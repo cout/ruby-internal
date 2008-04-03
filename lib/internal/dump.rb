@@ -6,7 +6,7 @@
 #     1+1
 #   end
 #
-#   $ ruby -rnwdump test.rb
+#   $ ruby -rinternal/dump test.rb
 #   NODE_NEWLINE at test.rb:1
 #   |-nth = 1
 #   +-next = NODE_DEFN at test.rb:1
