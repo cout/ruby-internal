@@ -1,5 +1,5 @@
-This is nodewrap, a library that provides access to ruby's internal node
-tree, among other things.
+This is ruby-internal, a library that provides access to the internals
+of the ruby interpreter.
 
 See the file LICENSE for license and copyright information.
 
@@ -11,8 +11,8 @@ Or, if you are on ruby 1.9 (or another version of ruby that doesn't have
 pre-parsed ruby source included in the distribution), you'll need to
 pass a special command-line option in the config step so the build
 scripts can find ruby's source code:
-  ruby install.rb config --ruby-source-path=/path/to/ruby
-  ruby install.rb setup
+  ruby setup.rb config --ruby-source-path=/path/to/ruby
+  ruby setup.rb setup
 
 To install:
   ruby install.rb install

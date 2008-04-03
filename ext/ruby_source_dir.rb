@@ -1,8 +1,13 @@
 wd = Dir.pwd()
-Dir.chdir('..')
+metaconfig_dir = File.join(File.dirname(__FILE__), '..')
+Dir.chdir metaconfig_dir
 begin
-  require 'install.rb'
-  config = ConfigTable.load
+  require 'setup.rb'
+  require 'rbconfig'
+  config = ConfigTable.new(Config::CONFIG)
+  config.load_standard_entries
+  config.load_script 'metaconfig'
+  config.load_savefile
 ensure
   Dir.chdir(wd)
 end

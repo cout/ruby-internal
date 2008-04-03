@@ -56,7 +56,5 @@ else
 
 end
 
-dive_into('ext') do
-  command('make clean')
-end
+exec_task_traverse 'clean'
 

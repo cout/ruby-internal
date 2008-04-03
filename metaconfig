@@ -1,15 +1,14 @@
 add_path_config(
   'ruby-source-path',
-  nil,
+  '',
   'path to the ruby source code')
 
 add_path_config(
   'ruby-include-path',
-  nil,
+  '',
   'path to the ruby header files')
 
-add_config(
+add_bool_config(
   'without-tests',
-  'yes/no',
   'no',
   'does not run tests')

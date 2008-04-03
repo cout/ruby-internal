@@ -1,0 +1,62 @@
+#ifndef ruby_internal_method__h_
+#define ruby_internal_method__h_
+
+#include <ruby.h>
+
+#ifdef RUBY_VM
+#include <ruby/node.h>
+#else
+#include <node.h>
+#endif
+
+#ruby <<END
+  $: << '../..'
+  require 'ruby_source_dir'
+  vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"
+  eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
+
+  oclass_member = "klass"
+  rclass_member = "klass"
+
+  [ vm_c_location, eval_c_location ].each do |file|
+    next if not File.exist?(file)
+
+    File.open(file) do |eval_c|
+      write = false
+      stopwrite = false
+      while (line = eval_c.gets) != nil do
+        case line
+        when /^struct (METHOD)/
+          write = true
+          stopwrite = false
+        when /^\}/
+          stopwrite = true
+        when /VALUE oclass/
+          oclass_member = "oclass"
+        when /VALUE oklass/
+          oklass_member = "oklass"
+        when /VALUE (klass, )?rclass/
+          rclass_member = "rclass"
+        when /VALUE (klass, )?rklass/
+          rclass_member = "rklass"
+        end
+        puts line if write
+        if write and stopwrite then
+          stopwrite = false
+          write = false
+          puts ''
+        end
+      end
+    end
+  end
+
+  puts <<-END
+#define METHOD_OCLASS(m) m->#{oclass_member}
+#define METHOD_RCLASS(m) m->#{rclass_member}
+  END
+
+  nil
+END
+
+#endif
+

@@ -1,0 +1,72 @@
+#include "node_type_descrip.h"
+#include "version.h"
+
+Node_Type_Descrip node_type_descrips_unsorted[] = {
+#ruby <<END
+require 'node_type_descrip'
+NODE_TYPE_DESCRIPS.each do |descrip|
+  name = descrip.name
+  node1 = descrip.node1
+  node2 = descrip.node2
+  node3 = descrip.node3
+
+  if name == 'ALLOCA' then
+    puts <<-END
+#ifdef HAVE_NODE_ALLOCA
+    END
+  end
+
+  puts <<-END
+  { NODE_#{name}, NEN_#{node1}, NEN_#{node2}, NEN_#{node3}, "#{name}" },
+  END
+
+  if name == 'ALLOCA' then
+    puts <<-END
+#endif
+    END
+  end
+end
+nil
+END
+};
+
+static Node_Type_Descrip * node_type_descrips[NUM_NODE_TYPE_DESCRIPS];
+static int node_type_descrips_initialized = 0;
+
+static void init_node_type_descrips()
+{
+  if(!node_type_descrips_initialized)
+  {
+    Node_Type_Descrip * descrip;
+    memset(node_type_descrips, 0, sizeof(node_type_descrips));
+    for(descrip = node_type_descrips_unsorted;
+        descrip->nt != NODE_LAST;
+        ++descrip)
+    {
+      if(node_type_descrips[descrip->nt])
+      {
+        rb_raise(rb_eRuntimeError, "duplicate entry for node type %d (%s is also %s)\n", descrip->nt, descrip->name, node_type_descrips[descrip->nt]->name);
+      }
+      else
+      {
+        node_type_descrips[descrip->nt] = descrip;
+      }
+    }
+    node_type_descrips_initialized = 1;
+  }
+}
+
+/* Given a node, find out the types of the three elements it contains */
+Node_Type_Descrip const * node_type_descrip(enum node_type nt)
+{
+  init_node_type_descrips();
+  if(node_type_descrips[nt])
+  {
+    return node_type_descrips[nt];
+  }
+  else
+  {
+    rb_raise(rb_eArgError, "Unknown node type %d", nt);
+  }
+}
+

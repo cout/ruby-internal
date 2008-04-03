@@ -1,0 +1,36 @@
+#ifndef CLASSPATH_H
+#define CLASSPATH_H
+
+#include "ruby.h"
+
+#ruby <<END
+$: << '../..'
+require 'ruby_source_dir'
+
+defn = nil
+marshal_c_location = "#{RUBY_SOURCE_DIR}/marshal.c"
+File.open(marshal_c_location) do |marshal_c|
+  write = false
+  while (line = marshal_c.gets) != nil do
+    case line
+    when /^(path2class|path2module|class2path)/
+      record_defn = true
+      defn = []
+    when /^\{/
+      if record_defn then
+        record_defn = false
+        puts "VALUE #{defn[0].sub(/\(.*/, '')}("
+        vars = defn[1..-1].map { |d| d.sub(/;.*/, '') }
+        puts vars.join(",\n")
+        puts ");"
+      end
+    end
+    if record_defn then
+      defn << line.chomp
+    end
+  end
+end
+END
+
+#endif
+
