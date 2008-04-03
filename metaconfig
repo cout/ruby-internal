@@ -10,5 +10,5 @@ add_path_config(
 
 add_bool_config(
   'without-tests',
-  'no',
+  false,
   'does not run tests')
