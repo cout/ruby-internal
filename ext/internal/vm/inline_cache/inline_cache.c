@@ -2,6 +2,8 @@
 
 #ifdef RUBY_VM
 
+#include "vm_core.h"
+
 static VALUE inline_cache_klass(VALUE self)
 {
   /* TODO: returning the real value can crash the interpreter */

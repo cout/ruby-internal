@@ -2,6 +2,10 @@
 #include "internal/node/ruby_internal_node.h"
 #include "block.h"
 
+#ifdef RUBY_VM
+#include "vm_core.h"
+#endif
+
 /*
  * call-seq:
  *   binding.body => Binding
@@ -12,7 +16,7 @@
  */
 static VALUE binding_body(VALUE self)
 {
-#ifdef RUBY_HAS_YARV
+#ifdef RUBY_VM
   rb_binding_t * binding;
   rb_env_t * env;
   GetBindingPtr(self, binding);
@@ -20,7 +24,7 @@ static VALUE binding_body(VALUE self)
   return env->block.iseq->self;
 #else
   struct BLOCK * b;
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get binding body");

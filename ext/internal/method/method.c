@@ -2,6 +2,10 @@
 #include "internal/node/ruby_internal_node.h"
 #include "method.h"
 
+#ifdef RUBY_VM
+#include "vm_core.h"
+#endif
+
 #ifndef HAVE_RB_CMETHOD
 static VALUE rb_cMethod = Qnil;
 #endif
@@ -122,7 +126,7 @@ static VALUE method_attached_class(VALUE method)
 static VALUE method_body(VALUE method)
 {
   struct METHOD * m;
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get method body");
@@ -146,7 +150,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
   struct METHOD * method;
   VALUE arr;
 
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump method");
@@ -185,8 +189,8 @@ static VALUE method_load(VALUE klass, VALUE str)
   NODE * n;
   VALUE retval;
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && OBJ_TAINTED(str)))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't load method");

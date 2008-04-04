@@ -2,6 +2,8 @@
 
 #ifdef RUBY_VM
 
+#include "vm_core.h"
+
 /* call-seq:
  *   iseq.self => VM::InstructionSequence
  *

@@ -4,6 +4,8 @@
 #ifdef RUBY_VM
 #include <ruby/node.h>
 #include <ruby/signal.h>
+#include "vm_core.h"
+#include "eval_intern.h"
 #else
 #include <node.h>
 #include <rubysig.h>
@@ -333,7 +335,7 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
 {
   NODE * n = 0;
 
-  if(ruby_safe_level >= 2)
+  if(rb_safe_level() >= 2)
   {
     /* adding a method with the wrong node type can cause a crash */
     rb_raise(rb_eSecurityError, "Insecure: can't add method");
@@ -505,7 +507,7 @@ static VALUE module_dump(VALUE self, VALUE limit)
 
   limit = INT2NUM(NUM2INT(limit) - 1);
 
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump module");
@@ -629,8 +631,8 @@ static VALUE module_load(VALUE klass, VALUE str)
         included_modules, class_variables_str, class_variables,
         instance_methods_str, instance_methods, flags, module;
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && OBJ_TAINTED(str)))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't load module");

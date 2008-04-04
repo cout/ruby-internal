@@ -1,5 +1,9 @@
 #include <ruby.h>
 
+#ifdef RUBY_VM
+#include "vm_core.h"
+#endif
+
 void Init_constants(void)
 {
 #ifdef RUBY_VM

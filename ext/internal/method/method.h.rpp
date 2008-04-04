@@ -12,13 +12,13 @@
 #ruby <<END
   $: << '../..'
   require 'ruby_source_dir'
-  vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"
+  proc_c_location = "#{RUBY_SOURCE_DIR}/proc.c"
   eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
 
   oclass_member = "klass"
   rclass_member = "klass"
 
-  [ vm_c_location, eval_c_location ].each do |file|
+  [ proc_c_location, eval_c_location ].each do |file|
     next if not File.exist?(file)
 
     File.open(file) do |eval_c|

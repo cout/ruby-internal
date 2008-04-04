@@ -1,5 +1,10 @@
 #include <ruby.h>
+
+#ifdef RUBY_VM
+#include <ruby/node.h>
+#else
 #include <node.h>
+#endif
 
 void Init_noex(void)
 {

@@ -1,2 +1,3 @@
-require 'mkmf'
-create_makefile 'internal/vm/iseq/iseq'
+$: << '../../..'
+require 'mkmf-ruby-internal'
+create_ruby_internal_makefile 'internal/vm/iseq/iseq'

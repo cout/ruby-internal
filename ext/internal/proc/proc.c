@@ -2,6 +2,10 @@
 #include "internal/node/ruby_internal_node.h"
 #include "block.h"
 
+#ifdef RUBY_VM
+#include "vm_core.h"
+#endif
+
 static VALUE rb_cUnboundProc = Qnil;
 
 static VALUE rb_mMarshal;
@@ -33,7 +37,7 @@ static VALUE proc_body(VALUE self)
   return p->block.iseq->self;
 #else
   struct BLOCK * b;
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get proc body");
@@ -55,7 +59,7 @@ static VALUE proc_body(VALUE self)
 static VALUE proc_var(VALUE self)
 {
   struct BLOCK * b;
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get proc var");
@@ -86,7 +90,7 @@ static VALUE proc_var(VALUE self)
  */
 static VALUE proc_dump(VALUE self, VALUE limit)
 {
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump proc");
@@ -162,8 +166,8 @@ static VALUE proc_load(VALUE klass, VALUE str)
   VALUE arr = marshal_load(str);
   NODE * body, * var;
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && OBJ_TAINTED(str)))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't load proc");
