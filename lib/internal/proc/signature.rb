@@ -1,4 +1,5 @@
-require 'node_to_a'
+require 'internal/node'
+require 'internal/proc'
 
 class Proc
   class Arguments

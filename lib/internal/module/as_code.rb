@@ -1,4 +1,5 @@
 require 'internal/node/as_code'
+require 'internal/module'
 
 class Module
   # TODO: it would be nice if we could go back and find the AST

@@ -1,2 +1,2 @@
 require 'mkmf'
-create_makefile 'internal/vm/instruction'
+create_makefile 'internal/vm/instruction/instruction'

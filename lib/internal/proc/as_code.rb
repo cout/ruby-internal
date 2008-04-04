@@ -1,4 +1,6 @@
 require 'internal/node/as_code'
+require 'internal/proc'
+require 'internal/proc/signature'
 
 class Proc
   def as_code(indent=0)

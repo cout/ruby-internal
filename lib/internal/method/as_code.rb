@@ -1,4 +1,6 @@
 require 'internal/node/as_code'
+require 'internal/method'
+require 'internal/method/signature'
 
 module MethodAsCode
   def as_code(indent=0, name=nil)

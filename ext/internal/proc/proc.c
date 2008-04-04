@@ -261,8 +261,10 @@ static VALUE unboundproc_binding(VALUE self)
   rb_raise(rb_eTypeError, "unbound proc has no binding");
 }
 
-void Init_Proc(void)
+void Init_proc(void)
 {
+  rb_require("internal/node");
+
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* For rdoc: rb_cProc = rb_define_class("Proc", rb_cObject) */

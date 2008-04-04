@@ -1,5 +1,6 @@
 require 'internal/node/as_expression'
 require 'internal/proc/signature'
+require 'internal/proc'
 
 class Proc
   def as_expression

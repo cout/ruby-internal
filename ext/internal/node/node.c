@@ -973,7 +973,7 @@ static void ruby_cref_setter(VALUE val, ID id, void * data, struct global_entry 
  * ---------------------------------------------------------------------
  */
 
-void Init_nodewrap(void)
+void Init_node(void)
 {
   {
     int actual_ruby_version_code = 0;

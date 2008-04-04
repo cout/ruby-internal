@@ -223,6 +223,8 @@ static VALUE method_load(VALUE klass, VALUE str)
 
 void Init_method(void)
 {
+  rb_require("internal/node");
+
   rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
 
   /* For rdoc: rb_cMethod = rb_define_class("Method", rb_cObject) */

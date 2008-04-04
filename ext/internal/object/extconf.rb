@@ -1,2 +1,2 @@
 require 'mkmf'
-create_makefile 'internal/object'
+create_makefile 'internal/object/object'

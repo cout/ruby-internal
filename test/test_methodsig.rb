@@ -6,8 +6,7 @@ $:.unshift(dir) if not $:.include?(dir)
 $:.unshift("#{dir}/../lib") if not $:.include?("#{dir}/../lib")
 $:.unshift("#{dir}/../ext") if not $:.include?("#{dir}/../ext")
 
-require 'nodewrap'
-require 'methodsig'
+require 'internal/method/signature'
 
 $stdout.sync = true
 $stderr.sync = true

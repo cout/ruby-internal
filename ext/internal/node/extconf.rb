@@ -37,5 +37,5 @@ have_func('rb_is_local_id', 'ruby.h')
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 $CPPFLAGS << " -DRUBY_VERSION_CODE=#{ruby_version_code}"
 
-create_ruby_internal_makefile 'internal/node'
+create_ruby_internal_makefile 'internal/node/node'
 

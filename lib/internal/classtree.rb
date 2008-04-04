@@ -1,4 +1,5 @@
-require 'nodewrap'
+require 'internal/object'
+require 'internal/module'
 
 class Object
   def classtree(s = '', prefix = '', obj=self, graphed={})

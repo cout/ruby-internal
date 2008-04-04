@@ -1,5 +1,6 @@
-require 'nodewrap'
-require 'as_expression'
+require 'internal/method'
+require 'internal/node'
+require 'internal/node/as_expression'
 
 module MethodSig
   class Argument
@@ -345,8 +346,6 @@ class Node
 end
 
 if __FILE__ == $0 then
-  require 'nodewrap'
-
   def foo(); end
   puts method(:foo).signature
 

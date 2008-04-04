@@ -7,10 +7,11 @@ $:.unshift(dir) if not $:.include?(dir)
 $:.unshift("#{dir}/../lib") if not $:.include?("#{dir}/../lib")
 $:.unshift("#{dir}/../ext") if not $:.include?("#{dir}/../ext")
 
-require 'nodewrap'
-require 'as_expression'
+require 'internal/node/as_expression'
+require 'internal/method/as_expression'
+require 'internal/proc/as_expression'
 
-require "expression_samples"
+require 'expression_samples'
 
 $stdout.sync = true
 $stderr.sync = true

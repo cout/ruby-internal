@@ -1,8 +1,6 @@
-require 'nodewrap'
-require 'as_expression'
-
-require 'pp'
-require 'nodepp'
+require 'internal/node'
+require 'internal/node/as_expression'
+require 'internal/node/pp'
 
 module Nodewrap
   def printdebug(&block)

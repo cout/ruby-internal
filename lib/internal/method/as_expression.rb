@@ -1,5 +1,6 @@
 require 'internal/node/as_expression'
 require 'internal/method/signature'
+require 'internal/method'
 
 module MethodAsExpression
   # It doesn't entirely make sense to have Method#as_expression, because

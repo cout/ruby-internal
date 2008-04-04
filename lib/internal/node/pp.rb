@@ -1,7 +1,7 @@
 # Require this file to get a node pretty-printer.
 #
 
-require 'nodewrap'
+require 'internal/node'
 require 'pp'
 
 module Noex

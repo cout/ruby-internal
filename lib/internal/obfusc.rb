@@ -20,14 +20,14 @@
 #   $ ruby test2.rb
 #   2
 
-require 'nodewrap'
+require 'internal/node'
 
 def obfusc(begin_nodes, n)
   # The outputted code must do the following:
   #   1. Evaluate each of the begin nodes (BEGIN {...}).
   #   2. Evaluate the main node.
   puts <<-END
-require 'nodewrap'
+require 'internal/node'
 if RUBY_VERSION != "#{RUBY_VERSION}" then
   $stderr.puts "Wrong Ruby version; please use #{RUBY_VERSION}"
   exit 1
