@@ -18,15 +18,15 @@ end
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 
 if ruby_version_code >= 190
-  have_type('st_data_t', 'ruby/st.h')
+  have_type('st_data_t', [ 'ruby.h', 'ruby/st.h'])
 else
-  have_type('st_data_t', 'st.h')
+  have_type('st_data_t', [ 'ruby.h', 'st.h' ])
 end
 
 if ruby_version_code >= 190
-  have_const('NODE_ALLOCA', 'ruby/node.h')
+  have_const('NODE_ALLOCA', [ 'ruby.h', 'ruby/node.h' ])
 else
-  have_const('NODE_ALLOCA', 'node.h')
+  have_const('NODE_ALLOCA', [ 'ruby.h', 'node.h' ])
 end
 
 have_func('rb_protect_inspect', 'ruby.h')
