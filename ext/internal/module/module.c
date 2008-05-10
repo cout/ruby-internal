@@ -284,6 +284,11 @@ static char const * lookup_module_str =
   "}\n";
 static VALUE lookup_module_proc = Qnil;
 
+VALUE lookup_module(VALUE name)
+{
+  return rb_funcall(lookup_module_proc, rb_intern("call"), 1, name);
+}
+
 static char const * outer_module_str =
   "proc { |name|\n"
   "  o = Object\n"
@@ -318,6 +323,25 @@ static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
   iseqdat->cref_stack = NEW_BLOCK(klass);
   iseqdat->cref_stack->nd_visi = noex;
   iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */
+}
+
+/* From iseq.c */
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  if(!rb_obj_is_kind_of(val, rb_cISeq))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected VM::InstructionSequence, but got %s",
+        rb_class2name(CLASS_OF(val)));
+  }
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
 }
 
 #endif
@@ -562,7 +586,7 @@ static void include_modules(module, included_modules)
   for(j = 0; j < RARRAY_LEN(included_modules); ++j)
   {
     name = RARRAY_PTR(included_modules)[j];
-    v = rb_funcall(lookup_module_proc, rb_intern("call"), 1, name);
+    v = lookup_module(name);
     rb_funcall(module, rb_intern("include"), 1, v);
   }
 }

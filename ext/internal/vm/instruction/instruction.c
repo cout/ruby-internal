@@ -14,6 +14,14 @@ static VALUE instruction_operands(VALUE self)
   return rb_iv_get(self, "@operands");
 }
 
+VALUE allocate_instruction(int instruction, VALUE args)
+{
+  return rb_class_new_instance(
+      RARRAY(args)->len,
+      RARRAY(args)->ptr,
+      instruction_class(instruction));
+}
+
 #endif
 
 void Init_instruction(void)

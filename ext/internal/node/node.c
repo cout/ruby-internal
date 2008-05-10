@@ -3,6 +3,7 @@
 #include "node_type_descrip.h"
 #include "block.h"
 #include "builtins.h"
+#include "internal/vm/iseq/iseq.h"
 
 #include <ruby.h>
 
@@ -20,10 +21,6 @@
 
 #ifdef RUBY_VM
 #include "eval_intern.h"
-#define ruby_safe_level rb_safe_level()
-VALUE iseq_data_to_ary(rb_iseq_t * iseq);
-VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
-static VALUE rb_cModulePlaceholder = Qnil;
 #endif
 
 static VALUE rb_cNode = Qnil;
@@ -141,32 +138,6 @@ NODE * unwrap_node(VALUE r)
     return n;
   }
 }
-
-/* ---------------------------------------------------------------------
- * Instruction sequence helper functions
- * ---------------------------------------------------------------------
- */
-
-#ifdef RUBY_VM
-/* From iseq.c */
-static rb_iseq_t *
-iseq_check(VALUE val)
-{
-  rb_iseq_t *iseq;
-  if(!rb_obj_is_kind_of(val, rb_cISeq))
-  {
-    rb_raise(
-        rb_eTypeError,
-        "Expected VM::InstructionSequence, but got %s",
-        rb_class2name(CLASS_OF(val)));
-  }
-  GetISeqPtr(val, iseq);
-  if (!iseq->name) {
-    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
-  }
-  return iseq;
-}
-#endif
 
 /* ---------------------------------------------------------------------
  * Marshalling
@@ -446,21 +417,8 @@ static VALUE node_type_to_i(VALUE node_type)
  * ---------------------------------------------------------------------
  */
 
-#ifdef RUBY_VM
+#ifndef RUBY_VM
 
-static VALUE create_proc(VALUE klass, VALUE binding, rb_iseq_t * iseq)
-{
-  VALUE new_proc = rb_funcall(
-      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
-  rb_proc_t * p;
-  GetProcPtr(new_proc, p);
-  p->block.iseq = iseq;
-  RBASIC(new_proc)->klass = klass;
-  return new_proc;
-} 
-  
-#else
-  
 static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
 { 
   /* Calling eval will do a security check */
@@ -529,7 +487,7 @@ static VALUE node_eval(int argc, VALUE * argv, VALUE node)
   VALUE cref = Qnil;
   rb_scan_args(argc, argv, "11", &self, &cref);
 
-  if(ruby_safe_level >= 2)
+  if(rb_safe_level() >= 2)
   {
     /* evaluating a node can cause a crash */
     rb_raise(rb_eSecurityError, "Insecure: can't eval node");
@@ -738,19 +696,13 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
 static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
 {
   NODE * node = unwrap_node(self);
-  VALUE opt = Qnil;
-  rb_compile_option_t option;
 
-  rb_scan_args(argc, argv, "01", &opt);
-  make_compile_option(&option, opt);
-
-  return rb_iseq_new_with_opt(
+  return rb_iseq_new(
       node,
       rb_str_new2("<main>"),
       rb_str_new2(node->nd_file),
       Qfalse,
-      ISEQ_TYPE_TOP,
-      &option);
+      ISEQ_TYPE_TOP);
 }
 
 #endif
@@ -766,7 +718,7 @@ static VALUE node_dump(VALUE self, VALUE limit)
   NODE * n;
   VALUE node_hash, arr;
 
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump node");
@@ -793,8 +745,8 @@ static VALUE node_load(VALUE klass, VALUE str)
   NODE * n;
   VALUE data;
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && OBJ_TAINTED(str)))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't load node");
@@ -836,8 +788,8 @@ static VALUE node_swap(VALUE self, VALUE other)
     rb_raise(rb_eArgError, "Argument must respond to #swap");
   }
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && (OBJ_TAINTED(other) || OBJ_TAINTED(self))))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && (OBJ_TAINTED(other) || OBJ_TAINTED(self))))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't swap node");
@@ -866,7 +818,7 @@ extern NODE *ruby_eval_tree;
 
 static VALUE ruby_eval_tree_begin_getter(ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get eval tree");
@@ -889,7 +841,7 @@ static void ruby_eval_tree_begin_setter(VALUE val, ID id, void * data, struct gl
 
 static VALUE ruby_eval_tree_getter(ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get eval tree");
@@ -912,7 +864,7 @@ static void ruby_eval_tree_setter(VALUE val, ID id, void * data, struct global_e
 
 static VALUE ruby_top_cref_getter(ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get top cref");
@@ -930,7 +882,7 @@ static VALUE ruby_top_cref_getter(ID id, void * data, struct global_entry * entr
 
 static void ruby_top_cref_setter(VALUE val, ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 2)
+  if(rb_safe_level() >= 2)
   {
     rb_raise(rb_eSecurityError, "Insecure: can't set top cref");
   }
@@ -940,7 +892,7 @@ static void ruby_top_cref_setter(VALUE val, ID id, void * data, struct global_en
 
 static VALUE ruby_cref_getter(ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get current cref");
@@ -958,7 +910,7 @@ static VALUE ruby_cref_getter(ID id, void * data, struct global_entry * entry)
 
 static void ruby_cref_setter(VALUE val, ID id, void * data, struct global_entry * entry)
 {
-  if(ruby_safe_level >= 2)
+  if(rb_safe_level() >= 2)
   {
     rb_raise(rb_eSecurityError, "Insecure: can't set current cref");
   }
@@ -975,6 +927,17 @@ static void ruby_cref_setter(VALUE val, ID id, void * data, struct global_entry 
 
 void Init_node(void)
 {
+  /* This needs to be defined before we require any other files, because
+   * we have a circular dependency.
+   * (node.so depends on iseq.so depends on module.so depends on
+   * node.so)
+   */
+  rb_cNode = rb_define_class("Node", rb_cObject);
+
+#ifdef RUBY_VM
+  rb_require("internal/vm/iseq");
+#endif
+
   {
     int actual_ruby_version_code = 0;
     VALUE ruby_version_str = rb_const_get(rb_cObject, rb_intern("RUBY_VERSION"));
@@ -999,8 +962,6 @@ void Init_node(void)
           actual_ruby_version_code);
     }
   }
-
-  rb_cNode = rb_define_class("Node", rb_cObject);
 
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
   rb_define_alloc_func(rb_cNode, node_allocate);
@@ -1067,10 +1028,6 @@ void Init_node(void)
       "$ruby_cref",
       ruby_cref_getter,
       ruby_cref_setter);
-#endif
-
-#ifdef RUBY_VM
-  rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
 #endif
 }
 

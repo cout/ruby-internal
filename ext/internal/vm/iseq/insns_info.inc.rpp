@@ -1,0 +1,30 @@
+#ifndef ruby_internal_insns_info__inc_
+#define ruby_internal_insns_info__inc_
+
+#include <ruby.h>
+
+#ifndef RUBY_VM
+#include "env.h"
+#endif
+
+#ruby <<END
+  ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
+
+  if ruby_version_code >= 190 then
+
+    $: << '../../..'
+    require 'ruby_source_dir'
+    insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"
+
+    File.open(insns_info_location) do |input|
+      input.each_line do |line|
+        puts line
+      end
+    end
+  end
+
+  nil
+END
+
+#endif
+

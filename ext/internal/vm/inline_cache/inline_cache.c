@@ -1,3 +1,5 @@
+#include "internal/node/ruby_internal_node.h"
+#include "internal/node/nodeinfo.h"
 #include <ruby.h>
 
 #ifdef RUBY_VM
@@ -27,7 +29,10 @@ static VALUE inline_cache_vmstat(VALUE self)
 void Init_inline_cache(void)
 {
 #ifdef RUBY_VM
-  rb_cInlineCache = rb_define_class_under(rb_cVM, "InlineCache", rb_cNode);
+  rb_require("internal/node/node");
+
+  VALUE rb_cNode = rb_define_class("Node", rb_cObject);
+  VALUE rb_cInlineCache = rb_define_class_under(rb_cVM, "InlineCache", rb_cNode);
   rb_define_method(rb_cInlineCache, "klass", inline_cache_klass, 0);
   rb_define_method(rb_cInlineCache, "value", inline_cache_value, 0);
   rb_define_method(rb_cInlineCache, "vmstat", inline_cache_vmstat, 0);

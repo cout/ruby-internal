@@ -1,8 +1,53 @@
+#include "iseq.h"
+#include "insns_info.inc"
+
+#include "internal/node/ruby_internal_node.h"
+#include "internal/module/module.h"
+#include "internal/vm/instruction/instruction.h"
+
 #include <ruby.h>
 
 #ifdef RUBY_VM
 
 #include "vm_core.h"
+
+// Defined but not declared by ruby
+VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
+VALUE iseq_data_to_ary(rb_iseq_t * iseq);
+
+static VALUE rb_cModulePlaceholder;
+
+static VALUE rb_mMarshal;
+
+static VALUE rb_cInlineCache;
+
+static VALUE marshal_dump(VALUE obj, VALUE limit)
+{
+  return rb_funcall(rb_mMarshal, rb_intern("dump"), 2, obj, limit);
+}
+
+static VALUE marshal_load(VALUE obj)
+{
+  return rb_funcall(rb_mMarshal, rb_intern("load"), 1, obj);
+}
+
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  if(!rb_obj_is_kind_of(val, rb_cISeq))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected VM::InstructionSequence, but got %s",
+        rb_class2name(CLASS_OF(val)));
+  }
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
+}
 
 /* call-seq:
  *   iseq.self => VM::InstructionSequence
@@ -212,10 +257,7 @@ static VALUE iseq_each(VALUE self)
       }
     }
 
-    rb_yield(rb_class_new_instance(
-            RARRAY(args)->len,
-            RARRAY(args)->ptr,
-            instruction_class[insn]));
+    rb_yield(allocate_instruction(insn, args));
   }
 
   return Qnil;
@@ -280,8 +322,7 @@ void convert_placeholders_to_modules(VALUE array)
     else if(CLASS_OF(v) == rb_cModulePlaceholder)
     {
       VALUE sym = rb_ivar_get(v, rb_intern("name"));
-      VALUE klass = 
-        rb_funcall(lookup_module_proc, rb_intern("call"), 1, sym);
+      VALUE klass = lookup_module(sym);
       RARRAY(array)->ptr[j] = klass;
     }
   }
@@ -297,7 +338,7 @@ static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
 {
   VALUE arr;
 
-  if(ruby_safe_level >= 4)
+  if(rb_safe_level() >= 4)
   {
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't dump iseq");
@@ -319,8 +360,8 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
 {
   VALUE arr;
 
-  if(   ruby_safe_level >= 4
-     || (ruby_safe_level >= 1 && OBJ_TAINTED(str)))
+  if(   rb_safe_level() >= 4
+     || (rb_safe_level() >= 1 && OBJ_TAINTED(str)))
   {
     /* no playing with knives in the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't load iseq");
@@ -354,6 +395,17 @@ VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE
 void Init_iseq(void)
 {
 #ifdef RUBY_VM
+  rb_require("internal/node");
+  rb_require("internal/module");
+  rb_require("internal/vm/instruction");
+  rb_require("internal/vm/inline_cache");
+
+  rb_mMarshal = rb_const_get(rb_cObject, rb_intern("Marshal"));
+
+  rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
+
+  rb_cInlineCache = rb_const_get(rb_cVM, rb_intern("InlineCache"));
+
   /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
   /* For rdoc: rb_cISeq = rb_define_class_under(rb_cVM, "InstructionSequence", rb_cObject) */
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
@@ -370,6 +422,10 @@ void Init_iseq(void)
   rb_include_module(rb_cISeq, rb_mEnumerable);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
+
+  /* Prevent compiler warnings about unused static functions */
+  insn_name(0);
+  insn_op_types(0);
 #endif
 }
 

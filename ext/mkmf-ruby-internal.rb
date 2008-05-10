@@ -68,8 +68,8 @@ END
   else
     # -- Generating files --
     rpp_files.each do |rpp_file|
-    dest_file = rpp_file.sub(/\.rpp$/, '')
-    append_to_makefile << <<END
+      dest_file = rpp_file.sub(/\.rpp$/, '')
+      append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
 	$(RUBY) #{base_dir}/rubypp.rb #{rpp_file} #{dest_file}
 END
@@ -80,8 +80,9 @@ END
   # Dependencies
   # TODO: we could be smarter about this
   generated_headers = generated_files.select { |x| x =~ /\.h$/ }
+  generated_incs = generated_files.select { |x| x =~ /\.inc$/ }
   append_to_makefile << <<END
-$(OBJS): #{generated_headers.join(' ')}
+$(OBJS): #{generated_headers.join(' ')} #{generated_incs.join(' ')}
 clean: clean_generated_files
 clean_generated_files:
 	@$(RM) #{generated_files.join(' ')}
