@@ -1,4 +1,5 @@
 require 'internal/node/as_expression'
+require 'internal/vm/iseq/as_expression'
 require 'internal/method/signature'
 require 'internal/method'
 
