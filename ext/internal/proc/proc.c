@@ -80,6 +80,28 @@ static VALUE proc_var(VALUE self)
     return wrap_node(b->var);
   }
 }
+
+#else
+
+/* From iseq.c */
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  if(!rb_obj_is_kind_of(val, rb_cISeq))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected VM::InstructionSequence, but got %s",
+        rb_class2name(CLASS_OF(val)));
+  }
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
+}
+
 #endif
 
 /*
