@@ -1,9 +1,9 @@
 #include "insns_info.h"
-#include "ruby_version.h"
 
-#ifdef RUBY_HAS_YARV
+#ifdef RUBY_VM
 
 #ruby <<END
+  $:.unshift '../../..'
   require 'ruby_source_dir'
   insns_location = "#{RUBY_SOURCE_DIR}/insns.inc"
   insns_info_location = "#{RUBY_SOURCE_DIR}/insns_info.inc"

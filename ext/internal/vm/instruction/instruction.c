@@ -1,3 +1,5 @@
+#include "instruction.h"
+#include "insns_info.h"
 #include <ruby.h>
 
 #ifdef RUBY_VM
@@ -19,7 +21,7 @@ VALUE allocate_instruction(int instruction, VALUE args)
   return rb_class_new_instance(
       RARRAY(args)->len,
       RARRAY(args)->ptr,
-      instruction_class(instruction));
+      instruction_class[instruction]);
 }
 
 #endif
@@ -33,6 +35,11 @@ void Init_instruction(void)
   rb_undef_method(rb_cInstruction, "new");
 
   define_instruction_subclasses(rb_cInstruction);
+
+  /* Silence compiler warnings about unused static functions */
+  insn_name(0);
+  insn_op_type(0, 0);
+  insn_op_types(0);
 #endif
 }
 
