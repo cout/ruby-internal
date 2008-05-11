@@ -35,6 +35,8 @@ if ruby_source_path == '' then
     exit 1
   end
 
+  @config.config_opt << "--enable-cached-files"
+
 else
 
   ruby_h = File.join(ruby_source_path, 'eval.c')

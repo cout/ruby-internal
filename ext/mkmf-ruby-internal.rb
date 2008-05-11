@@ -1,23 +1,27 @@
 require 'mkmf'
 
-ruby_source_path = arg_config('--ruby-source-path')
-
-if ruby_source_path.nil? then
-  class SetupError < StandardError; end
-
-  # if the user did not specify the source dir, then see if we have one
-  # configured
-  begin
-    require 'ruby_source_dir'
-    # if we got here, then we successfuly loaded the configuration
-  rescue SetupError 
-    # otherwise, assume we are using cached files
-    USING_CACHED_FILES = true
-  end
+using_cached_files = enable_config('cached-files')
+if using_cached_files then
+  USING_CACHED_FILES = true
 else
-  # the user did specify the source path
-  USING_CACHED_FILES = false
-  RUBY_SOURCE_DIR = ruby_source_path
+  ruby_source_path = arg_config('--ruby-source-path')
+  if ruby_source_path.nil? then
+    class SetupError < StandardError; end
+
+    # if the user did not specify the source dir, then see if we have one
+    # configured
+    begin
+      require 'ruby_source_dir'
+      # if we got here, then we successfuly loaded the configuration
+    rescue SetupError 
+      # otherwise, assume we are using cached files
+      USING_CACHED_FILES = true
+    end
+  else
+    # the user did specify the source path
+    USING_CACHED_FILES = false
+    RUBY_SOURCE_DIR = ruby_source_path
+  end
 end
 
 def create_ruby_internal_makefile(name)
@@ -56,12 +60,17 @@ def create_ruby_internal_makefile(name)
 
   if USING_CACHED_FILES then
 
+    subdir = File.expand_path(File.dirname($0))
+    subdir = subdir.gsub(File.expand_path(base_dir), '')
+    cached_dir = File.join('cached', "ruby-#{RUBY_VERSION}")
+
     # -- Using cached files --
     rpp_files.each do |rpp_file|
       dest_file = rpp_file.sub(/\.rpp$/, '')
+      src_file = File.join(base_dir, cached_dir, subdir, File.basename(dest_file))
       append_to_makefile << <<END
-#{dest_file}: cached/ruby-#{RUBY_VERSION}/#{dest_file}
-  @$(RUBY) -e 'begin; require "fileutils"; rescue LoadError; require "ftools"; FileUtils = File end; FileUtils.copy("cached/ruby-#{RUBY_VERSION}/#{dest_file}", ".", :verbose => true)'
+#{dest_file}: #{src_file}
+\t@$(RUBY) -e 'begin; require "fileutils"; rescue LoadError; require "ftools"; FileUtils = File end; FileUtils.copy("#{src_file}", ".", :verbose => true)'
 END
       end
 
@@ -71,7 +80,7 @@ END
       dest_file = rpp_file.sub(/\.rpp$/, '')
       append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-	$(RUBY) #{base_dir}/rubypp.rb #{rpp_file} #{dest_file}
+\t$(RUBY) #{base_dir}/rubypp.rb #{rpp_file} #{dest_file}
 END
     end
 
@@ -85,7 +94,7 @@ END
 $(OBJS): #{generated_headers.join(' ')} #{generated_incs.join(' ')}
 clean: clean_generated_files
 clean_generated_files:
-	@$(RM) #{generated_files.join(' ')}
+\t@$(RM) #{generated_files.join(' ')}
 END
 
   # Append it all to the makefile

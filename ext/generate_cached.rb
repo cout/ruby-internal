@@ -1,13 +1,16 @@
 require 'rubypp'
-require 'ftools'
+require 'fileutils'
 
 dir = ARGV[0]
 $:.unshift(dir)
 
+# Unset RUBY_VERSION
 class Object
   remove_const :RUBY_VERSION
 end
 
+# Figure out the Ruby version and set RUBY_VERSION to fool the scripts
+# we'll be calling
 File.open(File.join(dir, 'version.h')) do |version_h|
   version_h.each_line do |line|
     # #define RUBY_VERSION "1.6.4"
@@ -17,6 +20,7 @@ File.open(File.join(dir, 'version.h')) do |version_h|
   end
 end
 
+# Set RUBY_SORUCE_DIR to the directory specified on the command line
 RUBY_SOURCE_DIR = dir
 $".push('ruby_source_dir.rb')
 
@@ -28,30 +32,40 @@ if not File.exist?(ruby_include_path) or \
 end
 RUBY_INCLUDE_DIR = ruby_include_path
 
-output_dir = "cached/ruby-#{RUBY_VERSION}"
-Dir.mkdir("cached") rescue Errno::EEXIST
-Dir.mkdir(output_dir) rescue Errno::EEXIST
+# Figure out where we're going to spit output
+output_dir = File.expand_path("cached/ruby-#{RUBY_VERSION}")
+basedir = File.expand_path(File.dirname(__FILE__))
 
-Dir['*.rpp'].each do |rpp|
-  base = rpp.gsub(/(.*)\..*/, "\\1")
+def generate_cached_rpp(input_rpp, output_dir)
+  FileUtils.mkdir_p(output_dir)
+  input_dir = File.dirname(input_rpp)
+  base = File.basename(input_rpp.gsub(/(.*)\..*/, "\\1"))
   out = File.join(output_dir, base)
-  rubypp(rpp, out)
+  orig_dir = Dir.pwd
+  begin
+    Dir.chdir(input_dir)
+    rubypp(input_rpp, out)
+  ensure
+    Dir.chdir(orig_dir)
+  end
 end
 
-File.open(File.join(output_dir, 'README'), 'w') do |readme|
-  readme.puts <<END
-The files in this directory have been generated from the ruby source
-code, version #{RUBY_VERSION}, which are licensed under the Ruby
-license.  For more information, please see the file COPYING.
-END
+def recursively_generate_cached_rpps(input_dir, output_dir)
+  Dir[File.join(input_dir, '*')].each do |file|
+    next if file == '.' or file == '..'
+    if File.directory?(file) then
+      recursively_generate_cached_rpps(
+          file,
+          File.join(output_dir, File.basename(file)))
+    end
+  end
+
+  Dir[File.join(input_dir, '*.rpp')].each do |rpp|
+    generate_cached_rpp(rpp, output_dir)
+  end
 end
 
-def copy_from_ruby_dir(src, dir, output_dir)
-  File.copy(File.join(dir, src), output_dir) rescue Errno::ENOENT
-end
-
-copy_from_ruby_dir('COPYING', dir, output_dir)
-copy_from_ruby_dir('GPL', dir, output_dir)
-copy_from_ruby_dir('LEGAL', dir, output_dir)
-copy_from_ruby_dir('LGPL', dir, output_dir)
+recursively_generate_cached_rpps(
+    File.join(basedir, 'internal'),
+    File.join(output_dir, 'internal'))
 
