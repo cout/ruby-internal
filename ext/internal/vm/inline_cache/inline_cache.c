@@ -32,6 +32,7 @@ void Init_inline_cache(void)
   rb_require("internal/node/node");
 
   VALUE rb_cNode = rb_define_class("Node", rb_cObject);
+  /* For rdoc: VALUE rb_cVM = rb_define_class("VM", rb_cObject); */
   VALUE rb_cInlineCache = rb_define_class_under(rb_cVM, "InlineCache", rb_cNode);
   rb_define_method(rb_cInlineCache, "klass", inline_cache_klass, 0);
   rb_define_method(rb_cInlineCache, "value", inline_cache_value, 0);
