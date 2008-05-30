@@ -4,8 +4,8 @@ of the ruby interpreter.
 See the file LICENSE for license and copyright information.
 
 To build and run the tests:
-  ruby install.rb config
-  ruby install.rb setup
+  ruby setup.rb config
+  ruby setup.rb setup
 
 Or, if you are on ruby 1.9 (or another version of ruby that doesn't have
 pre-parsed ruby source included in the distribution), you'll need to
