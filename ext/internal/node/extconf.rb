@@ -33,6 +33,7 @@ have_func('rb_protect_inspect', 'ruby.h')
 have_func('rb_obj_respond_to', 'ruby.h')
 have_func('rb_define_alloc_func', 'ruby.h')
 have_func('rb_is_local_id', 'ruby.h')
+have_func('rb_source_filename', 'ruby.h')
 
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 $CPPFLAGS << " -DRUBY_VERSION_CODE=#{ruby_version_code}"

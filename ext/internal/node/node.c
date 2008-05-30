@@ -217,6 +217,7 @@ static VALUE node_nd_file(VALUE self)
 {
   NODE * n;
   Data_Get_Struct(self, NODE, n);
+#ifdef HAVE_RB_SOURCE_FILENAME
   if(n->nd_file)
   {
     return rb_str_new2(n->nd_file);
@@ -225,6 +226,10 @@ static VALUE node_nd_file(VALUE self)
   {
     return Qnil;
   }
+#else
+  /* nd_file has been removed in 1.9 */
+  return Qnil;
+#endif
 }
 
 /*
@@ -526,10 +531,12 @@ void dump_node_to_hash(NODE * n, int node_type, VALUE node_hash)
   s3 = dump_node_elem(descrip->n3, n, node_hash);
 
   nd_file = Qnil;
+#ifdef HAVE_RB_SOURCE_FILENAME
   if(n->nd_file)
   {
     nd_file = rb_str_new2(n->nd_file);
   }
+#endif
 
   arr = rb_ary_new();
   rb_ary_push(arr, INT2NUM(n->flags));
@@ -580,6 +587,7 @@ NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE
   load_node_elem(descrip->n2, s2, &tmp_node, node_hash, id_hash);
   load_node_elem(descrip->n3, s3, &tmp_node, node_hash, id_hash);
 
+#ifdef HAVE_RB_SOURCE_FILENAME
   /* Note that the garbage collector CAN be invoked at this point, so
    * any node object the GC knowns about must be in a consistent state.
    */
@@ -588,6 +596,7 @@ NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE
     Check_Type(rb_nd_file, T_STRING);
     nd_file = rb_source_filename(RSTRING_PTR(rb_nd_file));
   }
+#endif
 
   /* 1) We must NOT get an exception from here on out, since we are
    * modifying a live node, and so nd_file_buf won't be leaked.
@@ -695,12 +704,26 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
  */
 static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
 {
+  VALUE name = Qnil;
+  VALUE filename = Qnil;
+  rb_scan_args(argc, argv, "02", &name, &filename);
+
+  if(name == Qnil)
+  {
+    name = rb_str_new2("<unknown>");
+  }
+
+  if(filename == Qnil)
+  {
+    filename = name;
+  }
+
   NODE * node = unwrap_node(self);
 
   return rb_iseq_new(
       node,
-      rb_str_new2("<main>"),
-      rb_str_new2(node->nd_file),
+      name,
+      filename,
       Qfalse,
       ISEQ_TYPE_TOP);
 }
