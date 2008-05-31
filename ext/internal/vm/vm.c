@@ -1,9 +1,8 @@
-#include "vm_core.h"
 #include <ruby.h>
 
 #ifdef RUBY_VM
 
-VALUE rb_cVM;
+#include "vm_core.h"
 
 extern rb_vm_t * ruby_current_vm;
 
@@ -44,7 +43,7 @@ static VALUE vm_top_self(VALUE self)
 void Init_vm(void)
 {
 #ifdef RUBY_VM
-  rb_cVM = rb_define_class("VM", rb_cObject);
+  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
   rb_define_singleton_method(rb_cVM, "last_status", vm_current, 0);
   rb_define_method(rb_cVM, "last_status", vm_last_status, 0);
   rb_define_method(rb_cVM, "running", vm_running, 0);
