@@ -30,6 +30,8 @@ static VALUE thread_cfp(VALUE self)
       free, 
       cfp);
 
+  /* TODO: Not sure how many control frames back to go to get the one we
+   * want */
   cfp->control_frame = th->cfp;
   cfp->thread = self;
 
