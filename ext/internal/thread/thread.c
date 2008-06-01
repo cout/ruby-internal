@@ -18,24 +18,34 @@ void mark_ruby_internal_control_frame(
 static VALUE thread_cfp(VALUE self)
 {
   rb_thread_t * th;
-  VALUE cfp_v;
-  struct RubyInternalControlFrame * cfp;
+  rb_control_frame_t * prev_cfp;
 
   GetThreadPtr(self, th);
 
-  cfp_v = Data_Make_Struct(
-      rb_cVmControlFrame,
-      struct RubyInternalControlFrame,
-      mark_ruby_internal_control_frame,
-      free, 
-      cfp);
-
   /* TODO: Not sure how many control frames back to go to get the one we
    * want */
-  cfp->control_frame = th->cfp;
-  cfp->thread = self;
+  prev_cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(th->cfp);
+  if((void *)(th->stack + th->stack_size) == (void *)prev_cfp)
+  {
+    return Qnil;
+  }
+  else
+  {
+    struct RubyInternalControlFrame * cfp;
+    VALUE cfp_v;
 
-  return cfp_v;
+    cfp_v = Data_Make_Struct(
+        rb_cVmControlFrame,
+        struct RubyInternalControlFrame,
+        mark_ruby_internal_control_frame,
+        free, 
+        cfp);
+
+    cfp->control_frame = th->cfp;
+    cfp->thread = self;
+
+    return cfp_v;
+  }
 }
 
 #endif
