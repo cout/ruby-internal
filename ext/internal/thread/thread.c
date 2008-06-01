@@ -9,6 +9,7 @@
 
 static VALUE rb_cVmControlFrame;
 
+/* TODO: also defined in control_frame.c */
 void mark_ruby_internal_control_frame(
     struct RubyInternalControlFrame * cfp)
 {
@@ -41,7 +42,7 @@ static VALUE thread_cfp(VALUE self)
         free, 
         cfp);
 
-    cfp->control_frame = th->cfp;
+    cfp->control_frame = prev_cfp;
     cfp->thread = self;
 
     return cfp_v;
