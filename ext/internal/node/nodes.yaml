@@ -217,8 +217,6 @@ BMETHOD:
         the Proc object passed to define_method, which contains the body
         of the method
 
-  version: (0, 190)
-
   is_method_node: true
 
 BREAK:
