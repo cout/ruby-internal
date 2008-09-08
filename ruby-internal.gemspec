@@ -9,8 +9,8 @@ spec = Gem::Specification.new do |s|
   s.email = 'curlypaul924@gmail.com'
 
   s.description = <<-END
-Nodewrap is Ruby module that provides direct access to Ruby's internal
-data structures.i
+Ruby-Internal is Ruby module that provides direct access to Ruby's
+internal data structures.
 END
 
   patterns = [
