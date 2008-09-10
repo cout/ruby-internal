@@ -34,11 +34,11 @@ class Node
         s << "<ISeq:#{value.self.name}@#{value.self.filename}>\n"
         d = value.disasm
         lines = d.split("\n")
-        lines.each_with_index do |line, idx|
+        lines.each_with_index do |line, line_idx|
           if line =~ /^== disasm: (.*?)=/ then line = $1; end
           if line =~ /(.*)\s+\(\s*\d+\)/ then line = $1; end
           next if line =~ /^\|-----/
-          last_line = (idx == lines.size-1)
+          last_line = (line_idx == lines.size-1)
           s << "#{prefix}#{last ? '  ' : '| '}#{(last_line ? '+-' : '|-')}#{line}\n"
         end
         # p value.local_table
