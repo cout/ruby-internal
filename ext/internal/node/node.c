@@ -450,10 +450,13 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
   }
   else
   {
+    VALUE filename = node->nd_file
+      ? rb_str_new2(node->nd_file)
+      : rb_str_new2("<unknown>");
     VALUE iseq = rb_iseq_new(
         node,
         rb_str_new2("<compiled>"),
-        Qnil,
+        filename,
         self,
         ISEQ_TYPE_TOP);
     return rb_iseq_eval(iseq);
@@ -477,7 +480,7 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
   }
 #endif
 }
-
+  
 /*
  * call-seq:
  *   node.eval(Object) => Object
