@@ -422,6 +422,8 @@ static VALUE node_type_to_i(VALUE node_type)
  * ---------------------------------------------------------------------
  */
 
+/* TODO: copied from proc.c */
+
 #ifndef RUBY_VM
 
 static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
@@ -437,8 +439,43 @@ static VALUE create_proc(VALUE klass, VALUE binding, NODE * body, NODE * var)
   return new_proc;
 }
 
+#else
+
+/* From iseq.c */
+static rb_iseq_t *
+iseq_check(VALUE val)
+{
+  rb_iseq_t *iseq;
+  if(!rb_obj_is_kind_of(val, rb_cISeq))
+  {
+    rb_raise(
+        rb_eTypeError,
+        "Expected VM::InstructionSequence, but got %s",
+        rb_class2name(CLASS_OF(val)));
+  }
+  GetISeqPtr(val, iseq);
+  if (!iseq->name) {
+    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+  }
+  return iseq;
+}
+
+static VALUE create_proc(VALUE klass, VALUE binding, rb_iseq_t * iseq)
+{ 
+  /* Calling eval will do a security check */
+  VALUE new_proc = rb_funcall(
+      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+  rb_proc_t * p;
+  GetProcPtr(new_proc, p);
+  p->block.iseq = iseq;
+  RBASIC(new_proc)->klass = klass;
+  return new_proc;
+}
+
 #endif
 
+/* TODO: It would be nicer if we could eval the node in the current
+ * scope, but we have to create a new scope both on 1.8 and on 1.9. */
 VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
 {
 #ifdef RUBY_VM
@@ -453,13 +490,40 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
     VALUE filename = node->nd_file
       ? rb_str_new2(node->nd_file)
       : rb_str_new2("<unknown>");
-    VALUE iseq = rb_iseq_new(
+    VALUE iseq;
+
+    if(nd_type(node) != NODE_SCOPE)
+    {
+      /* TODO: This is kinda hokey */
+      ID * local_tbl = ruby_current_thread->cfp->iseq
+        ? ruby_current_thread->cfp->iseq->local_table
+        : 0;
+      node = NEW_NODE(NODE_SCOPE, local_tbl, node, 0);
+    }
+
+    iseq = rb_iseq_new(
         node,
         rb_str_new2("<compiled>"),
         filename,
         self,
         ISEQ_TYPE_TOP);
-    return rb_iseq_eval(iseq);
+
+    /* VALUE str = ruby_iseq_disasm(iseq);
+    rb_io_puts(1, &str, rb_stdout); */
+
+    /* VALUE result = rb_iseq_eval(iseq);
+    return result; */
+
+    rb_proc_t * p;
+    VALUE proc;
+
+    proc = create_proc(rb_cProc, Qnil, iseq_check(iseq));
+    GetProcPtr(proc, p);
+    p->block.self = self;
+
+    /* TODO: cref */
+
+    return rb_funcall(proc, rb_intern("call"), 0);
   }
 #else
   {
