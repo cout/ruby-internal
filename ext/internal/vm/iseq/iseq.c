@@ -21,6 +21,8 @@ static VALUE rb_mMarshal;
 
 static VALUE rb_cInlineCache;
 
+static VALUE rb_cCatchTableEntry;
+
 static VALUE marshal_dump(VALUE obj, VALUE limit)
 {
   return rb_funcall(rb_mMarshal, rb_intern("dump"), 2, obj, limit);
@@ -230,7 +232,7 @@ static VALUE iseq_each(VALUE self)
         }
 
         case TS_OFFSET:
-          rb_ary_push(args, Qnil);
+          rb_ary_push(args, LONG2NUM(*seq));
           /* TODO */
           break;
 
@@ -281,6 +283,34 @@ static VALUE iseq_insn_line(VALUE self, VALUE n)
       }
   }
   return Qnil;
+}
+
+/* call-seq:
+ *   iseq.catch_table => Array of CatchTableEntry
+ *
+ * Returns the catch table for the sequence
+ */
+static VALUE iseq_catch_table(VALUE self)
+{
+  rb_iseq_t *iseqdat = iseq_check(self);
+  unsigned long j;
+
+  VALUE catch_table = rb_ary_new();
+
+  for(j = 0; j < iseqdat->catch_table_size; ++j)
+  {
+    VALUE catch_table_entry = rb_struct_new(
+        rb_cCatchTableEntry,
+        iseqdat->catch_table[j].type,
+        iseqdat->catch_table[j].iseq,
+        ULONG2NUM(iseqdat->catch_table[j].start),
+        ULONG2NUM(iseqdat->catch_table[j].end),
+        ULONG2NUM(iseqdat->catch_table[j].cont),
+        ULONG2NUM(iseqdat->catch_table[j].sp));
+    rb_ary_push(catch_table, catch_table_entry);
+  }
+
+  return catch_table;
 }
 
 /* The putobject instruction takes a VALUE as a parameter.  But if this
@@ -419,10 +449,22 @@ void Init_iseq(void)
   rb_define_method(rb_cISeq, "arg_opt_table", iseq_arg_opt_table, 0);
   rb_define_method(rb_cISeq, "each", iseq_each, 0);
   rb_define_method(rb_cISeq, "insn_line", iseq_insn_line, 1);
+  rb_define_method(rb_cISeq, "catch_table", iseq_catch_table, 0);
   rb_include_module(rb_cISeq, rb_mEnumerable);
   rb_define_method(rb_cISeq, "_dump", iseq_marshal_dump, 1);
   rb_define_singleton_method(rb_cISeq, "_load", iseq_marshal_load, 1);
 
+  rb_cCatchTableEntry = rb_struct_define(
+      0,
+      "type",
+      "iseq",
+      "start",
+      "end",
+      "cont",
+      "sp",
+      0);
+  rb_const_set(rb_cISeq, rb_intern("CatchTableEntry"), rb_cCatchTableEntry);
+      
   /* Prevent compiler warnings about unused static functions */
   insn_name(0);
   insn_op_types(0);
