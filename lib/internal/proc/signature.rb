@@ -1,5 +1,6 @@
 require 'internal/node'
 require 'internal/proc'
+require 'internal/vm'
 
 class Proc
   class Arguments
@@ -12,7 +13,7 @@ class Proc
     end
 
     def unspecified
-      if defined?(VM) and defined?(VM::InstructionSequence) then
+      if defined?(RubyVM) and defined?(RubyVM::InstructionSequence) then
         # YARV
         return @names.length == 0
       else
