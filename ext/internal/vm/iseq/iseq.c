@@ -464,6 +464,13 @@ void Init_iseq(void)
       "sp",
       0);
   rb_const_set(rb_cISeq, rb_intern("CatchTableEntry"), rb_cCatchTableEntry);
+
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_RESCUE"), CATCH_TYPE_RESCUE);
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_ENSURE"), CATCH_TYPE_ENSURE);
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_RETRY"), CATCH_TYPE_RETRY);
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_BREAK"), CATCH_TYPE_BREAK);
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_REDO"), CATCH_TYPE_REDO);
+  rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_NEXT"), CATCH_TYPE_NEXT);
       
   /* Prevent compiler warnings about unused static functions */
   insn_name(0);
