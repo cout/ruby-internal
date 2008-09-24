@@ -17,7 +17,6 @@
 
 // Defined but not declared by ruby
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
-VALUE iseq_data_to_ary(rb_iseq_t * iseq);
 
 static VALUE rb_cModulePlaceholder;
 
@@ -348,7 +347,7 @@ static VALUE iseq_marshal_dump(VALUE self, VALUE limit)
     rb_raise(rb_eSecurityError, "Insecure: can't dump iseq");
   }
 
-  arr = iseq_data_to_ary((rb_iseq_t *)DATA_PTR(self));
+  arr = rb_funcall(self, rb_intern("to_a"), 0);
   convert_modules_to_placeholders(arr);
 
   return marshal_dump(arr, limit);
