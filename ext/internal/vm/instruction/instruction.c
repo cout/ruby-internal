@@ -29,7 +29,17 @@ VALUE allocate_instruction(int instruction, VALUE args)
 void Init_instruction(void)
 {
 #ifdef RUBY_VM
-  VALUE rb_cInstruction = rb_define_class_under(rb_cVM, "Instruction", rb_cObject);
+  VALUE rb_cRubyVM;
+
+  if(!rb_const_defined(rb_cObject, rb_intern("RubyVM")))
+  {
+    rb_define_const(
+        rb_cObject,
+        "RubyVM",
+        rb_const_get(rb_cObject, rb_intern("VM")));
+  }
+
+  VALUE rb_cInstruction = rb_define_class_under(rb_cRubyVM, "Instruction", rb_cObject);
   rb_define_method(rb_cInstruction, "initialize", instruction_initialize, -1);
   rb_define_method(rb_cInstruction, "operands", instruction_operands, 0);
   rb_undef_method(rb_cInstruction, "new");

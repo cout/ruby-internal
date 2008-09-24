@@ -1,4 +1,4 @@
-#include "iseq.h"
+#include "internal_iseq.h"
 #include "insns_info.inc"
 
 #include "internal/node/ruby_internal_node.h"
@@ -10,6 +10,10 @@
 #ifdef RUBY_VM
 
 #include "vm_core.h"
+
+#ifdef HAVE_ISEQ_H
+#include "iseq.h"
+#endif
 
 // Defined but not declared by ruby
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
@@ -395,6 +399,8 @@ VALUE load_iseq_from_hash(VALUE iseq, VALUE orig_node_id, VALUE node_hash, VALUE
 void Init_iseq(void)
 {
 #ifdef RUBY_VM
+  VALUE rb_cRubyVM;
+
   rb_require("internal/node");
   rb_require("internal/module");
   rb_require("internal/vm/instruction");
@@ -404,10 +410,18 @@ void Init_iseq(void)
 
   rb_cModulePlaceholder = rb_define_class("ModulePlaceholder", rb_cObject);
 
-  rb_cInlineCache = rb_const_get(rb_cVM, rb_intern("InlineCache"));
+  if(!rb_const_defined(rb_cObject, rb_intern("RubyVM")))
+  {
+    rb_define_const(
+        rb_cObject,
+        "RubyVM",
+        rb_const_get(rb_cObject, rb_intern("VM")));
+  }
 
-  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
-  /* For rdoc: rb_cISeq = rb_define_class_under(rb_cVM, "InstructionSequence", rb_cObject) */
+  rb_cRubyVM = rb_define_class("RubyVM", rb_cObject);
+  rb_cInlineCache = rb_const_get(rb_cRubyVM, rb_intern("InlineCache"));
+
+  /* For rdoc: rb_cISeq = rb_define_class_under(rb_cRubyVM, "InstructionSequence", rb_cObject) */
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
   rb_define_method(rb_cISeq, "filename", iseq_filename, 0);

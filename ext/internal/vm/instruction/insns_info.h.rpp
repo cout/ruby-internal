@@ -6,7 +6,10 @@
 #ifdef RUBY_VM
 
 #include "vm_core.h"
+
+#ifdef HAVE_VM_H
 #include "vm.h"
+#endif
 
 #ruby <<END
   $:.unshift '../../..'
