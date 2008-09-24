@@ -1,1 +1,1 @@
-require 'internal/object/object.so'
+require 'internal/object/object'

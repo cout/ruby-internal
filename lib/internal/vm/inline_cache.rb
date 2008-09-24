@@ -1,1 +1,1 @@
-require 'internal/vm/inline_cache/inline_cache.so'
+require 'internal/vm/inline_cache/inline_cache'

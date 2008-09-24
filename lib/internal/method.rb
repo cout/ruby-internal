@@ -1,1 +1,1 @@
-require 'internal/method/method.so'
+require 'internal/method/method'

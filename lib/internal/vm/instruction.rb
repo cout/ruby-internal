@@ -1,1 +1,1 @@
-require 'internal/vm/instruction/instruction.so'
+require 'internal/vm/instruction/instruction'
