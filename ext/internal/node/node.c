@@ -772,6 +772,9 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
  *   node.bytecode_compile => VM::InstructionSequence
  *
  * Compile a parsed node tree into a bytecode sequence.
+ *
+ * @param name the name of the new iseq (default <unknown>)
+ * @param filename the filename for the new iseq (default same as name)
  */
 static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
 {
