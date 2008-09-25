@@ -1,1 +1,1 @@
-require 'internal/binding/binding.so'
+require 'internal/binding/binding'

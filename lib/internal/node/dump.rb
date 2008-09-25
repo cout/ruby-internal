@@ -34,7 +34,7 @@
 #     |-mid = :foo
 #     +-noex = PRIVATE
 
-require 'nodepp'
+require 'internal/node/pp'
 
 set_trace_func proc {
   begin

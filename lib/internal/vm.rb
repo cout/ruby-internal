@@ -1,1 +1,1 @@
-require 'internal/vm/vm.so'
+require 'internal/vm/vm'

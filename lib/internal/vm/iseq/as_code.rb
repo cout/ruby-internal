@@ -1,7 +1,9 @@
-if defined?(VM::InstructionSequence) then
+require 'internal/vm'
+
+if defined?(RubyVM::InstructionSequence) then
   require 'internal/vm/bytedecoder'
 
-  class VM
+  class RubyVM
     class InstructionSequence
       def as_code(indent=0)
         env = Nodewrap::ByteDecoder::Environment.new(local_table())

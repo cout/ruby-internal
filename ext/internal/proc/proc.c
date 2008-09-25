@@ -6,6 +6,10 @@
 #include "vm_core.h"
 #endif
 
+#ifdef HAVE_ISEQ_H
+#include "iseq.h"
+#endif
+
 static VALUE rb_cUnboundProc = Qnil;
 
 static VALUE rb_mMarshal;

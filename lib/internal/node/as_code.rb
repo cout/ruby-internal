@@ -128,24 +128,21 @@ class Node
   end
 
   define_code(:ENSURE) do |node, indent, *args|
-    begin_ensure = args[0] || false
-    s = ''
-    Node.begin_end(indent, begin_ensure) do |s, indent, begin_ensure|
+    Node.begin_end(indent, begin_ensure) do |s, indent_, begin_ensure|
       if node.head then
-        s << "#{node.head.as_code(indent)}\n"
+        s << "#{node.head.as_code(indent_)}\n"
       end
-      s << "#{'  '*(indent-1)}ensure\n"
-      s << "#{node.ensr.as_code(indent)}"
+      s << "#{'  '*(indent_-1)}ensure\n"
+      s << "#{node.ensr.as_code(indent_)}"
     end
   end
 
   define_code(:RESCUE) do |node, indent, *args|
-    begin_rescue = args[0] || false
-    Node.begin_end(indent, begin_rescue) do |s, indent, begin_rescue|
+    Node.begin_end(indent, begin_rescue) do |s, indent_, begin_rescue|
       if node.head then
         if begin_rescue then
-          s << "#{node.head.as_code(indent)}\n"
-          s << "#{'  '*(indent-1)}rescue #{node.resq.as_code(indent+1, begin_rescue)}"
+          s << "#{node.head.as_code(indent_)}\n"
+          s << "#{'  '*(indent_-1)}rescue #{node.resq.as_code(indent_+1, begin_rescue)}"
         else
           s << "#{node.head.as_expression} rescue #{node.resq.as_expression(begin_rescue)}"
         end

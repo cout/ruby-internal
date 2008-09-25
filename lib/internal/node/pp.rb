@@ -2,6 +2,7 @@
 #
 
 require 'internal/node'
+require 'internal/vm'
 require 'pp'
 
 module Noex
@@ -28,9 +29,9 @@ class Node
       value = self[member]
       if Node === value then
         value.tree(s, prefix + (last ? '  ' : '| '))
-      elsif Object.const_defined?(:VM) and
-            VM.const_defined?(:InstructionSequence) and
-            VM::InstructionSequence === value then
+      elsif defined?(RubyVM) and
+            defined?(RubyVM::InstructionSequence) and
+            RubyVM::InstructionSequence === value then
         s << "<ISeq:#{value.self.name}@#{value.self.filename}>\n"
         d = value.disasm
         lines = d.split("\n")

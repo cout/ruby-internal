@@ -1,1 +1,1 @@
-require 'internal/thread/thread.so'
+require 'internal/thread/thread'

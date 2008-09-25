@@ -44,19 +44,11 @@ def create_ruby_internal_makefile(name)
     $CFLAGS << ' -Wall -g'
   end
 
-  base_dir = File.dirname(__FILE__)
-  $CPPFLAGS << " -I#{base_dir}"
-
-  # Include the ruby source directory in the source if we are using 1.9
-  # TODO: This means we can't build a gem for 1.9 (yet)
-  ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
-  if ruby_version_code >= 190 then
-    $CPPFLAGS << " -I#{RUBY_SOURCE_DIR.quote} "
-  end
-
   create_makefile(name)
 
   append_to_makefile = ''
+
+  base_dir = File.dirname(__FILE__)
 
   if USING_CACHED_FILES then
 
@@ -101,5 +93,15 @@ END
   File.open('Makefile', 'a') do |makefile|
     makefile.puts(append_to_makefile)
   end
-
 end
+
+base_dir = File.dirname(__FILE__)
+$CPPFLAGS << " -I#{base_dir}"
+
+# Include the ruby source directory in the source if we are using 1.9
+# TODO: This means we can't build a gem for 1.9 (yet)
+ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
+if ruby_version_code >= 190 then
+  $CPPFLAGS << " -I#{RUBY_SOURCE_DIR.quote} "
+end
+

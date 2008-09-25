@@ -14,7 +14,7 @@ module Nodewrap
 #
 # Example usage:
 #   env = Nodewrap::ByteDecoder::Environment.new(is.local_table)
-#   is = VM::InstructionSequence.new('1 + 1')
+#   is = RubyVM::InstructionSequence.new('1 + 1')
 #   is.bytedecode(env)
 #   env.expressions.each do |expr|
 #     puts expr
@@ -452,7 +452,7 @@ end # ByteDecoder
 
 end # Nodewrap
 
-class VM
+class RubyVM
   class Instruction
     include Nodewrap::ByteDecoder
 
@@ -492,8 +492,11 @@ class VM
 
     PREFIX_OPCODES = {
       OPT_NOT   => :!,
-      UNDEF     => :undef,
     }
+
+    if defined?(UNDEF)
+      PREFIX_OPCODES['UNDEF'] = :undef
+    end
 
     PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
 
@@ -538,9 +541,9 @@ class VM
         num_args.times do
           args.unshift env.stack.pop
         end
-        has_receiver = !flag_set(VM::CALL_FCALL_BIT)
-        has_parens = !flag_set(VM::CALL_VCALL_BIT)
-        splat_last = flag_set(VM::CALL_ARGS_SPLAT_BIT)
+        has_receiver = !flag_set(RubyVM::CALL_FCALL_BIT)
+        has_parens = !flag_set(RubyVM::CALL_VCALL_BIT)
+        splat_last = flag_set(RubyVM::CALL_ARGS_SPLAT_BIT)
         receiver = env.stack.pop
         block = @operands[2]
         if INFIX_OPERATORS.include?(id) and args.size == 1 then

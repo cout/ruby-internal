@@ -1,1 +1,1 @@
-require 'internal/proc/proc.so'
+require 'internal/proc/proc'

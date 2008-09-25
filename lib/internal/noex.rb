@@ -1,1 +1,1 @@
-require 'internal/noex/noex.so'
+require 'internal/noex/noex'

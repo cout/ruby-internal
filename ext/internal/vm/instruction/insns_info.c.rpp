@@ -47,7 +47,7 @@
           write = true
         when /^static.*COMPILE_OPTION_DEFAULT.*=/
           write = true
-        when /^static.*COMPILE_OPTION_FALSE;/
+        when /^static.*COMPILE_OPTION_FALSE.*;/
           puts line
         end
         puts line if write
@@ -147,7 +147,7 @@ static VALUE insn_#{name}_to_i(VALUE self)
 static VALUE insn_#{name}_operand_types(VALUE self)
 {
   VALUE operand_types = rb_ary_new();
-  char * s;
+  char const * s;
 
   for(s = insn_op_types(#{index}); *s != '\\0'; ++s)
   {

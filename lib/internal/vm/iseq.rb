@@ -1,1 +1,1 @@
-require 'internal/vm/iseq/iseq.so'
+require 'internal/vm/iseq/iseq'

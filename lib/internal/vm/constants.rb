@@ -1,1 +1,1 @@
-require 'internal/vm/constants/constants.so'
+require 'internal/vm/constants/constants'

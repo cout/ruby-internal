@@ -29,11 +29,23 @@ static VALUE inline_cache_vmstat(VALUE self)
 void Init_inline_cache(void)
 {
 #ifdef RUBY_VM
+  VALUE rb_cNode;
+  VALUE rb_cRubyVM;
+
   rb_require("internal/node/node");
 
-  VALUE rb_cNode = rb_define_class("Node", rb_cObject);
-  /* For rdoc: VALUE rb_cVM = rb_define_class("VM", rb_cObject); */
-  VALUE rb_cInlineCache = rb_define_class_under(rb_cVM, "InlineCache", rb_cNode);
+  rb_cNode = rb_define_class("Node", rb_cObject);
+
+  if(!rb_const_defined(rb_cObject, rb_intern("RubyVM")))
+  {
+    rb_define_const(
+        rb_cObject,
+        "RubyVM",
+        rb_const_get(rb_cObject, rb_intern("VM")));
+  }
+
+  rb_cRubyVM = rb_define_class("RubyVM", rb_cObject);
+  VALUE rb_cInlineCache = rb_define_class_under(rb_cRubyVM, "InlineCache", rb_cNode);
   rb_define_method(rb_cInlineCache, "klass", inline_cache_klass, 0);
   rb_define_method(rb_cInlineCache, "value", inline_cache_value, 0);
   rb_define_method(rb_cInlineCache, "vmstat", inline_cache_vmstat, 0);

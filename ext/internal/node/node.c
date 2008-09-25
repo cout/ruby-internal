@@ -3,7 +3,7 @@
 #include "node_type_descrip.h"
 #include "block.h"
 #include "builtins.h"
-#include "internal/vm/iseq/iseq.h"
+#include "internal/vm/iseq/internal_iseq.h"
 
 #include <ruby.h>
 
@@ -21,6 +21,10 @@
 
 #ifdef RUBY_VM
 #include "eval_intern.h"
+#endif
+
+#ifdef HAVE_ISEQ_H
+#include "iseq.h"
 #endif
 
 static VALUE rb_cNode = Qnil;

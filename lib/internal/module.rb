@@ -1,1 +1,1 @@
-require 'internal/module/module.so'
+require 'internal/module/module'

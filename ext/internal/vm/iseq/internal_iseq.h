@@ -1,5 +1,5 @@
-#ifndef ruby_internal_vm__iseq_h_
-#define ruby_internal_vm__iseq_h_
+#ifndef ruby_internal_vm__internal_iseq_h_
+#define ruby_internal_vm__internal_iseq_h_
 
 #include <ruby.h>
 

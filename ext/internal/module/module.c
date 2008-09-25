@@ -316,10 +316,22 @@ static VALUE module_name_proc = Qnil;
 
 #ifdef RUBY_VM
 
+#if defined(HAVE_VM_GET_RUBY_LEVEL_NEXT_CFP)
+/* Declared and defined in vm.c */
+rb_control_frame_t *
+vm_get_ruby_level_next_cfp(rb_thread_t *th, rb_control_frame_t *cfp);
+#endif
+
 static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
 {
   rb_thread_t * th = GET_THREAD();
+#if defined(HAVE_VM_GET_RUBY_LEVEL_NEXT_CFP)
+  rb_control_frame_t * cfp = vm_get_ruby_level_next_cfp(th, th->cfp);
+#elif defined(HAVE_VM_GET_RUBY_LEVEL_CFP)
   rb_control_frame_t * cfp = vm_get_ruby_level_cfp(th, th->cfp);
+#else
+#error No function to get cfp
+#endif
   iseqdat->cref_stack = NEW_BLOCK(klass);
   iseqdat->cref_stack->nd_visi = noex;
   iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */

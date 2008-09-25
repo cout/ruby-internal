@@ -56,10 +56,20 @@ void Init_thread(void)
   /* For rdoc: rb_cThread = rb_define_class("Thread", rb_cObject); */
 
 #ifdef RUBY_VM
+  VALUE rb_cRubyVM;
+
   rb_require("internal/vm/control_frame");
 
-  /* For rdoc: rb_cVM = rb_define_class("VM", rb_cObject); */
-  rb_cVmControlFrame = rb_const_get(rb_cVM, rb_intern("ControlFrame"));
+  if(!rb_const_defined(rb_cObject, rb_intern("RubyVM")))
+  {
+    rb_define_const(
+        rb_cObject,
+        "RubyVM",
+        rb_const_get(rb_cObject, rb_intern("VM")));
+  }
+
+  rb_cRubyVM = rb_define_class("RubyVM", rb_cObject);
+  rb_cVmControlFrame = rb_const_get(rb_cRubyVM, rb_intern("ControlFrame"));
 
   rb_define_method(rb_cThread, "cfp", thread_cfp, 0);
 #endif
