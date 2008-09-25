@@ -1,6 +1,7 @@
 require 'internal/method'
 require 'internal/node'
 require 'internal/node/as_expression'
+require 'internal/vm/bytedecoder'
 
 module MethodSig
   class Argument
