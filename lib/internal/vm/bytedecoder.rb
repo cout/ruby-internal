@@ -495,7 +495,7 @@ class RubyVM
     }
 
     if defined?(UNDEF)
-      PREFIX_OPCODES['UNDEF'] = :undef
+      PREFIX_OPCODES[UNDEF] = :undef
     end
 
     PREFIX_OPERATORS = PREFIX_OPCODES.values + [ :~, :+@, :-@ ]
