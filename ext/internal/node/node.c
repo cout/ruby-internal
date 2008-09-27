@@ -9,11 +9,9 @@
 
 #ifdef RUBY_VM
 #include <ruby/signal.h>
-#include <ruby/node.h>
 #include <ruby/st.h>
 #else
 #include <rubysig.h>
-#include <node.h>
 #include <st.h>
 #endif
 

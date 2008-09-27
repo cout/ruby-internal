@@ -17,17 +17,11 @@ end
 
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 
-if ruby_version_code >= 190
-  have_type('st_data_t', [ 'ruby.h', 'ruby/st.h'])
-else
-  have_type('st_data_t', [ 'ruby.h', 'st.h' ])
-end
+have_type('st_data_t', [ 'ruby.h', 'st.h' ]) or
+have_type('st_data_t', [ 'ruby.h', 'ruby/st.h'])
 
-if ruby_version_code >= 190
-  have_const('NODE_ALLOCA', [ 'ruby.h', 'ruby/node.h' ])
-else
-  have_const('NODE_ALLOCA', [ 'ruby.h', 'node.h' ])
-end
+have_const('NODE_ALLOCA', [ 'ruby.h', 'node.h' ]) or
+have_const('NODE_ALLOCA', [ 'ruby.h', 'ruby/node.h' ])
 
 have_func('rb_protect_inspect', 'ruby.h')
 have_func('rb_obj_respond_to', 'ruby.h')
@@ -39,6 +33,8 @@ have_header('iseq.h')
 
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 $CPPFLAGS << " -DRUBY_VERSION_CODE=#{ruby_version_code}"
+
+have_header('ruby/node.h') or have_header('node.h')
 
 create_ruby_internal_makefile 'internal/node/node'
 

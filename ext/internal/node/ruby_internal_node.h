@@ -3,10 +3,10 @@
 
 #include <ruby.h>
 
-#ifdef RUBY_VM
-#include "ruby/node.h"
-#else
+#if defined(HAVE_NODE_H)
 #include "node.h"
+#elif defined(HAVE_RUBY_NODE_H)
+#include "ruby/node.h"
 #endif
 
 VALUE wrap_node(NODE * n);

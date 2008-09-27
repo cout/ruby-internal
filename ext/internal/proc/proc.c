@@ -150,6 +150,7 @@ static VALUE proc_dump(VALUE self, VALUE limit)
 
 static VALUE create_proc(VALUE klass, VALUE binding, rb_iseq_t * iseq)
 {
+  printf("creating proc with iseq %p\n", iseq);
   VALUE new_proc = rb_funcall(
       rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
   rb_proc_t * p;

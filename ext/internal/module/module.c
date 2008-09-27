@@ -2,12 +2,10 @@
 #include "internal/node/ruby_internal_node.h"
 
 #ifdef RUBY_VM
-#include <ruby/node.h>
 #include <ruby/signal.h>
 #include "vm_core.h"
 #include "eval_intern.h"
 #else
-#include <node.h>
 #include <rubysig.h>
 #endif
 

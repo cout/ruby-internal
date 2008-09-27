@@ -1,10 +1,6 @@
 #include <ruby.h>
 
-#ifdef RUBY_VM
-#include <ruby/node.h>
-#else
-#include <node.h>
-#endif
+#include "internal/node/ruby_internal_node.h"
 
 void Init_noex(void)
 {

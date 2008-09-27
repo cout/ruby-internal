@@ -48,18 +48,16 @@ else
   end
 
   version_h = File.join(ruby_source_path, 'version.h')
-  if not File.exist?(ruby_source_path) or
-     not File.directory?(ruby_source_path) or
-     not File.exist?(ruby_h) then
-     $stderr.puts "ERROR: Could not find version.h at #{ruby_source_path}"
+  if not File.exist?(ruby_h) then
+     $stderr.puts "ERROR: Could not find version.h at #{version_h}"
      exit 1
   end
 
   node_h = File.join(ruby_include_path, 'node.h')
-  if not File.exist?(ruby_include_path) or
-     not File.directory?(ruby_include_path) or
-     not File.exist?(node_h) then
-     $stderr.puts "ERROR: Could not find node.h at #{ruby_include_path}"
+  node_h_alt = File.join(ruby_source_path, 'node.h')
+  if not File.exist?(node_h) and
+     not File.exist?(node_h_alt) then
+     $stderr.puts "ERROR: Could not find node.h at #{node_h} or #{node_h_alt}"
      exit 1
   end
 
