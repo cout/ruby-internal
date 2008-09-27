@@ -71,8 +71,7 @@ class TC_Dump_Proc < Test::Unit::TestCase
   def initialize(test_method_name)
     # TODO: This seems to be the only way to get tests defined with #
     # define_method to run on 1.8.1 and earlier.
-    @method_name = test_method_name
-    @test_passed = true
+    catch(:invalid_test) { super(test_method_name) }
   end
 
   extend Test::Unit::Assertions
