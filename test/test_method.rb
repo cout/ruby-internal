@@ -39,8 +39,7 @@ class TC_Method < Test::Unit::TestCase
   def test_method_node
     m = method(:foo)
     n = m.body
-    if Object.const_defined?(:VM) and
-       VM.const_defined?(:InstructionSequence) then
+    if defined?(RubyVM::InstructionSequence) then
       # YARV
       assert_equal Node::METHOD, n.class
     else

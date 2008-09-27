@@ -169,7 +169,7 @@ class TC_As_Code < Test::Unit::TestCase
   end
 
   def test_proc_empty_args_as_code
-    if not defined?(VM) then
+    if not defined?(RubyVM) then
       # indistinguishable from proc { } on YARV
       p = proc { || }
       assert_equal "proc do ||\nend", p.as_code

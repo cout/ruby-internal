@@ -34,7 +34,7 @@ class TC_Node < Test::Unit::TestCase
     assert_equal(p.call, p2.call)
   end
 
-  if not Object.const_defined?(:VM) then
+  if not defined?(RubyVM) then
     define_method(:test_proc_body) do
       p = proc { 1 + 1 }
       assert_equal p.call, p.body.eval(self)

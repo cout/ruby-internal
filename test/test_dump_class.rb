@@ -86,7 +86,7 @@ class TC_Dump_Class < Test::Unit::TestCase
       d = Marshal.dump(TestClass)
 
       # Thread critical should have been reset by the class restorer
-      if not defined?(VM) then
+      if not defined?(RubyVM) then
         assert_equal false, Thread.critical
       end
 

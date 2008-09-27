@@ -137,7 +137,7 @@ class TC_As_Expression < Test::Unit::TestCase
   end
 
   def test_proc_empty_args_as_expression
-    if not defined?(VM) then
+    if not defined?(RubyVM) then
       # indistinguishable from proc { } on YARV
       p = proc { || }
       assert_equal 'proc { || }', p.as_expression
