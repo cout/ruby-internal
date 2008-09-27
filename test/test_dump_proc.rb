@@ -78,9 +78,6 @@ class TC_Dump_Proc < Test::Unit::TestCase
 
   Proc_Node_Samples.each do |node_name, sample_code|
     p = proc {
-      puts "///"
-      puts sample_code
-      puts "\\\\\\"
       p_orig = eval <<-END_DEF
         proc {
           #{sample_code}
@@ -92,15 +89,6 @@ class TC_Dump_Proc < Test::Unit::TestCase
       #puts "loading"
       u = Marshal.load(d)
       p_new = u.bind(binding)
-
-      puts "*** ORIG ***"
-      p p_orig.body
-      p p_orig
-      puts p_orig.body.disasm
-      puts "*** NEW ***"
-      p p_new.body
-      p p_new
-      puts p_new.body.disasm
 
       orig_result = nil
       orig_exc = nil
