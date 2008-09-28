@@ -464,10 +464,15 @@ iseq_check(VALUE val)
 
 static VALUE create_proc(VALUE klass, VALUE binding, rb_iseq_t * iseq)
 { 
-  /* Calling eval will do a security check */
-  VALUE new_proc = rb_funcall(
-      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+  VALUE new_proc;
   rb_proc_t * p;
+
+  if(binding == Qnil)
+  {
+    binding = rb_binding_new();
+  }
+  new_proc = rb_funcall(
+      rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
   GetProcPtr(new_proc, p);
   p->block.iseq = iseq;
   RBASIC(new_proc)->klass = klass;
