@@ -129,7 +129,7 @@ void Init_control_frame(void)
         rb_const_get(rb_cObject, rb_intern("VM")));
   }
 
-  rb_cRubyVM = rb_define_class("VM", rb_cObject);
+  rb_cRubyVM = rb_define_class("RubyVM", rb_cObject);
   rb_cVmControlFrame = rb_define_class_under(rb_cRubyVM, "ControlFrame", rb_cObject);
   rb_define_method(rb_cVmControlFrame, "iseq", control_frame_iseq, 0);
   rb_define_method(rb_cVmControlFrame, "self", control_frame_self, 0);
