@@ -50,16 +50,13 @@ static VALUE thread_cfp(VALUE self)
   }
 }
 
-int ruby_exec_tag()
+/* For Ludicrous */
+void * ruby_current_thread_jmp_buf()
 {
-  /* TODO: EXEC_TAG not available on 1.8.x */
-  rb_thread_t * const _th = GET_THREAD();
-  return EXEC_TAG();
-}
-
-VALUE ruby_f_exec_tag(VALUE self)
-{
-  return INT2NUM(ruby_exec_tag());
+  /* jmp_buf is guaranteed to be an array type that can decay to a
+   * pointer */
+  rb_thread_t * const th = GET_THREAD();
+  return th->tag->buf;
 }
 
 #endif
@@ -85,7 +82,6 @@ void Init_thread(void)
   rb_cVmControlFrame = rb_const_get(rb_cRubyVM, rb_intern("ControlFrame"));
 
   rb_define_method(rb_cThread, "cfp", thread_cfp, 0);
-  rb_define_method(rb_cThread, "exec_tag", ruby_f_exec_tag, 0);
 #endif
 }
 
