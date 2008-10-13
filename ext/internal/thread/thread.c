@@ -59,6 +59,20 @@ void * ruby_current_thread_jmp_buf()
   return th->tag->buf;
 }
 
+/* For Ludicrous */
+void * ruby_current_thread_tag(void * tag)
+{
+  rb_thread_t * const th = GET_THREAD();
+  return th->tag;
+}
+
+/* For Ludicrous */
+void ruby_set_current_thread_tag(void * tag)
+{
+  rb_thread_t * const th = GET_THREAD();
+  th->tag = tag;
+}
+
 #endif
 
 void Init_thread(void)
