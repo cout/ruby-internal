@@ -1,0 +1,22 @@
+#include <ruby.h>
+
+#ifdef RUBY_VM
+#include "eval_intern.h"
+#endif
+
+#ruby <<END
+  $: << '../..'
+  require 'ruby_source_dir'
+  eval_c_location = "#{RUBY_SOURCE_DIR}/eval.c"
+
+  File.open(eval_c_location) do |eval_c|
+    while (line = eval_c.gets) != nil do
+      case line
+      when /^#define TAG_/
+        puts line
+      end
+    end
+  end
+
+  nil
+END
