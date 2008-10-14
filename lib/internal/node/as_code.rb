@@ -128,6 +128,7 @@ class Node
   end
 
   define_code(:ENSURE) do |node, indent, *args|
+    begin_ensure = args[0] || false
     Node.begin_end(indent, begin_ensure) do |s, indent_, begin_ensure|
       if node.head then
         s << "#{node.head.as_code(indent_)}\n"
@@ -138,6 +139,7 @@ class Node
   end
 
   define_code(:RESCUE) do |node, indent, *args|
+    begin_rescue = args[0] || false
     Node.begin_end(indent, begin_rescue) do |s, indent_, begin_rescue|
       if node.head then
         if begin_rescue then
