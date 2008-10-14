@@ -37,6 +37,13 @@ def run_tests_with_test_unit
     end
   end
 
+  verbose = nil
+  begin
+    verbose = Test::Unit::UI.const_get(:VERBOSE)
+  rescue NameError
+    verbose = Test::Unit::UI::Console::TestRunner.const_get(:VERBOSE)
+  end
+
   result = Test::Unit::UI::Console::TestRunner.run(
       suite,
       verbose)
@@ -56,13 +63,6 @@ def run_tests
   tests = Dir['test/test_*.rb']
   tests.each do |test|
     load test
-  end
-
-  verbose = nil
-  begin
-    verbose = Test::Unit::UI.const_get(:VERBOSE)
-  rescue NameError
-    verbose = Test::Unit::UI::Console::TestRunner.const_get(:VERBOSE)
   end
 
   if defined?(Mini::Test) then
