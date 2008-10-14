@@ -1,7 +1,10 @@
 require 'internal/method'
 require 'internal/node'
 require 'internal/node/as_expression'
+
+if defined?(RubyVM) then
 require 'internal/vm/bytedecoder'
+end
 
 module MethodSig
   class Argument
