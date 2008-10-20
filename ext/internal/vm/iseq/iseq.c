@@ -85,6 +85,24 @@ static VALUE iseq_parent_iseq(VALUE self)
 }
 
 /* call-seq:
+ *   iseq.local_iseq => VM::InstructionSequence or nil
+ *
+ * Returns the instruction sequence that contains the local variables.
+ */
+static VALUE iseq_local_iseq(VALUE self)
+{
+  rb_iseq_t * iseqdat = iseq_check(self);
+  rb_iseq_t * local_iseq = iseqdat->local_iseq;
+  if(local_iseq)
+  {
+    return local_iseq->self;
+  }
+  else
+  {
+    return Qnil;
+  }
+}
+/* call-seq:
  *   iseq.name => String
  *
  * Returns the name of the instruction sequence.
@@ -472,6 +490,7 @@ void Init_iseq(void)
   /* For rdoc: rb_cISeq = rb_define_class_under(rb_cRubyVM, "InstructionSequence", rb_cObject) */
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
   rb_define_method(rb_cISeq, "parent_iseq", iseq_parent_iseq, 0);
+  rb_define_method(rb_cISeq, "local_iseq", iseq_local_iseq, 0);
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
   rb_define_method(rb_cISeq, "filename", iseq_filename, 0);
   rb_define_method(rb_cISeq, "local_table", iseq_local_table, 0);
