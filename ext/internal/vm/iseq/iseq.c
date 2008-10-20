@@ -61,8 +61,27 @@ iseq_check(VALUE val)
  */
 static VALUE iseq_self(VALUE self)
 {
-  rb_iseq_t *iseqdat = iseq_check(self);
+  rb_iseq_t * iseqdat = iseq_check(self);
   return iseqdat->self;
+}
+
+/* call-seq:
+ *   iseq.parent_iseq => VM::InstructionSequence or nil
+ *
+ * Returns the parent instruction sequence.
+ */
+static VALUE iseq_parent_iseq(VALUE self)
+{
+  rb_iseq_t * iseqdat = iseq_check(self);
+  rb_iseq_t * parent = iseqdat->parent_iseq;
+  if(parent)
+  {
+    return parent->self;
+  }
+  else
+  {
+    return Qnil;
+  }
 }
 
 /* call-seq:
@@ -452,6 +471,7 @@ void Init_iseq(void)
 
   /* For rdoc: rb_cISeq = rb_define_class_under(rb_cRubyVM, "InstructionSequence", rb_cObject) */
   rb_define_method(rb_cISeq, "self", iseq_self, 0);
+  rb_define_method(rb_cISeq, "parent_iseq", iseq_parent_iseq, 0);
   rb_define_method(rb_cISeq, "name", iseq_name, 0);
   rb_define_method(rb_cISeq, "filename", iseq_filename, 0);
   rb_define_method(rb_cISeq, "local_table", iseq_local_table, 0);
