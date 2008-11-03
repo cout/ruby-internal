@@ -1121,11 +1121,6 @@ void Init_node(void)
       "$ruby_eval_tree",
       ruby_eval_tree_getter,
       ruby_eval_tree_setter);
-
-  rb_define_virtual_variable(
-      "$ruby_cref",
-      ruby_cref_getter,
-      ruby_cref_setter);
 #endif
 
 #ifdef HAVE_RUBY_TOP_CREF
@@ -1133,6 +1128,13 @@ void Init_node(void)
       "$ruby_top_cref",
       ruby_top_cref_getter,
       ruby_top_cref_setter);
+#endif
+
+#ifdef HAVE_RUBY_CREF
+  rb_define_virtual_variable(
+      "$ruby_cref",
+      ruby_cref_getter,
+      ruby_cref_setter);
 #endif
 }
 
