@@ -14,6 +14,14 @@ static VALUE rb_cMethod = Qnil;
 static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RCLASS(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RCLASS(a)->ptr
+#endif
+
 static VALUE rb_mMarshal;
 
 static VALUE marshal_dump(VALUE obj, VALUE limit)
