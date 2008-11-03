@@ -15,11 +15,11 @@ static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
 #ifndef RARRAY_LEN
-#define RARRAY_LEN(a) RCLASS(a)->len
+#define RARRAY_LEN(a) RARRAY(a)->len
 #endif
 
 #ifndef RARRAY_PTR
-#define RARRAY_PTR(a) RCLASS(a)->ptr
+#define RARRAY_PTR(a) RARRAY(a)->ptr
 #endif
 
 static VALUE rb_mMarshal;
