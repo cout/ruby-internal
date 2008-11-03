@@ -36,7 +36,7 @@ have_func('rb_is_local_id', 'ruby.h')
 have_func('rb_source_filename', 'ruby.h')
 
 checking_for("ruby_top_cref") do
-  if try_compile(<<-END) then
+  if try_link(<<-END) then
 int main() { return 0; }
 void * ruby_top_cref;
 int t() { void * v = ruby_top_cref; }
@@ -46,7 +46,7 @@ int t() { void * v = ruby_top_cref; }
 end
 
 checking_for("ruby_cref") do
-  if try_compile(<<-END) then
+  if try_link(<<-END) then
 int main() { return 0; }
 void * ruby_cref;
 int t() { void * v = ruby_cref; }
