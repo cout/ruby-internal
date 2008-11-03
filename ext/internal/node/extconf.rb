@@ -37,9 +37,9 @@ have_func('rb_source_filename', 'ruby.h')
 
 checking_for("ruby_top_cref") do
   if try_link(<<-END) then
-int main() { return 0; }
-void * ruby_top_cref;
-int t() { void * v = ruby_top_cref; }
+#include <stdio.h>
+extern void * ruby_top_cref;
+int main() { printf("%p\\n", ruby_top_cref); return 0; }
   END
     $defs.push "-DHAVE_RUBY_TOP_CREF"
   end
@@ -47,9 +47,9 @@ end
 
 checking_for("ruby_cref") do
   if try_link(<<-END) then
-int main() { return 0; }
-void * ruby_cref;
-int t() { void * v = ruby_cref; }
+#include <stdio.h>
+extern void * ruby_cref;
+int main() { printf("%p\\n", ruby_cref); return 0; }
   END
     $defs.push "-DHAVE_RUBY_CREF"
   end
