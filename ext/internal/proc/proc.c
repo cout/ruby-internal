@@ -10,6 +10,14 @@
 #include "iseq.h"
 #endif
 
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RARRAY(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RARRAY(a)->ptr
+#endif
+
 static VALUE rb_cUnboundProc = Qnil;
 
 static VALUE rb_mMarshal;
