@@ -3,10 +3,12 @@
 
 #ifdef RUBY_VM
 #include <ruby/signal.h>
+#include <ruby/st.h>
 #include "vm_core.h"
 #include "eval_intern.h"
 #else
 #include <rubysig.h>
+#include <st.h>
 #endif
 
 #ifndef RCLASS_SUPER
@@ -19,6 +21,14 @@
 
 #ifndef RCLASS_M_TBL
 #define RCLASS_M_TBL(c) RCLASS(c)->m_tbl
+#endif
+
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RCLASS(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RCLASS(a)->ptr
 #endif
 
 static VALUE rb_cNode;
