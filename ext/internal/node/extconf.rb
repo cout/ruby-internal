@@ -6,6 +6,12 @@ module Kernel
     alias_method :try_const, :try_constant
   end
 
+  if not method_defined?(:checking_message)
+    def checking_message(checking_for, headers = nil, opt = "")
+      return "checking for #{checking_for}"
+    end
+  end
+
   if not method_defined?(:have_const)
     def have_const(const, headers = nil, opt = "", &b)
       checking_for checking_message([*const].compact.join(' '), headers, opt) do
