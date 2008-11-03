@@ -1,14 +1,5 @@
 Makefile
-evalinfo.h
-global_entry.h
 mkmf.log
-nodeinfo.c
-nodeinfo.h
-node_type_descrip.c
-classpath.c
-classpath.h
-insns_info.c
-insns_info.h
 *.o
 *.so
 core
