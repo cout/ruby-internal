@@ -31,7 +31,6 @@ def run_tests_with_test_unit
 
   suite = Test::Unit::TestSuite.new("RubyInternal")
   tests.each do |test|
-    p test
     test.suite.tests.each do |testcase|
       suite << testcase
     end
