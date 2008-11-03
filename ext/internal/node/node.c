@@ -961,7 +961,9 @@ static void ruby_eval_tree_setter(VALUE val, ID id, void * data, struct global_e
 {
   rb_raise(rb_eNotImpError, "ruby_eval_tree_setter() not implemented");
 }
+#endif
 
+#ifdef HAVE_RUBY_TOP_CREF
 static VALUE ruby_top_cref_getter(ID id, void * data, struct global_entry * entry)
 {
   if(rb_safe_level() >= 4)
@@ -989,7 +991,9 @@ static void ruby_top_cref_setter(VALUE val, ID id, void * data, struct global_en
 
   ruby_top_cref = unwrap_node(val);
 }
+#endif
 
+#ifdef HAVE_RUBY_CREF
 static VALUE ruby_cref_getter(ID id, void * data, struct global_entry * entry)
 {
   if(rb_safe_level() >= 4)
@@ -998,9 +1002,9 @@ static VALUE ruby_cref_getter(ID id, void * data, struct global_entry * entry)
     rb_raise(rb_eSecurityError, "Insecure: can't get current cref");
   }
 
-  if(ruby_eval_tree)
+  if(ruby_cref)
   {
-    return wrap_node(ruby_eval_tree);
+    return wrap_node(ruby_cref);
   }
   else
   {
@@ -1017,7 +1021,6 @@ static void ruby_cref_setter(VALUE val, ID id, void * data, struct global_entry 
 
   ruby_cref = unwrap_node(val);
 }
-
 #endif
 
 /* ---------------------------------------------------------------------
@@ -1120,14 +1123,16 @@ void Init_node(void)
       ruby_eval_tree_setter);
 
   rb_define_virtual_variable(
-      "$ruby_top_cref",
-      ruby_top_cref_getter,
-      ruby_top_cref_setter);
-
-  rb_define_virtual_variable(
       "$ruby_cref",
       ruby_cref_getter,
       ruby_cref_setter);
+#endif
+
+#ifdef HAVE_RUBY_TOP_CREF
+  rb_define_virtual_variable(
+      "$ruby_top_cref",
+      ruby_top_cref_getter,
+      ruby_top_cref_setter);
 #endif
 }
 

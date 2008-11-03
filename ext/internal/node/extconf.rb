@@ -8,7 +8,7 @@ module Kernel
 
   if not method_defined?(:checking_message)
     def checking_message(checking_for, headers = nil, opt = "")
-      return "checking for #{checking_for}"
+      return checking_for
     end
   end
 
@@ -34,6 +34,26 @@ have_func('rb_obj_respond_to', 'ruby.h')
 have_func('rb_define_alloc_func', 'ruby.h')
 have_func('rb_is_local_id', 'ruby.h')
 have_func('rb_source_filename', 'ruby.h')
+
+checking_for("ruby_top_cref") do
+  if try_compile(<<-END) then
+int main() { return 0; }
+void * ruby_top_cref;
+int t() { void * v = ruby_top_cref; }
+  END
+    $defs.push "-DHAVE_RUBY_TOP_CREF"
+  end
+end
+
+checking_for("ruby_cref") do
+  if try_compile(<<-END) then
+int main() { return 0; }
+void * ruby_cref;
+int t() { void * v = ruby_cref; }
+  END
+    $defs.push "-DHAVE_RUBY_CREF"
+  end
+end
 
 have_header('iseq.h')
 
