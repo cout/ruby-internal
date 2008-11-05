@@ -65,7 +65,17 @@ def recursively_generate_cached_rpps(input_dir, output_dir)
   end
 end
 
+$stdout.puts "Generating cached files for ruby-#{RUBY_VERSION}"
+
 recursively_generate_cached_rpps(
     File.join(basedir, 'internal'),
     File.join(output_dir, 'internal'))
+
+ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
+if ruby_version_code >= 190 then
+  yarv_header_output_dir =
+    File.join(output_dir, 'internal', 'yarv-headers')
+  FileUtils.mkdir_p(yarv_header_output_dir)
+  FileUtils.cp(Dir["#{RUBY_SOURCE_DIR}/*.h"], yarv_header_output_dir)
+end
 

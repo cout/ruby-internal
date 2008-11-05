@@ -37,6 +37,13 @@ if ruby_source_path == '' then
 
   @config.config_opt << "--enable-cached-files"
 
+  # If running on YARV, copy the cached yarv-headers directory
+  ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
+  if ruby_version_code >= 190 then
+    cached_dir = File.join('cached', "ruby-#{RUBY_VERSION}")
+    FileUtils.cp(Dir["ext/#{cached_dir}/internal/yarv-headers/*"], "ext/internal/yarv-headers")
+  end
+
 else
 
   ruby_h = File.join(ruby_source_path, 'eval.c')

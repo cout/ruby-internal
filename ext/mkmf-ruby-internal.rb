@@ -98,10 +98,12 @@ end
 base_dir = File.dirname(__FILE__)
 $CPPFLAGS << " -I#{base_dir}"
 
-# Include the ruby source directory in the source if we are using 1.9
-# TODO: This means we can't build a gem for 1.9 (yet)
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 if ruby_version_code >= 190 then
-  $CPPFLAGS << " -I#{RUBY_SOURCE_DIR.quote} "
+  if USING_CACHED_FILES then
+    $CPPFLAGS << " -I#{base_dir}/internal/yarv-headers"
+  else
+    $CPPFLAGS << " -I#{RUBY_SOURCE_DIR}"
+  end
 end
 
