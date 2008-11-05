@@ -41,7 +41,9 @@ if ruby_source_path == '' then
   ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
   if ruby_version_code >= 190 then
     cached_dir = File.join('cached', "ruby-#{RUBY_VERSION}")
-    FileUtils.cp(Dir["ext/#{cached_dir}/internal/yarv-headers/*"], "ext/internal/yarv-headers")
+    dest_dir = "ext/internal/yarv-headers"
+    FileUtils.mkdir_p(dest_dir)
+    FileUtils.cp(Dir["ext/#{cached_dir}/internal/yarv-headers/*"], dest_dir)
   end
 
 else
