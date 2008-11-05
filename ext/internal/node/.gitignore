@@ -1,1 +1,7 @@
+classpath.c
+classpath.h
+global_entry.h
+node_type_descrip.c
+nodeinfo.c
+nodeinfo.h
 block.h
