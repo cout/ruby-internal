@@ -2,6 +2,14 @@
 #include "insns_info.h"
 #include <ruby.h>
 
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RARRAY(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RARRAY(a)->ptr
+#endif
+
 #ifdef RUBY_VM
 
 static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
@@ -19,8 +27,8 @@ static VALUE instruction_operands(VALUE self)
 VALUE allocate_instruction(int instruction, VALUE args)
 {
   return rb_class_new_instance(
-      RARRAY(args)->len,
-      RARRAY(args)->ptr,
+      RARRAY_LEN(args),
+      RARRAY_PTR(args),
       instruction_class[instruction]);
 }
 
