@@ -2,7 +2,6 @@
 #include "internal/node/ruby_internal_node.h"
 
 #ifdef RUBY_VM
-#include <ruby/signal.h>
 #include <ruby/st.h>
 #include "vm_core.h"
 #include "eval_intern.h"
