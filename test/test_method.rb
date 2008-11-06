@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'test/unit/ui/console/testrunner'
 require 'rbconfig'
 
 dir = File.dirname(__FILE__)

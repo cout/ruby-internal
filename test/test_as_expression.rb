@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'test/unit/ui/console/testrunner'
 require 'timeout'
 
 dir = File.dirname(__FILE__)
@@ -208,6 +207,8 @@ class TC_As_Expression < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
+  require 'test/unit/ui/console/testrunner'
+
   if Test::Unit.const_defined?(:AutoRunner) then
     exit Test::Unit::AutoRunner.run
   else

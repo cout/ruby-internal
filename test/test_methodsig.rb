@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'test/unit/ui/console/testrunner'
 
 dir = File.dirname(__FILE__)
 $:.unshift(dir) if not $:.include?(dir)

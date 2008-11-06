@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'test/unit/ui/console/testrunner'
 require 'rbconfig'
 
 dir = File.dirname(__FILE__)
@@ -166,6 +165,8 @@ class TC_Dump_Class < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
+  require 'test/unit/ui/console/testrunner'
+
   if Test::Unit.const_defined?(:AutoRunner) then
     exit Test::Unit::AutoRunner.run
   else
