@@ -15,6 +15,14 @@
 #include "iseq.h"
 #endif
 
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RARRAY(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RARRAY(a)->ptr
+#endif
+
 // Defined but not declared by ruby
 VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
 
@@ -361,9 +369,9 @@ void convert_modules_to_placeholders(VALUE array)
 {
   int j;
 
-  for(j = 0; j < RARRAY(array)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(array); ++j)
   {
-    VALUE v = RARRAY(array)->ptr[j];
+    VALUE v = RARRAY_PTR(array)[j];
     if(TYPE(v) == T_ARRAY)
     {
       convert_modules_to_placeholders(v);
@@ -373,7 +381,7 @@ void convert_modules_to_placeholders(VALUE array)
       VALUE p = rb_class_new_instance(0, 0, rb_cModulePlaceholder);
       VALUE sym = rb_mod_name(v);
       rb_iv_set(p, "name", sym);
-      RARRAY(array)->ptr[j] = p;
+      RARRAY_PTR(array)[j] = p;
     }
   }
 }
@@ -382,9 +390,9 @@ void convert_placeholders_to_modules(VALUE array)
 {
   int j;
 
-  for(j = 0; j < RARRAY(array)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(array); ++j)
   {
-    VALUE v = RARRAY(array)->ptr[j];
+    VALUE v = RARRAY_PTR(array)[j];
     if(TYPE(v) == T_ARRAY)
     {
       convert_placeholders_to_modules(v);
@@ -393,7 +401,7 @@ void convert_placeholders_to_modules(VALUE array)
     {
       VALUE sym = rb_ivar_get(v, rb_intern("name"));
       VALUE klass = lookup_module(sym);
-      RARRAY(array)->ptr[j] = klass;
+      RARRAY_PTR(array)[j] = klass;
     }
   }
 }
