@@ -8,7 +8,6 @@
 #include <ruby.h>
 
 #ifdef RUBY_VM
-#include <ruby/signal.h>
 #include <ruby/st.h>
 #else
 #include <rubysig.h>
