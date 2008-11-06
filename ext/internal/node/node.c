@@ -24,6 +24,14 @@
 #include "iseq.h"
 #endif
 
+#ifndef RARRAY_LEN
+#define RARRAY_LEN(a) RARRAY(a)->len
+#endif
+
+#ifndef RARRAY_PTR
+#define RARRAY_PTR(a) RARRAY(a)->ptr
+#endif
+
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
@@ -315,9 +323,9 @@ static VALUE node_inspect_protect(VALUE node, VALUE dummy, int recur)
   int j;
 
 
-  for(j = 0; j < RARRAY(members)->len; ++j)
+  for(j = 0; j < RARRAY_LEN(members); ++j)
   {
-    VALUE name = RARRAY(members)->ptr[j];
+    VALUE name = RARRAY_PTR(members)[j];
     VALUE value = node_bracket(node, name);
     rb_str_append(str, name);
     rb_str_cat2(str, "=");
@@ -329,7 +337,7 @@ static VALUE node_inspect_protect(VALUE node, VALUE dummy, int recur)
     {
       rb_str_append(str, rb_funcall(value, rb_intern("inspect"), 0));
     }
-    if(j != RARRAY(members)->len - 1)
+    if(j != RARRAY_LEN(members) - 1)
     {
       rb_str_cat2(str, ", ");
     }
