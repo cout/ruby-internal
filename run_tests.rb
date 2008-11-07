@@ -1,7 +1,7 @@
 $mini_unit_exit_code = 0
 
 def disable_mini_unit_auto_run
-  Mini::Test.class_eval do
+  MiniTest::Unit.class_eval do
     alias :run_ :run
     def run(*args)
       return $mini_unit_exit_code
@@ -11,7 +11,7 @@ end
 
 def run_tests_with_mini_unit
   begin
-    test = Mini::Test.new
+    test = MiniTest::Unit.new
     args = ARGV.dup
     args << '-v'
     $mini_unit_exit_code = test.run(args)
@@ -35,6 +35,8 @@ def run_tests_with_test_unit
       suite << testcase
     end
   end
+
+  require 'test/unit/ui/console/testrunner'
 
   verbose = nil
   begin
@@ -64,7 +66,7 @@ def run_tests
     load test
   end
 
-  if defined?(Mini::Test) then
+  if defined?(MiniTest) then
     run_tests_with_mini_unit
   else
     run_tests_with_test_unit
