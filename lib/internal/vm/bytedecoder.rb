@@ -785,15 +785,14 @@ class RubyVM
   end
 
   class InstructionSequence
-    def bytedecode(env, start_pc=nil, end_pc=nil)
-      self.each do |instruction|
+    def bytedecode(env, start_pc=0, end_pc=nil, &block)
+      self.each(start_pc) do |instruction|
         # p instruction
-        if start_pc and env.pc >= start_pc then
-          instruction.bytedecode(env)
-        end
+        instruction.bytedecode(env)
         # p env.stack
         env.advance(instruction.length)
         break if end_pc and env.pc >= end_pc
+        break if block and block.call(instruction)
       end
     end
 

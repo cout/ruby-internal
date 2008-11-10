@@ -9,15 +9,13 @@ end
 module MethodSig
   class Argument
     attr_reader :name
-    attr_reader :default
-    attr_reader :node_or_iseq_for_default
-
-    def optional?
-      return (@default != nil) || @is_rest || @is_block
-    end
 
     def required?
       return !optional?
+    end
+
+    def optional?
+      return false
     end
 
     def rest?
@@ -28,10 +26,8 @@ module MethodSig
       return @is_block
     end
 
-    def initialize(name, default, node_or_iseq_for_default, is_rest, is_block)
+    def initialize(name, is_rest, is_block)
       @name = name
-      @default = default
-      @node_or_iseq_for_default = node_or_iseq_for_default
       @is_rest = is_rest
       @is_block = is_block
     end
@@ -44,10 +40,61 @@ module MethodSig
       end
 
       if @default then
-        suffix = "=#{@default}"
+        suffix = "=#{default()}"
       end
 
       return "#{prefix}#{@name}#{suffix}"
+    end
+  end
+
+  class OptionalArgument < Argument
+    def optional?
+      return true
+    end
+  end
+
+  class NodeOptionalArgument < OptionalArgument
+    attr_reader :node_for_default
+    attr_reader :default
+
+    def initialize(name, default, node_for_default, is_rest, is_block)
+      super(name, is_rest, is_block)
+      @default = default
+      @node_for_default = node_for_default
+    end
+  end
+
+  class YarvOptionalArgument < OptionalArgument
+    attr_reader :iseq
+    attr_reader :pc_start
+    attr_reader :local_idx
+
+    def initialize(name, iseq, pc_start, local_idx, is_rest, is_block)
+      super(name, is_rest, is_block)
+      @iseq = iseq
+      @pc_start = pc_start
+      @local_idx = local_idx
+      @default = nil
+    end
+
+    def inspect
+      default()
+      super
+    end
+
+    def default
+      return @default if @default
+
+      env = Nodewrap::ByteDecoder::Environment.new(@iseq.local_table())
+      local_table_idx = @iseq.local_table.size - @local_idx + 1
+      @iseq.bytedecode(env, @pc_start) do |instr|
+        RubyVM::Instruction::SETLOCAL === instr &&
+        instr.operands[0] == local_table_idx
+      end
+      expressions = env.expressions + env.stack
+
+      @default = expressions[-1].rhs.to_s
+      return @default
     end
   end
 
@@ -93,7 +140,7 @@ module MethodSig
 
     args = {}
     names.each do |name|
-      args[name] = Argument.new(name, nil, nil, false, false)
+      args[name] = Argument.new(name, false, false)
     end
 
     # Optional args
@@ -103,13 +150,13 @@ module MethodSig
     # Rest arg
     if self.rest_arg then
       rest_name = names[rest_arg]
-      args[rest_name] = Argument.new(rest_name, nil, nil, true, false)
+      args[rest_name] = Argument.new(rest_name, true, false)
     end
 
     # Block arg
     if block_arg then
       block_name = names[block_arg]
-      args[block_name] = Argument.new(block_name, nil, nil, false, true)
+      args[block_name] = Argument.new(block_name, false, true)
     end
 
     return args
@@ -249,7 +296,8 @@ class Node
       while opt do
         head = opt.head
         if head.class == Node::LASGN then
-          args[head.vid] = Argument.new(head.vid, head.value.as_expression, head.value, false, false)
+          args[head.vid] = NodeOptionalArgument.new(
+              head.vid, head.value.as_expression, head.value, false, false)
         else
           raise "Unexpected node type: #{opt.class}"
         end
@@ -327,12 +375,6 @@ class Node
     end
 
     def set_optional_args(args, args_node, names)
-      iseq = self.body
-      opt_pc = iseq.opt_pc
-      env = Nodewrap::ByteDecoder::Environment.new(iseq.local_table())
-      iseq.bytedecode(env, 0, opt_pc)
-      expressions = env.expressions + env.stack
-      expressions.sort!
       opt_table = self.body.arg_opt_table
       opt_table.pop
       first_opt_idx =
@@ -342,8 +384,7 @@ class Node
         (self.block_arg ? 1 : 0)
       opt_table.each_with_index do |pc, idx|
         name = names[first_opt_idx + idx]
-        expr = expressions.find { |e| e.pc >= pc }
-        args[name] = Argument.new(name, expr.rhs.to_s, nil, false, false)
+        args[name] = YarvOptionalArgument.new(name, self.body, pc, idx, false, false)
       end
     end
   end
