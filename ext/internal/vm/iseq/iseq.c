@@ -228,16 +228,31 @@ static VALUE iseq_arg_opt_table(VALUE self)
 }
 
 /* call-seq:
- *   iseq.each(&block) => nil
+ *   iseq.each(pc_start=0, &block) => nil
  *
  * Yields each instruction in the sequence.
+ *
+ * If pc_start is supplied, begins iteration at the given offset from
+ * the beginning of the sequence.
+ *
  */
-static VALUE iseq_each(VALUE self)
+static VALUE iseq_each(int argc, VALUE * argv, VALUE self)
 {
   rb_iseq_t *iseqdat = iseq_check(self);
   VALUE * seq;
+  VALUE pc_start_v = Qnil;
+  unsigned long pc_start = 0;
 
-  for(seq = iseqdat->iseq; seq < iseqdat->iseq + iseqdat->iseq_size; )
+  rb_scan_args(argc, argv, "01", &pc_start_v);
+
+  if(RTEST(pc_start_v))
+  {
+    pc_start = NUM2ULONG(pc_start_v);
+  }
+
+  for(seq = iseqdat->iseq + pc_start;
+      seq < iseqdat->iseq + iseqdat->iseq_size;
+      )
   {
     VALUE insn = *seq++;
     int op_type_idx;
@@ -507,7 +522,7 @@ void Init_iseq(void)
   rb_define_method(rb_cISeq, "arg_rest", iseq_arg_rest, 0);
   rb_define_method(rb_cISeq, "arg_block", iseq_arg_block, 0);
   rb_define_method(rb_cISeq, "arg_opt_table", iseq_arg_opt_table, 0);
-  rb_define_method(rb_cISeq, "each", iseq_each, 0);
+  rb_define_method(rb_cISeq, "each", iseq_each, -1);
   rb_define_method(rb_cISeq, "insn_line", iseq_insn_line, 1);
   rb_define_method(rb_cISeq, "catch_table", iseq_catch_table, 0);
   rb_include_module(rb_cISeq, rb_mEnumerable);
