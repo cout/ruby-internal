@@ -86,7 +86,7 @@ module MethodSig
       return @default if @default
 
       env = Nodewrap::ByteDecoder::Environment.new(@iseq.local_table())
-      local_table_idx = @iseq.local_table.size - @local_idx + 1
+      local_table_idx = local_table_idx()
       @iseq.bytedecode(env, @pc_start) do |instr|
         RubyVM::Instruction::SETLOCAL === instr &&
         instr.operands[0] == local_table_idx
@@ -95,6 +95,10 @@ module MethodSig
 
       @default = expressions[-1].rhs.to_s
       return @default
+    end
+
+    def local_table_idx
+      return @iseq.local_table.size - @local_idx + 1
     end
   end
 
