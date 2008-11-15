@@ -10,7 +10,10 @@ FileUtils.rm_f 'ext/Makefile'
 ruby_source_path = config('ruby-source-path')
 ruby_include_path = config('ruby-include-path')
 
+set_config('cached-files', 'no')
+
 if ruby_source_path != '' then
+
   if ruby_include_path == '' then
     ruby_include_path = File.join(ruby_source_path, 'include', 'ruby')
     if not File.exist?(ruby_include_path) or \
@@ -27,6 +30,7 @@ if ruby_source_path != '' then
 end
 
 if ruby_source_path == '' then
+  set_config('cached-files', 'yes')
   cached_dir = "ext/cached/ruby-#{RUBY_VERSION}"
   if File.exist?(cached_dir) then
     puts "Ruby source path not specified; using generated files from #{cached_dir}"

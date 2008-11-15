@@ -2,6 +2,8 @@ require 'mkmf'
 
 using_cached_files = enable_config('cached-files')
 if using_cached_files then
+  # if --enable-cached-files was specified on the command line, then use cached
+  # files
   USING_CACHED_FILES = true
 else
   ruby_source_path = arg_config('--ruby-source-path')
@@ -13,7 +15,7 @@ else
     begin
       require 'ruby_source_dir'
       # if we got here, then we successfuly loaded the configuration
-    rescue SetupError 
+    rescue SetupError
       # otherwise, assume we are using cached files
       USING_CACHED_FILES = true
     end
