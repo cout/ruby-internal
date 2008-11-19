@@ -148,7 +148,7 @@ class TC_Dump_Class < Test::Unit::TestCase
       assert_equal 42*42, f.foo(42)
 
       # Thread critical should have been reset by the class restorer
-      if not defined?(VM) then
+      if not defined?(RubyVM) then
         assert_equal false, Thread.critical
       end
 
@@ -157,7 +157,7 @@ class TC_Dump_Class < Test::Unit::TestCase
       assert_equal 2, TestClass.instance_eval('@foo')
 
     ensure
-      if not defined?(VM) then
+      if not defined?(RubyVM) then
         Thread.critical = false
       end
     end
