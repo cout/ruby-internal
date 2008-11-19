@@ -26,6 +26,10 @@ module MethodSig
       return @is_block
     end
 
+    def default
+      return nil
+    end
+
     def initialize(name, is_rest, is_block)
       @name = name
       @is_rest = is_rest
@@ -39,7 +43,7 @@ module MethodSig
         prefix = "&"
       end
 
-      if @default then
+      if self.default then
         suffix = "=#{default()}"
       end
 
@@ -93,7 +97,7 @@ module MethodSig
       end
       expressions = env.expressions + env.stack
 
-      @default = expressions[-1].rhs.to_s
+      @default = expressions[0].rhs.to_s
       return @default
     end
 
