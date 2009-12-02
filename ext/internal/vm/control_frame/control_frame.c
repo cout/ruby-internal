@@ -18,6 +18,12 @@ void mark_ruby_internal_control_frame(
   rb_gc_mark(cfp->thread);
 }
 
+/*
+ * call-seq:
+ *   control_frame.iseq => RubyVM::InstructionSequence
+ *
+ * Return the frame's iseq member.
+ */
 static VALUE control_frame_iseq(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -25,6 +31,12 @@ static VALUE control_frame_iseq(VALUE control_frame)
   return (VALUE)cfp->control_frame->iseq;
 }
 
+/*
+ * call-seq:
+ *   control_frame.self => Object
+ *
+ * Return the frame's self member.
+ */
 static VALUE control_frame_self(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -32,6 +44,12 @@ static VALUE control_frame_self(VALUE control_frame)
   return cfp->control_frame->self;
 }
 
+/*
+ * call-seq:
+ *   control_frame.block_iseq => RubyVM::InstructionSequence or nil
+ *
+ * Return the frame's block_iseq member.
+ */
 static VALUE control_frame_block_iseq(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -46,6 +64,12 @@ static VALUE control_frame_block_iseq(VALUE control_frame)
   }
 }
 
+/*
+ * call-seq:
+ *   control_frame.proc => ?
+ *
+ * Return the frame's proc member.
+ */
 static VALUE control_frame_proc(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -53,6 +77,12 @@ static VALUE control_frame_proc(VALUE control_frame)
   return cfp->control_frame->proc;
 }
 
+/*
+ * call-seq:
+ *   control_frame.method_id => Symbol or nil
+ *
+ * Return the frame's method_id member.
+ */
 static VALUE control_frame_method_id(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -67,6 +97,12 @@ static VALUE control_frame_method_id(VALUE control_frame)
   }
 }
 
+/*
+ * call-seq:
+ *   control_frame.method_class => Class
+ *
+ * Return the frame's method_class member.
+ */
 static VALUE control_frame_method_class(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;
@@ -74,6 +110,12 @@ static VALUE control_frame_method_class(VALUE control_frame)
   return cfp->control_frame->method_class;
 }
 
+/*
+ * call-seq:
+ *   control_frame.prev => RubyVM::ControlFrame
+ *
+ * Return the frame's prev member.
+ */
 static VALUE control_frame_prev(VALUE control_frame)
 {
   struct RubyInternalControlFrame * cfp;

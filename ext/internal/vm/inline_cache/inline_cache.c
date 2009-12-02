@@ -6,18 +6,37 @@
 
 #include "vm_core.h"
 
+/*
+ * call-seq:
+ *   inline_cache.class => nil
+ *
+ * Currently returns nil, because returning the real class can cause the
+ * interpreter to crash.
+ */
 static VALUE inline_cache_klass(VALUE self)
 {
   /* TODO: returning the real value can crash the interpreter */
   return Qnil;
 }
 
+/*
+ * call-seq:
+ *   inline_cache.value => Object
+ *
+ * Returns the ic_cache member of the inline cache.
+ */
 static VALUE inline_cache_value(VALUE self)
 {
   IC inline_cache = unwrap_node(self);
   return inline_cache->ic_value;
 }
 
+/*
+ * call-seq:
+ *   inline_cache.vmstat => object
+ *
+ * Returns the ic_vmstat member of the inline cache.
+ */
 static VALUE inline_cache_vmstat(VALUE self)
 {
   IC inline_cache = unwrap_node(self);

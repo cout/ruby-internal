@@ -12,6 +12,12 @@
 
 #ifdef RUBY_VM
 
+/*
+ * call-seq:
+ *   Instruction.new(*operands) => Instruction
+ *
+ * Create a new instruction with the given operands.
+ */
 static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
 {
   VALUE operands = rb_ary_new4(argc, argv);
@@ -19,6 +25,12 @@ static VALUE instruction_initialize(int argc, VALUE * argv, VALUE self)
   return Qnil;
 }
 
+/*
+ * call-seq:
+ *   instruction.operands => Array
+ *
+ * Returns the instructions operands.
+ */
 static VALUE instruction_operands(VALUE self)
 {
   return rb_iv_get(self, "@operands");

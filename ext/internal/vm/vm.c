@@ -6,11 +6,23 @@
 
 extern rb_vm_t * ruby_current_vm;
 
+/*
+ * call-seq:
+ *   RubyVM.current => RubyVM
+ *
+ * Returns the current ruby VM.
+ */
 static VALUE vm_current(VALUE klass)
 {
   return ruby_current_vm->self;
 }
 
+/*
+ * call-seq:
+ *   ruby_vm.top_self
+ *
+ * Returns the VM's "top self".
+ */
 static VALUE vm_top_self(VALUE self)
 {
   rb_vm_t * vm;

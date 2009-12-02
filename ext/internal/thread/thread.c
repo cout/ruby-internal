@@ -17,6 +17,12 @@ void mark_ruby_internal_control_frame(
   rb_gc_mark(cfp->thread);
 }
 
+/*
+ * call-seq:
+ *   thread.cfp = RubyVM::ControlFrame
+ *
+ * Returns the thread's control frame.
+ */
 static VALUE thread_cfp(VALUE self)
 {
   rb_thread_t * th;

@@ -126,12 +126,24 @@ static void restore_class(VALUE ruby_class_restorer)
 #endif
 }
 
+/*
+ * call-seq:
+ *   class_restorer.dump => String
+ *
+ * Do not call this function.
+ */
 static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
 {
   restore_class(ruby_class_restorer);
   return rb_str_new2("");
 }
 
+/*
+ * call-seq:
+ *   Nodewrap::ClassRestorer.load => ClassRestorer
+ *
+ * Do not call this function.
+ */
 static VALUE class_restorer_load(VALUE klass, VALUE str)
 {
   return Qnil;
@@ -508,6 +520,13 @@ static VALUE module_remove_features(VALUE module, VALUE uninclude)
   return module;
 }
 
+/*
+ * call-seq:
+ *   module.unincluded(uninclude) => nil
+ *
+ * Callback when a module is unincluded.  Should not normally be called
+ * by the user.
+ */
 static VALUE module_unincluded(VALUE module, VALUE uninclude)
 {
   return Qnil;
