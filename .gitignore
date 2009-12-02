@@ -3,3 +3,4 @@
 .config
 InstalledFiles
 config.log
+ruby-internal-*.gem

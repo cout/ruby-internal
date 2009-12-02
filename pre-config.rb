@@ -32,6 +32,7 @@ end
 if ruby_source_path == '' then
   set_config('cached-files', 'yes')
   cached_dir = "ext/cached/ruby-#{RUBY_VERSION}"
+  puts "Looking for cached files in #{Dir.pwd}/#{cached_dir}"
   if File.exist?(cached_dir) then
     puts "Ruby source path not specified; using generated files from #{cached_dir}"
   else
