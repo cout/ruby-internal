@@ -66,8 +66,7 @@ def create_ruby_internal_makefile(name)
 #{dest_file}: #{src_file}
 \t@$(RUBY) -e 'begin; require "fileutils"; rescue LoadError; require "ftools"; FileUtils = File end; FileUtils.copy("#{src_file}", ".", :verbose => true)'
 END
-      end
-
+    end
   else
     # -- Generating files --
     rpp_files.each do |rpp_file|
@@ -89,6 +88,7 @@ $(OBJS): #{generated_headers.join(' ')} #{generated_incs.join(' ')}
 clean: clean_generated_files
 clean_generated_files:
 \t@$(RM) #{generated_files.join(' ')}
+generated_files: #{generated_files.join(' ')}
 END
 
   # Append it all to the makefile
