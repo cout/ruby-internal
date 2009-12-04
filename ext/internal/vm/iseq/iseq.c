@@ -11,6 +11,8 @@
 
 #include "vm_core.h"
 
+#include "iseq_load.inc"
+
 #ifdef HAVE_ISEQ_H
 #include "iseq.h"
 #endif
@@ -22,9 +24,6 @@
 #ifndef RARRAY_PTR
 #define RARRAY_PTR(a) RARRAY(a)->ptr
 #endif
-
-// Defined but not declared by ruby
-VALUE iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt);
 
 static VALUE rb_cModulePlaceholder;
 

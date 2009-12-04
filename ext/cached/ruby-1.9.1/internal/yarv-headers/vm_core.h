@@ -2,7 +2,7 @@
 
   vm_core.h - 
 
-  $Author: ko1 $
+  $Author: yugui $
   created at: 04/01/01 19:41:38 JST
 
   Copyright (C) 2004-2007 Koichi Sasada
@@ -363,6 +363,7 @@ typedef struct rb_thread_struct
     int slice;
 
     native_thread_data_t native_thread_data;
+    void *blocking_region_buffer;
 
     VALUE thgroup;
     VALUE value;
@@ -431,11 +432,12 @@ typedef struct rb_thread_struct
 /* iseq.c */
 VALUE rb_iseq_new(NODE*, VALUE, VALUE, VALUE, VALUE);
 VALUE rb_iseq_new_top(NODE *node, VALUE name, VALUE filename, VALUE parent);
+VALUE rb_iseq_new_main(NODE *node, VALUE filename);
 VALUE rb_iseq_new_with_bopt(NODE*, VALUE, VALUE, VALUE, VALUE, VALUE);
 VALUE rb_iseq_new_with_opt(NODE*, VALUE, VALUE, VALUE, VALUE, const rb_compile_option_t*);
 VALUE rb_iseq_compile(VALUE src, VALUE file, VALUE line);
-VALUE ruby_iseq_disasm(VALUE self);
-VALUE ruby_iseq_disasm_insn(VALUE str, VALUE *iseqval, int pos, rb_iseq_t *iseq, VALUE child);
+VALUE rb_iseq_disasm(VALUE self);
+VALUE rb_iseq_disasm_insn(VALUE str, VALUE *iseqval, int pos, rb_iseq_t *iseq, VALUE child);
 const char *ruby_node_name(int node);
 int rb_iseq_first_lineno(rb_iseq_t *iseq);
 
@@ -567,23 +569,28 @@ VALUE rb_thread_alloc(VALUE klass);
 VALUE rb_proc_alloc(VALUE klass);
 
 /* for debug */
-extern void vm_stack_dump_raw(rb_thread_t *, rb_control_frame_t *);
-#define SDR() vm_stack_dump_raw(GET_THREAD(), GET_THREAD()->cfp)
-#define SDR2(cfp) vm_stack_dump_raw(GET_THREAD(), (cfp))
+extern void rb_vmdebug_stack_dump_raw(rb_thread_t *, rb_control_frame_t *);
+#define SDR() rb_vmdebug_stack_dump_raw(GET_THREAD(), GET_THREAD()->cfp)
+#define SDR2(cfp) rb_vmdebug_stack_dump_raw(GET_THREAD(), (cfp))
 void rb_vm_bugreport(void);
 
 
 /* functions about thread/vm execution */
 
 VALUE rb_iseq_eval(VALUE iseqval);
+VALUE rb_iseq_eval_main(VALUE iseqval);
 void rb_enable_interrupt(void);
 void rb_disable_interrupt(void);
 int rb_thread_method_id_and_class(rb_thread_t *th, ID *idp, VALUE *klassp);
 
-VALUE vm_invoke_proc(rb_thread_t *th, rb_proc_t *proc, VALUE self,
-		     int argc, const VALUE *argv, rb_block_t *blockptr);
-VALUE vm_make_proc(rb_thread_t *th, rb_control_frame_t *cfp, const rb_block_t *block, VALUE klass);
-VALUE vm_make_env_object(rb_thread_t *th, rb_control_frame_t *cfp);
+VALUE rb_vm_invoke_proc(rb_thread_t *th, rb_proc_t *proc, VALUE self,
+			int argc, const VALUE *argv, rb_block_t *blockptr);
+VALUE rb_vm_make_proc(rb_thread_t *th, const rb_block_t *block, VALUE klass);
+VALUE rb_vm_make_env_object(rb_thread_t *th, rb_control_frame_t *cfp);
+
+void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
+int ruby_thread_has_gvl_p(void);
+rb_control_frame_t *rb_vm_get_ruby_level_next_cfp(rb_thread_t *th, rb_control_frame_t *cfp);
 
 NOINLINE(void rb_gc_save_machine_context(rb_thread_t *));
 
@@ -624,30 +631,14 @@ void rb_thread_execute_interrupts(rb_thread_t *);
   RUBY_VM_CHECK_INTS_TH(GET_THREAD())
 
 /* tracer */
-static inline void
-exec_event_hooks(rb_event_hook_t *hook, rb_event_flag_t flag, VALUE self, ID id, VALUE klass)
-{
-    if (self == rb_mRubyVMFrozenCore) return;
-    while (hook) {
-	if (flag & hook->flag) {
-	    (*hook->func)(flag, hook->data, self, id, klass);
-	}
-	hook = hook->next;
-    }
-}
+void
+rb_threadptr_exec_event_hooks(rb_thread_t *th, rb_event_flag_t flag, VALUE self, ID id, VALUE klass);
 
 #define EXEC_EVENT_HOOK(th, flag, self, id, klass) do { \
     rb_event_flag_t wait_event__ = th->event_flags; \
     if (UNLIKELY(wait_event__)) { \
 	if (wait_event__ & (flag | RUBY_EVENT_VM)) { \
-	    VALUE self__ = (self), klass__ = (klass); \
-	    ID id__ = (id); \
-	    if (wait_event__ & flag) { \
-		exec_event_hooks(th->event_hooks, flag, self__, id__, klass__); \
-	    } \
-	    if (wait_event__ & RUBY_EVENT_VM) { \
-		exec_event_hooks(th->vm->event_hooks, flag, self__, id__, klass__); \
-	    } \
+	    rb_threadptr_exec_event_hooks(th, flag, self, id, klass); \
 	} \
     } \
 } while (0)

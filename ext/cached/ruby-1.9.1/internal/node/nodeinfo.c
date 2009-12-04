@@ -2849,29 +2849,33 @@ void define_node_subclass_methods()
   }
 
 
-  /* Document-class: Node::DASGN_CURR
-   * Represents dynamic local variable assignment in the current frame.
-   * See DASGN for a description of how dynamic assignment works.
+  /* Document-class: Node::DEFS
+   * Represents a singleton method definition, e.g.:
+   *   def recv.mid
+   *     defn
+   *   end
    */
   {
-    VALUE rb_cDASGN_CURR = rb_define_class_under(rb_cNode, "DASGN_CURR", rb_cNode);
+    VALUE rb_cDEFS = rb_define_class_under(rb_cNode, "DEFS", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DASGN_CURR] = rb_cDASGN_CURR;
-    rb_iv_set(rb_cDASGN_CURR, "__member__", members);
-    rb_iv_set(rb_cDASGN_CURR, "__type__", INT2NUM(NODE_DASGN_CURR));
-    rb_define_singleton_method(rb_cDASGN_CURR, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_DEFS] = rb_cDEFS;
+    rb_iv_set(rb_cDEFS, "__member__", members);
+    rb_iv_set(rb_cDEFS, "__type__", INT2NUM(NODE_DEFS));
+    rb_define_singleton_method(rb_cDEFS, "members", node_s_members, 0);
+    rb_define_method(rb_cDEFS, "defn", node_defn, 0);
+    rb_ary_push(members, rb_str_new2("defn"));
 
-    /* Document-method: value
-     * the value to assign to the local variable
+    /* Document-method: mid
+     * the name of the method* defn the body of the method
      */
-    rb_define_method(rb_cDASGN_CURR, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
+    rb_define_method(rb_cDEFS, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
 
-    /* Document-method: vid
-     * the name of the local variable
+    /* Document-method: recv
+     * the object to whose singleton class the new method is to be  added
      */
-    rb_define_method(rb_cDASGN_CURR, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
+    rb_define_method(rb_cDEFS, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
   }
 
   /* Document-class: Node::UNTIL
@@ -2901,36 +2905,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cond"));
     rb_define_method(rb_cUNTIL, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
-  }
-
-  /* Document-class: Node::BACK_REF
-   * Represents one of the regex back reference variables:
-   * * $& - last match
-   * * $` - pre
-   * * $' - post
-   * * $+ - last
-   */
-  {
-    VALUE rb_cBACK_REF = rb_define_class_under(rb_cNode, "BACK_REF", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_BACK_REF] = rb_cBACK_REF;
-    rb_iv_set(rb_cBACK_REF, "__member__", members);
-    rb_iv_set(rb_cBACK_REF, "__type__", INT2NUM(NODE_BACK_REF));
-    rb_define_singleton_method(rb_cBACK_REF, "members", node_s_members, 0);
-
-    /* Document-method: nth
-     * the integer representation of the character of the variable to
-     * reference, one of '&', '`', '\'', or '+'
-     */
-    rb_define_method(rb_cBACK_REF, "nth", node_nth, 0);
-    rb_ary_push(members, rb_str_new2("nth"));
-
-    /* Document-method: cnt
-     * the index into the local variable table where the match data is
-     * stored
-     */
-    rb_define_method(rb_cBACK_REF, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::ARGS
@@ -2964,36 +2938,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cnt"));
   }
 
-  /* Document-class: Node::OP_ASGN_AND
-   * Represents an expression of the form:
-   *   recv &&= value
-   * Ruby will evaluate the expression on the left hand side of the
-   * assignment; if it is true, then it will assign the result of the
-   * expression on the right hand side to the receiver on the left hand
-   * side.
-   */
-  {
-    VALUE rb_cOP_ASGN_AND = rb_define_class_under(rb_cNode, "OP_ASGN_AND", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_OP_ASGN_AND] = rb_cOP_ASGN_AND;
-    rb_iv_set(rb_cOP_ASGN_AND, "__member__", members);
-    rb_iv_set(rb_cOP_ASGN_AND, "__type__", INT2NUM(NODE_OP_ASGN_AND));
-    rb_define_singleton_method(rb_cOP_ASGN_AND, "members", node_s_members, 0);
-
-    /* Document-method: value
-     * an expression representing the assignment that should be
-     * performed if the left hand side is true
-     */
-    rb_define_method(rb_cOP_ASGN_AND, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-
-    /* Document-method: recv
-     * an expression representing the left hand side of the assignment
-     */
-    rb_define_method(rb_cOP_ASGN_AND, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
-  }
-
   /* Document-class: Node::RETURN
    * Represents the 'return' keyword.  Evaluation of this node results in
    * a return from the current method.  If no argument is supplied,
@@ -3015,62 +2959,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("stts"));
   }
 
-  /* Document-class: Node::RESCUE
-   * Represents part of a rescue expression of the form:
-   *   head rescue expr
-   * 
-   * or the longer form:
-   *   begin
-   *     head
-   *   rescue exception
-   *     expr
-   *   end
-   * 
-   * or the form using the else keyword:
-   *   begin
-   *     head
-   *   rescue exception
-   *     expr
-   *   else
-   *     else_expr
-   *   end
-   * 
-   * The head expression is first evaluated, and if an exception is
-   * raised, evaluates the resq node.  If no exception is raised, the
-   * else node is evaluated if it is not false (0).
-   * 
-   * The resq node will be a RESBDOY node, which will test the exception
-   * to see if it matches one of the expected types.  If it does it will
-   * handle the exception, otherwise it will allow the expression to pass
-   * to the outer scope.
-   */
-  {
-    VALUE rb_cRESCUE = rb_define_class_under(rb_cNode, "RESCUE", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_RESCUE] = rb_cRESCUE;
-    rb_iv_set(rb_cRESCUE, "__member__", members);
-    rb_iv_set(rb_cRESCUE, "__type__", INT2NUM(NODE_RESCUE));
-    rb_define_singleton_method(rb_cRESCUE, "members", node_s_members, 0);
-
-    /* Document-method: head
-     * the body of the block to evaluate
-     */
-    rb_define_method(rb_cRESCUE, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
-    /* Document-method: else
-     * the expression to be evaluated if no exception is raised
-     */
-    rb_define_method(rb_cRESCUE, "else", node_else, 0);
-    rb_ary_push(members, rb_str_new2("else"));
-
-    /* Document-method: resq
-     * the expression to be evaluated if an exception is raised
-     */
-    rb_define_method(rb_cRESCUE, "resq", node_resq, 0);
-    rb_ary_push(members, rb_str_new2("resq"));
-  }
-
   /* Document-class: Node::LIT
    * Represents a literal object.  The result of the expression is the
    * object contained in this node.
@@ -3090,6 +2978,49 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("lit"));
   }
 
+  /* Document-class: Node::SCOPE
+   * Represents a lexical scope.
+   * 
+   * A new scope is created when a method is invoked.  The scope node
+   * holds information about local variables and arguments to the method.
+   * The first two variables in the local variable table are the implicit
+   * variables $_ and $~.
+   * 
+   * The next variables listed in the local variable table are the
+   * arguments to the method.  More information about the arguments to
+   * the method are stored in the ARGS node, which will either be the
+   * first node in the scope or the first node in the BLOCK held by the
+   * scope.
+   */
+  {
+    VALUE rb_cSCOPE = rb_define_class_under(rb_cNode, "SCOPE", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_SCOPE] = rb_cSCOPE;
+    rb_iv_set(rb_cSCOPE, "__member__", members);
+    rb_iv_set(rb_cSCOPE, "__type__", INT2NUM(NODE_SCOPE));
+    rb_define_singleton_method(rb_cSCOPE, "members", node_s_members, 0);
+
+    /* Document-method: tbl
+     * the names of the local variables* next the first expression in
+     * the scope
+     */
+    rb_define_method(rb_cSCOPE, "tbl", node_tbl, 0);
+    rb_ary_push(members, rb_str_new2("tbl"));
+
+    /* Document-method: rval
+     * holds information about which class(es) to search for  constants
+     * in this scope
+     */
+    rb_define_method(rb_cSCOPE, "rval", node_rval, 0);
+    rb_ary_push(members, rb_str_new2("rval"));
+
+    /* Document-method: next
+     * the body of the lexical scope
+     */
+    rb_define_method(rb_cSCOPE, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
+  }
+
   /* Document-class: Node::SELF
    * Represents the keyword 'self'.
    */
@@ -3102,112 +3033,93 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cSELF, "members", node_s_members, 0);
   }
 
-  /* Document-class: Node::IFUNC
-   * A temporary node used in iteration.
+  /* Document-class: Node::TO_ARY
+   * Represents a conversion from one object type to an array type.
+   * Evaluation of this node converts its argument to an array by calling
+   * \#to_ary on the argument.
    */
   {
-    VALUE rb_cIFUNC = rb_define_class_under(rb_cNode, "IFUNC", rb_cNode);
+    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_IFUNC] = rb_cIFUNC;
-    rb_iv_set(rb_cIFUNC, "__member__", members);
-    rb_iv_set(rb_cIFUNC, "__type__", INT2NUM(NODE_IFUNC));
-    rb_define_singleton_method(rb_cIFUNC, "members", node_s_members, 0);
-
-    /* Document-method: cfnc
-     * a pointer to the C function to which to yield
-     */
-    rb_define_method(rb_cIFUNC, "cfnc", node_cfnc, 0);
-    rb_ary_push(members, rb_str_new2("cfnc"));
-
-    /* Document-method: tval
-     * the user-specified data to be passed as the second argument to
-     * cfnc
-     */
-    rb_define_method(rb_cIFUNC, "tval", node_tval, 0);
-    rb_ary_push(members, rb_str_new2("tval"));
-
-    /* Document-method: state
-     * always 0
-     */
-    rb_define_method(rb_cIFUNC, "state", node_state, 0);
-    rb_ary_push(members, rb_str_new2("state"));
-  }
-
-  /* Document-class: Node::ZSUPER
-   * Represents the keyword 'super' when used without parens nor
-   * arguments.  The arguments to the base class method are obtained from
-   * the arguments passed to the current method, which are store in the
-   * current frame.
-   * 
-   * Can also be a placeholder for a method when its implementation is
-   * deferred to the base class.
-   */
-  {
-    VALUE rb_cZSUPER = rb_define_class_under(rb_cNode, "ZSUPER", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_ZSUPER] = rb_cZSUPER;
-    rb_iv_set(rb_cZSUPER, "__member__", members);
-    rb_iv_set(rb_cZSUPER, "__type__", INT2NUM(NODE_ZSUPER));
-    rb_define_singleton_method(rb_cZSUPER, "members", node_s_members, 0);
-  }
-
-  /* Document-class: Node::WHILE
-   * Represents a loop constructed with the 'while' keyword, e.g.:
-   *   while cond do
-   *     body
-   *   end
-   */
-  {
-    VALUE rb_cWHILE = rb_define_class_under(rb_cNode, "WHILE", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_WHILE] = rb_cWHILE;
-    rb_iv_set(rb_cWHILE, "__member__", members);
-    rb_iv_set(rb_cWHILE, "__type__", INT2NUM(NODE_WHILE));
-    rb_define_singleton_method(rb_cWHILE, "members", node_s_members, 0);
-
-    /* Document-method: body
-     * the body of the loop
-     */
-    rb_define_method(rb_cWHILE, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-
-    /* Document-method: cond
-     * a condition to terminate the loop when it becomes false
-     */
-    rb_define_method(rb_cWHILE, "cond", node_cond, 0);
-    rb_ary_push(members, rb_str_new2("cond"));
-    rb_define_method(rb_cWHILE, "state", node_state, 0);
-    rb_ary_push(members, rb_str_new2("state"));
-  }
-
-  /* Document-class: Node::BLOCK
-   * Represents a block of code (a succession of multiple expressions).
-   * A single block node can hold two expressions: one expression to be
-   * evaluated and second expression, which may be another BLOCK.
-   * The first node in the block may be of type ARGS, in which case it
-   * represents the arguments to the current method.
-   * The second node in the block may be of type BLOCK_ARG, in which case
-   * it represents an explicit block argument.
-   * The result of the block is the last expression evaluated.
-   */
-  {
-    VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_BLOCK] = rb_cBLOCK;
-    rb_iv_set(rb_cBLOCK, "__member__", members);
-    rb_iv_set(rb_cBLOCK, "__type__", INT2NUM(NODE_BLOCK));
-    rb_define_singleton_method(rb_cBLOCK, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
+    rb_iv_set(rb_cTO_ARY, "__member__", members);
+    rb_iv_set(rb_cTO_ARY, "__type__", INT2NUM(NODE_TO_ARY));
+    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
 
     /* Document-method: head
-     * the first expression in the block of code
+     * the object to convert to an array
      */
-    rb_define_method(rb_cBLOCK, "head", node_head, 0);
+    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+  }
+
+  /* Document-class: Node::RESBODY
+   * Represents the rescue portion of a rescue expression (see RESCUE for
+   * examples).
+   * 
+   * If the head node of the rescue expresion raises an exception, the
+   * resq node is evaluated.  The resq node is of type RESBDOY.
+   * 
+   * As it is evaluated, the type of the exception is tested against the
+   * class(es) listed in the args node.  If there is a match, the body
+   * node is evaluated, otherwise the head node is evaluated.  The head
+   * node is either another RESBDOY node or false (0).
+   */
+  {
+    VALUE rb_cRESBODY = rb_define_class_under(rb_cNode, "RESBODY", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_RESBODY] = rb_cRESBODY;
+    rb_iv_set(rb_cRESBODY, "__member__", members);
+    rb_iv_set(rb_cRESBODY, "__type__", INT2NUM(NODE_RESBODY));
+    rb_define_singleton_method(rb_cRESBODY, "members", node_s_members, 0);
+
+    /* Document-method: head
+     * the next rescue
+     */
+    rb_define_method(rb_cRESBODY, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
 
-    /* Document-method: next
-     * the second expression in the block of code
+    /* Document-method: args
+     * the expression type to match against
      */
-    rb_define_method(rb_cBLOCK, "next", node_next, 0);
+    rb_define_method(rb_cRESBODY, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
+
+    /* Document-method: body
+     * the expresion to evaluate if the exception type matches
+     */
+    rb_define_method(rb_cRESBODY, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
+
+  /* Document-class: Node::CASE
+   * Represents the value portion of a case/end block, e.g.:
+   *   case head
+   *   body
+   *   end
+   *   next
+   */
+  {
+    VALUE rb_cCASE = rb_define_class_under(rb_cNode, "CASE", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_CASE] = rb_cCASE;
+    rb_iv_set(rb_cCASE, "__member__", members);
+    rb_iv_set(rb_cCASE, "__type__", INT2NUM(NODE_CASE));
+    rb_define_singleton_method(rb_cCASE, "members", node_s_members, 0);
+
+    /* Document-method: head
+     * the value to select on
+     */
+    rb_define_method(rb_cCASE, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+
+    /* Document-method: body
+     * a linked list of nodes, each node representing a when
+     * conditional
+     */
+    rb_define_method(rb_cCASE, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cCASE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
 
@@ -3243,42 +3155,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("oid"));
   }
 
-  /* Document-class: Node::METHOD
-   * A placeholder for a method entry in a class's method table.
-   * 
-   * On ruby 1.9 this node type is also known as RUBY_VM_METHOD_NODE.
-   * Its use differs from that of NODE_METHOD in that it is used as the
-   * body of another METHOD node and is used to store the method's
-   * instruction sequence.
-   */
-  {
-    VALUE rb_cMETHOD = rb_define_class_under(rb_cNode, "METHOD", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_METHOD] = rb_cMETHOD;
-    rb_iv_set(rb_cMETHOD, "__member__", members);
-    rb_iv_set(rb_cMETHOD, "__type__", INT2NUM(NODE_METHOD));
-    rb_define_singleton_method(rb_cMETHOD, "members", node_s_members, 0);
-
-    /* Document-method: body
-     * the body of the method
-     */
-    rb_define_method(rb_cMETHOD, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-
-    /* Document-method: clss
-     * the class to which the method was added or the instruction
-     * sequence used to implement this method
-     */
-    rb_define_method(rb_cMETHOD, "clss", node_clss, 0);
-    rb_ary_push(members, rb_str_new2("clss"));
-
-    /* Document-method: noex
-     * the method's flags
-     */
-    rb_define_method(rb_cMETHOD, "noex", node_noex, 0);
-    rb_ary_push(members, rb_str_new2("noex"));
-  }
-
   /* Document-class: Node::FCALL
    * Represents a method call in the form:
    *   mid(args).
@@ -3307,39 +3183,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("mid"));
   }
 
-  /* Document-class: Node::DREGX_ONCE
-   * Represents a regular expression with interpolation with the 'once'
-   * flag set.  The regular expression is only interpolated the first
-   * time it is encountered.
-   */
-  {
-    VALUE rb_cDREGX_ONCE = rb_define_class_under(rb_cNode, "DREGX_ONCE", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DREGX_ONCE] = rb_cDREGX_ONCE;
-    rb_iv_set(rb_cDREGX_ONCE, "__member__", members);
-    rb_iv_set(rb_cDREGX_ONCE, "__type__", INT2NUM(NODE_DREGX_ONCE));
-    rb_define_singleton_method(rb_cDREGX_ONCE, "members", node_s_members, 0);
-
-    /* Document-method: lit
-     * a string
-     */
-    rb_define_method(rb_cDREGX_ONCE, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-
-    /* Document-method: cflag
-     * a bitfield containing the options used in the regular
-     * expression.  See DREGX for a list of valid values.
-     */
-    rb_define_method(rb_cDREGX_ONCE, "cflag", node_cflag, 0);
-    rb_ary_push(members, rb_str_new2("cflag"));
-
-    /* Document-method: next
-     * a list of expressions to be appended onto the string
-     */
-    rb_define_method(rb_cDREGX_ONCE, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
-  }
-
   /* Document-class: Node::ARGSPUSH
    * Represents the splat portion of the index in an expression:
    *   obj[arg, arg, *head] = body
@@ -3360,23 +3203,56 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("body"));
   }
 
-  /* Document-class: Node::OPT_N
-   * Represents the top-level loop when the -n or -p options are used
-   * with the interpreter.
+  /* Document-class: Node::ATTRASGN
+   * Represents attribute assignment in the form:
+   *   recv.mid = args
+   * or:
+   *   recv.mid=(args).
    */
   {
-    VALUE rb_cOPT_N = rb_define_class_under(rb_cNode, "OPT_N", rb_cNode);
+    VALUE rb_cATTRASGN = rb_define_class_under(rb_cNode, "ATTRASGN", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_OPT_N] = rb_cOPT_N;
-    rb_iv_set(rb_cOPT_N, "__member__", members);
-    rb_iv_set(rb_cOPT_N, "__type__", INT2NUM(NODE_OPT_N));
-    rb_define_singleton_method(rb_cOPT_N, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_ATTRASGN] = rb_cATTRASGN;
+    rb_iv_set(rb_cATTRASGN, "__member__", members);
+    rb_iv_set(rb_cATTRASGN, "__type__", INT2NUM(NODE_ATTRASGN));
+    rb_define_singleton_method(rb_cATTRASGN, "members", node_s_members, 0);
 
-    /* Document-method: body
-     * the body of the loop
+    /* Document-method: args
+     * the arguments to the method
      */
-    rb_define_method(rb_cOPT_N, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cATTRASGN, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
+
+    /* Document-method: mid
+     * the id of the attribute, with a trailing '=' sign
+     */
+    rb_define_method(rb_cATTRASGN, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
+
+    /* Document-method: recv
+     * the receiver of the method
+     */
+    rb_define_method(rb_cATTRASGN, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
+  }
+
+  /* Document-class: Node::BREAK
+   * Represents the 'break' keyword.  Causes control to be transferred
+   * out of the current loop.
+   */
+  {
+    VALUE rb_cBREAK = rb_define_class_under(rb_cNode, "BREAK", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_BREAK] = rb_cBREAK;
+    rb_iv_set(rb_cBREAK, "__member__", members);
+    rb_iv_set(rb_cBREAK, "__type__", INT2NUM(NODE_BREAK));
+    rb_define_singleton_method(rb_cBREAK, "members", node_s_members, 0);
+
+    /* Document-method: stts
+     * the value to be used as the "return" value of the loop, 0 if  nil is to be used.
+     */
+    rb_define_method(rb_cBREAK, "stts", node_stts, 0);
+    rb_ary_push(members, rb_str_new2("stts"));
   }
 
   /* Document-class: Node::OP_ASGN2_ARG
@@ -3413,156 +3289,92 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("mid"));
   }
 
-  /* Document-class: Node::COLON2
-   * Represents a constant lookup in a particular class.  This expression
-   * has the form:
-   *   klass::mid
-   * 
-   * where klass is the result of evaluating the expression in the head
-   * member.
+  /* Document-class: Node::DVAR
+   * Represents dynamic local variable retrieval.  See also DASGN.
    */
   {
-    VALUE rb_cCOLON2 = rb_define_class_under(rb_cNode, "COLON2", rb_cNode);
+    VALUE rb_cDVAR = rb_define_class_under(rb_cNode, "DVAR", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_COLON2] = rb_cCOLON2;
-    rb_iv_set(rb_cCOLON2, "__member__", members);
-    rb_iv_set(rb_cCOLON2, "__type__", INT2NUM(NODE_COLON2));
-    rb_define_singleton_method(rb_cCOLON2, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_DVAR] = rb_cDVAR;
+    rb_iv_set(rb_cDVAR, "__member__", members);
+    rb_iv_set(rb_cDVAR, "__type__", INT2NUM(NODE_DVAR));
+    rb_define_singleton_method(rb_cDVAR, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * an expression specifying the class in which to do the lookup
+    /* Document-method: vid
+     * the name of the local variable to retrieve.
      */
-    rb_define_method(rb_cCOLON2, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
-    /* Document-method: mid
-     * the name of the method or constant to call/look up
-     */
-    rb_define_method(rb_cCOLON2, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
+    rb_define_method(rb_cDVAR, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::COLON3
-   * Represents a constant lookup or method call in class Object.  This
-   * expression has the form:
-   *   ::mid
+  /* Document-class: Node::CVASGN
+   * Represents class variable assignment in a method context.
    */
   {
-    VALUE rb_cCOLON3 = rb_define_class_under(rb_cNode, "COLON3", rb_cNode);
+    VALUE rb_cCVASGN = rb_define_class_under(rb_cNode, "CVASGN", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_COLON3] = rb_cCOLON3;
-    rb_iv_set(rb_cCOLON3, "__member__", members);
-    rb_iv_set(rb_cCOLON3, "__type__", INT2NUM(NODE_COLON3));
-    rb_define_singleton_method(rb_cCOLON3, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_CVASGN] = rb_cCVASGN;
+    rb_iv_set(rb_cCVASGN, "__member__", members);
+    rb_iv_set(rb_cCVASGN, "__type__", INT2NUM(NODE_CVASGN));
+    rb_define_singleton_method(rb_cCVASGN, "members", node_s_members, 0);
 
-    /* Document-method: mid
-     * the name of the method or constant to call/look up
+    /* Document-method: value
+     * an expression whose result is the new value of the class
+     * variable
      */
-    rb_define_method(rb_cCOLON3, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
+    rb_define_method(rb_cCVASGN, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: vid
+     * the name of the class variable to assign
+     */
+    rb_define_method(rb_cCVASGN, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::ITER
-   * Represents an iteration loop, e.g.:
-   *   iter do |*args|
-   *     assign args to var
-   *     body
-   *   end
+  /* Document-class: Node::UNDEF
+   * Represents an expression using the undef keyword, e.g.:
+   *   undef :mid
    * 
-   * A new block is created so that dynamic variables created inside the
-   * loop do not persist once the loop has terminated.
-   * 
-   * If the iter node is a POSTEXE node, indicates that the expression
-   * should be evaluated when the program terminates.
+   * This causes the method identified by mid in the current class to be
+   * undefined.
    */
   {
-    VALUE rb_cITER = rb_define_class_under(rb_cNode, "ITER", rb_cNode);
+    VALUE rb_cUNDEF = rb_define_class_under(rb_cNode, "UNDEF", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_ITER] = rb_cITER;
-    rb_iv_set(rb_cITER, "__member__", members);
-    rb_iv_set(rb_cITER, "__type__", INT2NUM(NODE_ITER));
-    rb_define_singleton_method(rb_cITER, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_UNDEF] = rb_cUNDEF;
+    rb_iv_set(rb_cUNDEF, "__member__", members);
+    rb_iv_set(rb_cUNDEF, "__type__", INT2NUM(NODE_UNDEF));
+    rb_define_singleton_method(rb_cUNDEF, "members", node_s_members, 0);
 
     /* Document-method: body
-     * the body of the loop
+     * an expression returning the id of the method to undefine
      */
-    rb_define_method(rb_cITER, "body", node_body, 0);
+    rb_define_method(rb_cUNDEF, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
-
-    /* Document-method: iter
-     * an expression which calls the desired iteration method, usually
-     * recv.each
-     */
-    rb_define_method(rb_cITER, "iter", node_iter, 0);
-    rb_ary_push(members, rb_str_new2("iter"));
-
-    /* Document-method: var
-     * an assignment node which assigns the next value in the sequence
-     * to a variable, which may or may not be local.  May also be a
-     * multiple assignment.
-     */
-    rb_define_method(rb_cITER, "var", node_var, 0);
-    rb_ary_push(members, rb_str_new2("var"));
   }
 
-  /* Document-class: Node::SUPER
-   * Represents the keyword 'super' when used with parens or with arguments.
+  /* Document-class: Node::SPLAT
+   * Represents the splat (*) operation as an rvalue, e.g.:
+   *   *head
+   * If the argument is an array, returns self.
+   * If the argument is nil, returns [nil].
+   * If the argument is any other value, returns the result of calling #to_a on the
+   * argument.
    */
   {
-    VALUE rb_cSUPER = rb_define_class_under(rb_cNode, "SUPER", rb_cNode);
+    VALUE rb_cSPLAT = rb_define_class_under(rb_cNode, "SPLAT", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_SUPER] = rb_cSUPER;
-    rb_iv_set(rb_cSUPER, "__member__", members);
-    rb_iv_set(rb_cSUPER, "__type__", INT2NUM(NODE_SUPER));
-    rb_define_singleton_method(rb_cSUPER, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_SPLAT] = rb_cSPLAT;
+    rb_iv_set(rb_cSPLAT, "__member__", members);
+    rb_iv_set(rb_cSPLAT, "__type__", INT2NUM(NODE_SPLAT));
+    rb_define_singleton_method(rb_cSPLAT, "members", node_s_members, 0);
 
-    /* Document-method: args
-     * the arguments to be passed to the base class
+    /* Document-method: head
+     * the argument to splat.
      */
-    rb_define_method(rb_cSUPER, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
-  }
-
-  /* Document-class: Node::FALSE
-   * Represents the keyword 'false'.
-   */
-  {
-    VALUE rb_cFALSE = rb_define_class_under(rb_cNode, "FALSE", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_FALSE] = rb_cFALSE;
-    rb_iv_set(rb_cFALSE, "__member__", members);
-    rb_iv_set(rb_cFALSE, "__type__", INT2NUM(NODE_FALSE));
-    rb_define_singleton_method(rb_cFALSE, "members", node_s_members, 0);
-  }
-
-  /* Document-class: Node::CALL
-   * Represents a method call in the form recv.mid(args).
-   */
-  {
-    VALUE rb_cCALL = rb_define_class_under(rb_cNode, "CALL", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CALL] = rb_cCALL;
-    rb_iv_set(rb_cCALL, "__member__", members);
-    rb_iv_set(rb_cCALL, "__type__", INT2NUM(NODE_CALL));
-    rb_define_singleton_method(rb_cCALL, "members", node_s_members, 0);
-
-    /* Document-method: args
-     * the arguments to the method
-     */
-    rb_define_method(rb_cCALL, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
-
-    /* Document-method: mid
-     * the method id
-     */
-    rb_define_method(rb_cCALL, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-
-    /* Document-method: recv
-     * the receiver of the method
-     */
-    rb_define_method(rb_cCALL, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
+    rb_define_method(rb_cSPLAT, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::OP_ASGN_OR
@@ -3602,102 +3414,33 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("recv"));
   }
 
-  /* Document-class: Node::TRUE
-   * Represents the keyword 'true'.
+  /* Document-class: Node::DSTR
+   * Represents a string object with interpolation.  The node is
+   * evaluated by duplicating the string stored in the 'lit' element,
+   * then iterating over the nodes stored in the 'next' element.  Each
+   * node found should evalate to a string, and each resulting string is
+   * appended onto the regex.  Interpolation is represented with the
+   * EVSTR node.
    */
   {
-    VALUE rb_cTRUE = rb_define_class_under(rb_cNode, "TRUE", rb_cNode);
+    VALUE rb_cDSTR = rb_define_class_under(rb_cNode, "DSTR", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_TRUE] = rb_cTRUE;
-    rb_iv_set(rb_cTRUE, "__member__", members);
-    rb_iv_set(rb_cTRUE, "__type__", INT2NUM(NODE_TRUE));
-    rb_define_singleton_method(rb_cTRUE, "members", node_s_members, 0);
-  }
-
-  /* Document-class: Node::MASGN
-   * Represents multiple assignment.
-   */
-  {
-    VALUE rb_cMASGN = rb_define_class_under(rb_cNode, "MASGN", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_MASGN] = rb_cMASGN;
-    rb_iv_set(rb_cMASGN, "__member__", members);
-    rb_iv_set(rb_cMASGN, "__type__", INT2NUM(NODE_MASGN));
-    rb_define_singleton_method(rb_cMASGN, "members", node_s_members, 0);
-
-    /* Document-method: args
-     * TODO
-     */
-    rb_define_method(rb_cMASGN, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
-
-    /* Document-method: head
-     * TODO
-     */
-    rb_define_method(rb_cMASGN, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
-    /* Document-method: value
-     * TODO
-     */
-    rb_define_method(rb_cMASGN, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-  }
-
-  /* Document-class: Node::EVSTR
-   * Represents a single string interpolation.
-   * 
-   * Evaluates the given expression and converts its result to a string
-   * with #to_s.
-   */
-  {
-    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
-    rb_iv_set(rb_cEVSTR, "__member__", members);
-    rb_iv_set(rb_cEVSTR, "__type__", INT2NUM(NODE_EVSTR));
-    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
-
-    /* Document-method: body
-     * an expression to evaluate
-     */
-    rb_define_method(rb_cEVSTR, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-  }
-
-  /* Document-class: Node::MATCH
-   * Represents a regular expression match in a conditional, e.g.:
-   *   if /lit/ then
-   *     ...
-   *   end
-   * 
-   * This expression is equivalent to:
-   *   if /lit/ =~ $_ then
-   *     ...
-   *   end
-   * 
-   * On ruby 1.8 and newer, this type of expression causes ruby to emit a
-   * warning, unless script is running with -e.
-   */
-  {
-    VALUE rb_cMATCH = rb_define_class_under(rb_cNode, "MATCH", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_MATCH] = rb_cMATCH;
-    rb_iv_set(rb_cMATCH, "__member__", members);
-    rb_iv_set(rb_cMATCH, "__type__", INT2NUM(NODE_MATCH));
-    rb_define_singleton_method(rb_cMATCH, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_DSTR] = rb_cDSTR;
+    rb_iv_set(rb_cDSTR, "__member__", members);
+    rb_iv_set(rb_cDSTR, "__type__", INT2NUM(NODE_DSTR));
+    rb_define_singleton_method(rb_cDSTR, "members", node_s_members, 0);
 
     /* Document-method: lit
-     * the regular expression to use in the condition.
+     * a string
      */
-    rb_define_method(rb_cMATCH, "lit", node_lit, 0);
+    rb_define_method(rb_cDSTR, "lit", node_lit, 0);
     rb_ary_push(members, rb_str_new2("lit"));
 
-    /* Document-method: value
-     * the value to compare against
+    /* Document-method: next
+     * a list of expressions to be appended onto the string
      */
-    rb_define_method(rb_cMATCH, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
+    rb_define_method(rb_cDSTR, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
   }
 
   /* Document-class: Node::ENSURE
@@ -3735,29 +3478,126 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("ensr"));
   }
 
-  /* Document-class: Node::CDECL
-   * Represents constant assignment of the form:
-   *   vid = value
+  /* Document-class: Node::CLASS
+   * Represents a class definition, e.g.:
+   *   class cpath
+   *     body
+   *   end
+   * 
+   * or:
+   *   class cpath < super
+   *     body
+   *   end
+   * 
+   * The class definition is evaluated in a new lexical scope.
+   * 
+   * The result of the expression is the last expression evaluated in the
+   * body.
    */
   {
-    VALUE rb_cCDECL = rb_define_class_under(rb_cNode, "CDECL", rb_cNode);
+    VALUE rb_cCLASS = rb_define_class_under(rb_cNode, "CLASS", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CDECL] = rb_cCDECL;
-    rb_iv_set(rb_cCDECL, "__member__", members);
-    rb_iv_set(rb_cCDECL, "__type__", INT2NUM(NODE_CDECL));
-    rb_define_singleton_method(rb_cCDECL, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_CLASS] = rb_cCLASS;
+    rb_iv_set(rb_cCLASS, "__member__", members);
+    rb_iv_set(rb_cCLASS, "__type__", INT2NUM(NODE_CLASS));
+    rb_define_singleton_method(rb_cCLASS, "members", node_s_members, 0);
 
-    /* Document-method: value
-     * the value to be assigned to the constant
+    /* Document-method: cpath
+     * the name of the class to define
      */
-    rb_define_method(rb_cCDECL, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
+    rb_define_method(rb_cCLASS, "cpath", node_cpath, 0);
+    rb_ary_push(members, rb_str_new2("cpath"));
 
-    /* Document-method: vid
-     * the name of the constant to be assigned, all uppercase
+    /* Document-method: body
+     * the body of the class definition
      */
-    rb_define_method(rb_cCDECL, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
+    rb_define_method(rb_cCLASS, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+
+    /* Document-method: super
+     * an expression returning the base class, or false if there is no
+     * base class specified
+     */
+    rb_define_method(rb_cCLASS, "super", node_super, 0);
+    rb_ary_push(members, rb_str_new2("super"));
+  }
+
+  /* Document-class: Node::ARRAY
+   * Represents an array of elements.  Evaluation of this node creates a
+   * new Array by evalating the given expressions and placing them into
+   * the array.
+   */
+  {
+    VALUE rb_cARRAY = rb_define_class_under(rb_cNode, "ARRAY", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_ARRAY] = rb_cARRAY;
+    rb_iv_set(rb_cARRAY, "__member__", members);
+    rb_iv_set(rb_cARRAY, "__type__", INT2NUM(NODE_ARRAY));
+    rb_define_singleton_method(rb_cARRAY, "members", node_s_members, 0);
+
+    /* Document-method: head
+     * the first element of the array
+     */
+    rb_define_method(rb_cARRAY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cARRAY, "alen", node_alen, 0);
+    rb_ary_push(members, rb_str_new2("alen"));
+
+    /* Document-method: next
+     * the tail of the array
+     */
+    rb_define_method(rb_cARRAY, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
+  }
+
+  /* Document-class: Node::NEXT
+   * Represents the 'next' keyword.
+   * Causes control to be transferred to the end of the loop, causing the
+   * next value in the sequence to be retrieved.
+   */
+  {
+    VALUE rb_cNEXT = rb_define_class_under(rb_cNode, "NEXT", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_NEXT] = rb_cNEXT;
+    rb_iv_set(rb_cNEXT, "__member__", members);
+    rb_iv_set(rb_cNEXT, "__type__", INT2NUM(NODE_NEXT));
+    rb_define_singleton_method(rb_cNEXT, "members", node_s_members, 0);
+    rb_define_method(rb_cNEXT, "stts", node_stts, 0);
+    rb_ary_push(members, rb_str_new2("stts"));
+  }
+
+  /* Document-class: Node::FLIP2
+   * Represents part of an awk-like flip-flop expression of the form:
+   *   if beg..end then
+   *     body
+   *   end
+   */
+  {
+    VALUE rb_cFLIP2 = rb_define_class_under(rb_cNode, "FLIP2", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_FLIP2] = rb_cFLIP2;
+    rb_iv_set(rb_cFLIP2, "__member__", members);
+    rb_iv_set(rb_cFLIP2, "__type__", INT2NUM(NODE_FLIP2));
+    rb_define_singleton_method(rb_cFLIP2, "members", node_s_members, 0);
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cFLIP2, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
+
+    /* Document-method: end
+     * the end of the range
+     */
+    rb_define_method(rb_cFLIP2, "end", node_end, 0);
+    rb_ary_push(members, rb_str_new2("end"));
+
+    /* Document-method: cnt
+     * the index into the local variable table of the special variable
+     * to use in the flip-flop expression (usually 2 for $_)
+     */
+    rb_define_method(rb_cFLIP2, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::DXSTR
@@ -3793,6 +3633,40 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cDXSTR, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+  }
+
+  /* Document-class: Node::FLIP3
+   * Represents part of a sed-like flip-flop expression of the form:
+   *   if beg..end then
+   *     body
+   *   end
+   */
+  {
+    VALUE rb_cFLIP3 = rb_define_class_under(rb_cNode, "FLIP3", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_FLIP3] = rb_cFLIP3;
+    rb_iv_set(rb_cFLIP3, "__member__", members);
+    rb_iv_set(rb_cFLIP3, "__type__", INT2NUM(NODE_FLIP3));
+    rb_define_singleton_method(rb_cFLIP3, "members", node_s_members, 0);
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cFLIP3, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
+
+    /* Document-method: end
+     * the end of the range
+     */
+    rb_define_method(rb_cFLIP3, "end", node_end, 0);
+    rb_ary_push(members, rb_str_new2("end"));
+
+    /* Document-method: cnt
+     * the index into the local variable table of the special variable
+     * to use in the flip-flop expression (usually 2 for $_)
+     */
+    rb_define_method(rb_cFLIP3, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::VCALL
@@ -3876,6 +3750,36 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("second"));
   }
 
+  /* Document-class: Node::BACK_REF
+   * Represents one of the regex back reference variables:
+   * * $& - last match
+   * * $` - pre
+   * * $' - post
+   * * $+ - last
+   */
+  {
+    VALUE rb_cBACK_REF = rb_define_class_under(rb_cNode, "BACK_REF", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_BACK_REF] = rb_cBACK_REF;
+    rb_iv_set(rb_cBACK_REF, "__member__", members);
+    rb_iv_set(rb_cBACK_REF, "__type__", INT2NUM(NODE_BACK_REF));
+    rb_define_singleton_method(rb_cBACK_REF, "members", node_s_members, 0);
+
+    /* Document-method: nth
+     * the integer representation of the character of the variable to
+     * reference, one of '&', '`', '\'', or '+'
+     */
+    rb_define_method(rb_cBACK_REF, "nth", node_nth, 0);
+    rb_ary_push(members, rb_str_new2("nth"));
+
+    /* Document-method: cnt
+     * the index into the local variable table where the match data is
+     * stored
+     */
+    rb_define_method(rb_cBACK_REF, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
+  }
+
   /* Document-class: Node::SCLASS
    * Represents the body of a singleton class definition, e.g.:
    *   class << recv
@@ -3927,23 +3831,62 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("head"));
   }
 
-  /* Document-class: Node::VALIAS
-   * Represents an alias expression of the form:
-   *   alias 1st 2nd
-   * where 2nd is the name of a variable and 1st is the name of its new
-   * alias.
+  /* Document-class: Node::OP_ASGN_AND
+   * Represents an expression of the form:
+   *   recv &&= value
+   * Ruby will evaluate the expression on the left hand side of the
+   * assignment; if it is true, then it will assign the result of the
+   * expression on the right hand side to the receiver on the left hand
+   * side.
    */
   {
-    VALUE rb_cVALIAS = rb_define_class_under(rb_cNode, "VALIAS", rb_cNode);
+    VALUE rb_cOP_ASGN_AND = rb_define_class_under(rb_cNode, "OP_ASGN_AND", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_VALIAS] = rb_cVALIAS;
-    rb_iv_set(rb_cVALIAS, "__member__", members);
-    rb_iv_set(rb_cVALIAS, "__type__", INT2NUM(NODE_VALIAS));
-    rb_define_singleton_method(rb_cVALIAS, "members", node_s_members, 0);
-    rb_define_method(rb_cVALIAS, "first", node_1st, 0);
-    rb_ary_push(members, rb_str_new2("first"));
-    rb_define_method(rb_cVALIAS, "second", node_2nd, 0);
-    rb_ary_push(members, rb_str_new2("second"));
+    rb_cNodeSubclass[NODE_OP_ASGN_AND] = rb_cOP_ASGN_AND;
+    rb_iv_set(rb_cOP_ASGN_AND, "__member__", members);
+    rb_iv_set(rb_cOP_ASGN_AND, "__type__", INT2NUM(NODE_OP_ASGN_AND));
+    rb_define_singleton_method(rb_cOP_ASGN_AND, "members", node_s_members, 0);
+
+    /* Document-method: value
+     * an expression representing the assignment that should be
+     * performed if the left hand side is true
+     */
+    rb_define_method(rb_cOP_ASGN_AND, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: recv
+     * an expression representing the left hand side of the assignment
+     */
+    rb_define_method(rb_cOP_ASGN_AND, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
+  }
+
+  /* Document-class: Node::DOT2
+   * Represents a range created with the form:
+   *   beg..end
+   * Creates a range which does not exclude the range end.
+   */
+  {
+    VALUE rb_cDOT2 = rb_define_class_under(rb_cNode, "DOT2", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_DOT2] = rb_cDOT2;
+    rb_iv_set(rb_cDOT2, "__member__", members);
+    rb_iv_set(rb_cDOT2, "__type__", INT2NUM(NODE_DOT2));
+    rb_define_singleton_method(rb_cDOT2, "members", node_s_members, 0);
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cDOT2, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
+
+    /* Document-method: end
+     * the end of the range
+     */
+    rb_define_method(rb_cDOT2, "end", node_end, 0);
+    rb_ary_push(members, rb_str_new2("end"));
+    rb_define_method(rb_cDOT2, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
   }
 
   /* Document-class: Node::REDO
@@ -4035,128 +3978,162 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("next"));
   }
 
-  /* Document-class: Node::DEFN
-   * Represents a method definition, e.g.:
-   *   def mid
-   *     defn
+  /* Document-class: Node::DOT3
+   * Represents a range created with the form:
+   *   beg...end
+   * Creates a range which excludes the range end.
+   */
+  {
+    VALUE rb_cDOT3 = rb_define_class_under(rb_cNode, "DOT3", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_DOT3] = rb_cDOT3;
+    rb_iv_set(rb_cDOT3, "__member__", members);
+    rb_iv_set(rb_cDOT3, "__type__", INT2NUM(NODE_DOT3));
+    rb_define_singleton_method(rb_cDOT3, "members", node_s_members, 0);
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cDOT3, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
+
+    /* Document-method: end
+     * the end of the range
+     */
+    rb_define_method(rb_cDOT3, "end", node_end, 0);
+    rb_ary_push(members, rb_str_new2("end"));
+    rb_define_method(rb_cDOT3, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
+  }
+
+  /* Document-class: Node::RESCUE
+   * Represents part of a rescue expression of the form:
+   *   head rescue expr
+   * 
+   * or the longer form:
+   *   begin
+   *     head
+   *   rescue exception
+   *     expr
    *   end
+   * 
+   * or the form using the else keyword:
+   *   begin
+   *     head
+   *   rescue exception
+   *     expr
+   *   else
+   *     else_expr
+   *   end
+   * 
+   * The head expression is first evaluated, and if an exception is
+   * raised, evaluates the resq node.  If no exception is raised, the
+   * else node is evaluated if it is not false (0).
+   * 
+   * The resq node will be a RESBDOY node, which will test the exception
+   * to see if it matches one of the expected types.  If it does it will
+   * handle the exception, otherwise it will allow the expression to pass
+   * to the outer scope.
    */
   {
-    VALUE rb_cDEFN = rb_define_class_under(rb_cNode, "DEFN", rb_cNode);
+    VALUE rb_cRESCUE = rb_define_class_under(rb_cNode, "RESCUE", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DEFN] = rb_cDEFN;
-    rb_iv_set(rb_cDEFN, "__member__", members);
-    rb_iv_set(rb_cDEFN, "__type__", INT2NUM(NODE_DEFN));
-    rb_define_singleton_method(rb_cDEFN, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_RESCUE] = rb_cRESCUE;
+    rb_iv_set(rb_cRESCUE, "__member__", members);
+    rb_iv_set(rb_cRESCUE, "__type__", INT2NUM(NODE_RESCUE));
+    rb_define_singleton_method(rb_cRESCUE, "members", node_s_members, 0);
 
-    /* Document-method: mid
-     * the name of the method* defn the body of the method
+    /* Document-method: head
+     * the body of the block to evaluate
      */
-    rb_define_method(rb_cDEFN, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
+    rb_define_method(rb_cRESCUE, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
 
-    /* Document-method: defn
-     * the body of the method definition
+    /* Document-method: else
+     * the expression to be evaluated if no exception is raised
      */
-    rb_define_method(rb_cDEFN, "defn", node_defn, 0);
-    rb_ary_push(members, rb_str_new2("defn"));
+    rb_define_method(rb_cRESCUE, "else", node_else, 0);
+    rb_ary_push(members, rb_str_new2("else"));
 
-    /* Document-method: noex
-     * the flags which should be used to define the method
+    /* Document-method: resq
+     * the expression to be evaluated if an exception is raised
      */
-    rb_define_method(rb_cDEFN, "noex", node_noex, 0);
-    rb_ary_push(members, rb_str_new2("noex"));
+    rb_define_method(rb_cRESCUE, "resq", node_resq, 0);
+    rb_ary_push(members, rb_str_new2("resq"));
   }
 
-  /* Document-class: Node::SCOPE
-   * Represents a lexical scope.
-   * 
-   * A new scope is created when a method is invoked.  The scope node
-   * holds information about local variables and arguments to the method.
-   * The first two variables in the local variable table are the implicit
-   * variables $_ and $~.
-   * 
-   * The next variables listed in the local variable table are the
-   * arguments to the method.  More information about the arguments to
-   * the method are stored in the ARGS node, which will either be the
-   * first node in the scope or the first node in the BLOCK held by the
-   * scope.
+  /* Document-class: Node::RETRY
+   * Represents the retry keyword.
    */
   {
-    VALUE rb_cSCOPE = rb_define_class_under(rb_cNode, "SCOPE", rb_cNode);
+    VALUE rb_cRETRY = rb_define_class_under(rb_cNode, "RETRY", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_SCOPE] = rb_cSCOPE;
-    rb_iv_set(rb_cSCOPE, "__member__", members);
-    rb_iv_set(rb_cSCOPE, "__type__", INT2NUM(NODE_SCOPE));
-    rb_define_singleton_method(rb_cSCOPE, "members", node_s_members, 0);
-
-    /* Document-method: tbl
-     * the names of the local variables* next the first expression in
-     * the scope
-     */
-    rb_define_method(rb_cSCOPE, "tbl", node_tbl, 0);
-    rb_ary_push(members, rb_str_new2("tbl"));
-
-    /* Document-method: rval
-     * holds information about which class(es) to search for  constants
-     * in this scope
-     */
-    rb_define_method(rb_cSCOPE, "rval", node_rval, 0);
-    rb_ary_push(members, rb_str_new2("rval"));
-
-    /* Document-method: next
-     * the body of the lexical scope
-     */
-    rb_define_method(rb_cSCOPE, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
+    rb_cNodeSubclass[NODE_RETRY] = rb_cRETRY;
+    rb_iv_set(rb_cRETRY, "__member__", members);
+    rb_iv_set(rb_cRETRY, "__type__", INT2NUM(NODE_RETRY));
+    rb_define_singleton_method(rb_cRETRY, "members", node_s_members, 0);
   }
 
-  /* Document-class: Node::DSYM
-   * Represents a symbol with interpolation, e.g.:
-   *   :"#{next}"
-   * 
-   * The node is evaluated by duplicating the string stored in the 'lit'
-   * element, then iterating over the nodes stored in the 'next' element.
-   * Each node found should evalate to a string, and each resulting
-   * string is appended onto the original string.  The final resulting
-   * string is then converted into a symbol.  Interpolation is
-   * represented with the EVSTR node.
+  /* Document-class: Node::IVAR
+   * A placeholder for an attribute reader method, which can added to a
+   * class by using attr_reader:
+   *   attr_reader :attribute
+   * Its writer counterpart is ATTRSET.
    */
   {
-    VALUE rb_cDSYM = rb_define_class_under(rb_cNode, "DSYM", rb_cNode);
+    VALUE rb_cIVAR = rb_define_class_under(rb_cNode, "IVAR", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DSYM] = rb_cDSYM;
-    rb_iv_set(rb_cDSYM, "__member__", members);
-    rb_iv_set(rb_cDSYM, "__type__", INT2NUM(NODE_DSYM));
-    rb_define_singleton_method(rb_cDSYM, "members", node_s_members, 0);
-    rb_define_method(rb_cDSYM, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-    rb_define_method(rb_cDSYM, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
+    rb_cNodeSubclass[NODE_IVAR] = rb_cIVAR;
+    rb_iv_set(rb_cIVAR, "__member__", members);
+    rb_iv_set(rb_cIVAR, "__type__", INT2NUM(NODE_IVAR));
+    rb_define_singleton_method(rb_cIVAR, "members", node_s_members, 0);
+
+    /* Document-method: vid
+     * the name of the attribute, with a leading '@' sign
+     */
+    rb_define_method(rb_cIVAR, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::BMETHOD
-   * A placeholder for a method defined using define_method, e.g.:
-   *   define_method(:foo) {
+  /* Document-class: Node::MATCH2
+   * Represents a match in a conditional with a regular expression using
+   * interpolation, e.g.:
+   *   if /#{recv}/ then
    *     ...
-   *   }
+   *   end
    * 
-   * See also DMETHOD.
+   * which is equivalent to:
+   *   if /#{recv}/ =~ $_ then
+   *     ...
+   *   end
+   * 
+   * or a match with a regular expression on the left hand side and an
+   * expression on the right hand side, e.g.:
+   * 
+   *   /recv/ =~ value
    */
   {
-    VALUE rb_cBMETHOD = rb_define_class_under(rb_cNode, "BMETHOD", rb_cNode);
+    VALUE rb_cMATCH2 = rb_define_class_under(rb_cNode, "MATCH2", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_BMETHOD] = rb_cBMETHOD;
-    rb_iv_set(rb_cBMETHOD, "__member__", members);
-    rb_iv_set(rb_cBMETHOD, "__type__", INT2NUM(NODE_BMETHOD));
-    rb_define_singleton_method(rb_cBMETHOD, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_MATCH2] = rb_cMATCH2;
+    rb_iv_set(rb_cMATCH2, "__member__", members);
+    rb_iv_set(rb_cMATCH2, "__type__", INT2NUM(NODE_MATCH2));
+    rb_define_singleton_method(rb_cMATCH2, "members", node_s_members, 0);
 
-    /* Document-method: cval
-     * the Proc object passed to define_method, which contains the body
-     * of the method
+    /* Document-method: value
+     * the expression on the right hand side of the match operator, or
+     * an expression returning $_ if there is nothing on the right hand
+     * side
      */
-    rb_define_method(rb_cBMETHOD, "cval", node_cval, 0);
-    rb_ary_push(members, rb_str_new2("cval"));
+    rb_define_method(rb_cMATCH2, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: recv
+     * the regular expression on the left hand side of the match
+     * operator
+     */
+    rb_define_method(rb_cMATCH2, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
   }
 
   /* Document-class: Node::IF
@@ -4266,37 +4243,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("next"));
   }
 
-  /* Document-class: Node::ARGSCAT
-   * Represents the concatenation of a list of arguments and a splatted
-   * value, e.g.:
-   *   a, b, *value
-   * Evaluates head to create an array.  Evaluates body and performs a
-   * splat operation on the result to create another array (see SPLAT).
-   * Concatenates the the second array onto the end of the first to
-   * produce the result.
-   */
-  {
-    VALUE rb_cARGSCAT = rb_define_class_under(rb_cNode, "ARGSCAT", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_ARGSCAT] = rb_cARGSCAT;
-    rb_iv_set(rb_cARGSCAT, "__member__", members);
-    rb_iv_set(rb_cARGSCAT, "__type__", INT2NUM(NODE_ARGSCAT));
-    rb_define_singleton_method(rb_cARGSCAT, "members", node_s_members, 0);
-
-    /* Document-method: head
-     * a list of fixed arguments
-     */
-    rb_define_method(rb_cARGSCAT, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
-    /* Document-method: body
-     * the last argument, which will be splatted onto the end of the
-     * fixed arguments
-     */
-    rb_define_method(rb_cARGSCAT, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-  }
-
   /* Document-class: Node::HASH
    * Represents a hash table.  Evaluation of this node creates a new Hash
    * by evaluating the given expressions and placing them into the table.
@@ -4314,6 +4260,26 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cHASH, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
+  }
+
+  /* Document-class: Node::CONST
+   * Represents a constant lookup in the current class.  The current
+   * class is the class in which the containing scope was defined.  The
+   * result of the expression is the value of the constant.
+   */
+  {
+    VALUE rb_cCONST = rb_define_class_under(rb_cNode, "CONST", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_CONST] = rb_cCONST;
+    rb_iv_set(rb_cCONST, "__member__", members);
+    rb_iv_set(rb_cCONST, "__type__", INT2NUM(NODE_CONST));
+    rb_define_singleton_method(rb_cCONST, "members", node_s_members, 0);
+
+    /* Document-method: vid
+     * the name of the constant to look up
+     */
+    rb_define_method(rb_cCONST, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
   /* Document-class: Node::ALLOCA
@@ -4402,51 +4368,75 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("recv"));
   }
 
-  /* Document-class: Node::CASE
-   * Represents the value portion of a case/end block, e.g.:
-   *   case head
-   *   body
-   *   end
-   *   next
+  /* Document-class: Node::MATCH3
+   * Represents a regular expression match of the form:
+   *   recv =~ /value/
+   * 
+   * where recv is an expression that returns an object and value is a
+   * regular expression literal.
    */
   {
-    VALUE rb_cCASE = rb_define_class_under(rb_cNode, "CASE", rb_cNode);
+    VALUE rb_cMATCH3 = rb_define_class_under(rb_cNode, "MATCH3", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CASE] = rb_cCASE;
-    rb_iv_set(rb_cCASE, "__member__", members);
-    rb_iv_set(rb_cCASE, "__type__", INT2NUM(NODE_CASE));
-    rb_define_singleton_method(rb_cCASE, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_MATCH3] = rb_cMATCH3;
+    rb_iv_set(rb_cMATCH3, "__member__", members);
+    rb_iv_set(rb_cMATCH3, "__type__", INT2NUM(NODE_MATCH3));
+    rb_define_singleton_method(rb_cMATCH3, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the value to select on
+    /* Document-method: value
+     * the right hand side of the match
      */
-    rb_define_method(rb_cCASE, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cMATCH3, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
 
-    /* Document-method: body
-     * a linked list of nodes, each node representing a when
-     * conditional
+    /* Document-method: recv
+     * the left hand side of the match
      */
-    rb_define_method(rb_cCASE, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-    rb_define_method(rb_cCASE, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
+    rb_define_method(rb_cMATCH3, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
   }
 
-  /* Document-class: Node::CFUNC
-   * A placeholder for a function implemented in C.
+  /* Document-class: Node::IASGN
+   * Represents instance variable assignment.
    */
   {
-    VALUE rb_cCFUNC = rb_define_class_under(rb_cNode, "CFUNC", rb_cNode);
+    VALUE rb_cIASGN = rb_define_class_under(rb_cNode, "IASGN", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CFUNC] = rb_cCFUNC;
-    rb_iv_set(rb_cCFUNC, "__member__", members);
-    rb_iv_set(rb_cCFUNC, "__type__", INT2NUM(NODE_CFUNC));
-    rb_define_singleton_method(rb_cCFUNC, "members", node_s_members, 0);
-    rb_define_method(rb_cCFUNC, "cfnc", node_cfnc, 0);
-    rb_ary_push(members, rb_str_new2("cfnc"));
-    rb_define_method(rb_cCFUNC, "argc", node_argc, 0);
-    rb_ary_push(members, rb_str_new2("argc"));
+    rb_cNodeSubclass[NODE_IASGN] = rb_cIASGN;
+    rb_iv_set(rb_cIASGN, "__member__", members);
+    rb_iv_set(rb_cIASGN, "__type__", INT2NUM(NODE_IASGN));
+    rb_define_singleton_method(rb_cIASGN, "members", node_s_members, 0);
+
+    /* Document-method: value
+     * the value to assign to the instance variable
+     */
+    rb_define_method(rb_cIASGN, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: vid
+     * the name of the instance variable, with a leading '@' sign
+     */
+    rb_define_method(rb_cIASGN, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
+  }
+
+  /* Document-class: Node::CVAR
+   * Represents a class variable retrieval.  The result of the expression
+   * is the value of the class variable.
+   */
+  {
+    VALUE rb_cCVAR = rb_define_class_under(rb_cNode, "CVAR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_CVAR] = rb_cCVAR;
+    rb_iv_set(rb_cCVAR, "__member__", members);
+    rb_iv_set(rb_cCVAR, "__type__", INT2NUM(NODE_CVAR));
+    rb_define_singleton_method(rb_cCVAR, "members", node_s_members, 0);
+
+    /* Document-method: vid
+     * the name of the class variable, with two leading '@' characters.
+     */
+    rb_define_method(rb_cCVAR, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
   /* Document-class: Node::OP_ASGN2
@@ -4489,33 +4479,48 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("recv"));
   }
 
-  /* Document-class: Node::DEFS
-   * Represents a singleton method definition, e.g.:
-   *   def recv.mid
-   *     defn
-   *   end
+  /* Document-class: Node::OPT_N
+   * Represents the top-level loop when the -n or -p options are used
+   * with the interpreter.
    */
   {
-    VALUE rb_cDEFS = rb_define_class_under(rb_cNode, "DEFS", rb_cNode);
+    VALUE rb_cOPT_N = rb_define_class_under(rb_cNode, "OPT_N", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DEFS] = rb_cDEFS;
-    rb_iv_set(rb_cDEFS, "__member__", members);
-    rb_iv_set(rb_cDEFS, "__type__", INT2NUM(NODE_DEFS));
-    rb_define_singleton_method(rb_cDEFS, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_OPT_N] = rb_cOPT_N;
+    rb_iv_set(rb_cOPT_N, "__member__", members);
+    rb_iv_set(rb_cOPT_N, "__type__", INT2NUM(NODE_OPT_N));
+    rb_define_singleton_method(rb_cOPT_N, "members", node_s_members, 0);
 
-    /* Document-method: mid
-     * the name of the method* defn the body of the method
+    /* Document-method: body
+     * the body of the loop
      */
-    rb_define_method(rb_cDEFS, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-    rb_define_method(rb_cDEFS, "defn", node_defn, 0);
-    rb_ary_push(members, rb_str_new2("defn"));
+    rb_define_method(rb_cOPT_N, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
 
-    /* Document-method: recv
-     * the object to whose singleton class the new method is to be  added
+  /* Document-class: Node::DASGN_CURR
+   * Represents dynamic local variable assignment in the current frame.
+   * See DASGN for a description of how dynamic assignment works.
+   */
+  {
+    VALUE rb_cDASGN_CURR = rb_define_class_under(rb_cNode, "DASGN_CURR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_DASGN_CURR] = rb_cDASGN_CURR;
+    rb_iv_set(rb_cDASGN_CURR, "__member__", members);
+    rb_iv_set(rb_cDASGN_CURR, "__type__", INT2NUM(NODE_DASGN_CURR));
+    rb_define_singleton_method(rb_cDASGN_CURR, "members", node_s_members, 0);
+
+    /* Document-method: value
+     * the value to assign to the local variable
      */
-    rb_define_method(rb_cDEFS, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
+    rb_define_method(rb_cDASGN_CURR, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: vid
+     * the name of the local variable
+     */
+    rb_define_method(rb_cDASGN_CURR, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
   /* Document-class: Node::LASGN
@@ -4542,6 +4547,35 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("vid"));
     rb_define_method(rb_cLASGN, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
+  }
+
+  /* Document-class: Node::COLON2
+   * Represents a constant lookup in a particular class.  This expression
+   * has the form:
+   *   klass::mid
+   * 
+   * where klass is the result of evaluating the expression in the head
+   * member.
+   */
+  {
+    VALUE rb_cCOLON2 = rb_define_class_under(rb_cNode, "COLON2", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_COLON2] = rb_cCOLON2;
+    rb_iv_set(rb_cCOLON2, "__member__", members);
+    rb_iv_set(rb_cCOLON2, "__type__", INT2NUM(NODE_COLON2));
+    rb_define_singleton_method(rb_cCOLON2, "members", node_s_members, 0);
+
+    /* Document-method: head
+     * an expression specifying the class in which to do the lookup
+     */
+    rb_define_method(rb_cCOLON2, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+
+    /* Document-method: mid
+     * the name of the method or constant to call/look up
+     */
+    rb_define_method(rb_cCOLON2, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
   }
 
   /* Document-class: Node::POSTEXE
@@ -4579,6 +4613,26 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("lit"));
   }
 
+  /* Document-class: Node::COLON3
+   * Represents a constant lookup or method call in class Object.  This
+   * expression has the form:
+   *   ::mid
+   */
+  {
+    VALUE rb_cCOLON3 = rb_define_class_under(rb_cNode, "COLON3", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_COLON3] = rb_cCOLON3;
+    rb_iv_set(rb_cCOLON3, "__member__", members);
+    rb_iv_set(rb_cCOLON3, "__type__", INT2NUM(NODE_COLON3));
+    rb_define_singleton_method(rb_cCOLON3, "members", node_s_members, 0);
+
+    /* Document-method: mid
+     * the name of the method or constant to call/look up
+     */
+    rb_define_method(rb_cCOLON3, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
+  }
+
   /* Document-class: Node::ATTRSET
    * A placeholder for an attribute writer method, which can added to a
    * class by using attr_writer:
@@ -4600,26 +4654,65 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::UNDEF
-   * Represents an expression using the undef keyword, e.g.:
-   *   undef :mid
-   * 
-   * This causes the method identified by mid in the current class to be
-   * undefined.
+  /* Document-class: Node::SUPER
+   * Represents the keyword 'super' when used with parens or with arguments.
    */
   {
-    VALUE rb_cUNDEF = rb_define_class_under(rb_cNode, "UNDEF", rb_cNode);
+    VALUE rb_cSUPER = rb_define_class_under(rb_cNode, "SUPER", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_UNDEF] = rb_cUNDEF;
-    rb_iv_set(rb_cUNDEF, "__member__", members);
-    rb_iv_set(rb_cUNDEF, "__type__", INT2NUM(NODE_UNDEF));
-    rb_define_singleton_method(rb_cUNDEF, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_SUPER] = rb_cSUPER;
+    rb_iv_set(rb_cSUPER, "__member__", members);
+    rb_iv_set(rb_cSUPER, "__type__", INT2NUM(NODE_SUPER));
+    rb_define_singleton_method(rb_cSUPER, "members", node_s_members, 0);
 
-    /* Document-method: body
-     * an expression returning the id of the method to undefine
+    /* Document-method: args
+     * the arguments to be passed to the base class
      */
-    rb_define_method(rb_cUNDEF, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cSUPER, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
+  }
+
+  /* Document-class: Node::FALSE
+   * Represents the keyword 'false'.
+   */
+  {
+    VALUE rb_cFALSE = rb_define_class_under(rb_cNode, "FALSE", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_FALSE] = rb_cFALSE;
+    rb_iv_set(rb_cFALSE, "__member__", members);
+    rb_iv_set(rb_cFALSE, "__type__", INT2NUM(NODE_FALSE));
+    rb_define_singleton_method(rb_cFALSE, "members", node_s_members, 0);
+  }
+
+  /* Document-class: Node::IFUNC
+   * A temporary node used in iteration.
+   */
+  {
+    VALUE rb_cIFUNC = rb_define_class_under(rb_cNode, "IFUNC", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_IFUNC] = rb_cIFUNC;
+    rb_iv_set(rb_cIFUNC, "__member__", members);
+    rb_iv_set(rb_cIFUNC, "__type__", INT2NUM(NODE_IFUNC));
+    rb_define_singleton_method(rb_cIFUNC, "members", node_s_members, 0);
+
+    /* Document-method: cfnc
+     * a pointer to the C function to which to yield
+     */
+    rb_define_method(rb_cIFUNC, "cfnc", node_cfnc, 0);
+    rb_ary_push(members, rb_str_new2("cfnc"));
+
+    /* Document-method: tval
+     * the user-specified data to be passed as the second argument to
+     * cfnc
+     */
+    rb_define_method(rb_cIFUNC, "tval", node_tval, 0);
+    rb_ary_push(members, rb_str_new2("tval"));
+
+    /* Document-method: state
+     * always 0
+     */
+    rb_define_method(rb_cIFUNC, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
   }
 
   /* Document-class: Node::MEMO
@@ -4645,24 +4738,86 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cMEMO, "members", node_s_members, 0);
   }
 
-  /* Document-class: Node::TO_ARY
-   * Represents a conversion from one object type to an array type.
-   * Evaluation of this node converts its argument to an array by calling
-   * \#to_ary on the argument.
+  /* Document-class: Node::WHILE
+   * Represents a loop constructed with the 'while' keyword, e.g.:
+   *   while cond do
+   *     body
+   *   end
    */
   {
-    VALUE rb_cTO_ARY = rb_define_class_under(rb_cNode, "TO_ARY", rb_cNode);
+    VALUE rb_cWHILE = rb_define_class_under(rb_cNode, "WHILE", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_TO_ARY] = rb_cTO_ARY;
-    rb_iv_set(rb_cTO_ARY, "__member__", members);
-    rb_iv_set(rb_cTO_ARY, "__type__", INT2NUM(NODE_TO_ARY));
-    rb_define_singleton_method(rb_cTO_ARY, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_WHILE] = rb_cWHILE;
+    rb_iv_set(rb_cWHILE, "__member__", members);
+    rb_iv_set(rb_cWHILE, "__type__", INT2NUM(NODE_WHILE));
+    rb_define_singleton_method(rb_cWHILE, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the object to convert to an array
+    /* Document-method: body
+     * the body of the loop
      */
-    rb_define_method(rb_cTO_ARY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cWHILE, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+
+    /* Document-method: cond
+     * a condition to terminate the loop when it becomes false
+     */
+    rb_define_method(rb_cWHILE, "cond", node_cond, 0);
+    rb_ary_push(members, rb_str_new2("cond"));
+    rb_define_method(rb_cWHILE, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
+  }
+
+  /* Document-class: Node::ZSUPER
+   * Represents the keyword 'super' when used without parens nor
+   * arguments.  The arguments to the base class method are obtained from
+   * the arguments passed to the current method, which are store in the
+   * current frame.
+   * 
+   * Can also be a placeholder for a method when its implementation is
+   * deferred to the base class.
+   */
+  {
+    VALUE rb_cZSUPER = rb_define_class_under(rb_cNode, "ZSUPER", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_ZSUPER] = rb_cZSUPER;
+    rb_iv_set(rb_cZSUPER, "__member__", members);
+    rb_iv_set(rb_cZSUPER, "__type__", INT2NUM(NODE_ZSUPER));
+    rb_define_singleton_method(rb_cZSUPER, "members", node_s_members, 0);
+  }
+
+  /* Document-class: Node::MATCH
+   * Represents a regular expression match in a conditional, e.g.:
+   *   if /lit/ then
+   *     ...
+   *   end
+   * 
+   * This expression is equivalent to:
+   *   if /lit/ =~ $_ then
+   *     ...
+   *   end
+   * 
+   * On ruby 1.8 and newer, this type of expression causes ruby to emit a
+   * warning, unless script is running with -e.
+   */
+  {
+    VALUE rb_cMATCH = rb_define_class_under(rb_cNode, "MATCH", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_MATCH] = rb_cMATCH;
+    rb_iv_set(rb_cMATCH, "__member__", members);
+    rb_iv_set(rb_cMATCH, "__type__", INT2NUM(NODE_MATCH));
+    rb_define_singleton_method(rb_cMATCH, "members", node_s_members, 0);
+
+    /* Document-method: lit
+     * the regular expression to use in the condition.
+     */
+    rb_define_method(rb_cMATCH, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
+
+    /* Document-method: value
+     * the value to compare against
+     */
+    rb_define_method(rb_cMATCH, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
   }
 
   /* Document-class: Node::XSTR
@@ -4686,43 +4841,35 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("lit"));
   }
 
-  /* Document-class: Node::RESBODY
-   * Represents the rescue portion of a rescue expression (see RESCUE for
-   * examples).
-   * 
-   * If the head node of the rescue expresion raises an exception, the
-   * resq node is evaluated.  The resq node is of type RESBDOY.
-   * 
-   * As it is evaluated, the type of the exception is tested against the
-   * class(es) listed in the args node.  If there is a match, the body
-   * node is evaluated, otherwise the head node is evaluated.  The head
-   * node is either another RESBDOY node or false (0).
+  /* Document-class: Node::BLOCK
+   * Represents a block of code (a succession of multiple expressions).
+   * A single block node can hold two expressions: one expression to be
+   * evaluated and second expression, which may be another BLOCK.
+   * The first node in the block may be of type ARGS, in which case it
+   * represents the arguments to the current method.
+   * The second node in the block may be of type BLOCK_ARG, in which case
+   * it represents an explicit block argument.
+   * The result of the block is the last expression evaluated.
    */
   {
-    VALUE rb_cRESBODY = rb_define_class_under(rb_cNode, "RESBODY", rb_cNode);
+    VALUE rb_cBLOCK = rb_define_class_under(rb_cNode, "BLOCK", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_RESBODY] = rb_cRESBODY;
-    rb_iv_set(rb_cRESBODY, "__member__", members);
-    rb_iv_set(rb_cRESBODY, "__type__", INT2NUM(NODE_RESBODY));
-    rb_define_singleton_method(rb_cRESBODY, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_BLOCK] = rb_cBLOCK;
+    rb_iv_set(rb_cBLOCK, "__member__", members);
+    rb_iv_set(rb_cBLOCK, "__type__", INT2NUM(NODE_BLOCK));
+    rb_define_singleton_method(rb_cBLOCK, "members", node_s_members, 0);
 
     /* Document-method: head
-     * the next rescue
+     * the first expression in the block of code
      */
-    rb_define_method(rb_cRESBODY, "head", node_head, 0);
+    rb_define_method(rb_cBLOCK, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
 
-    /* Document-method: args
-     * the expression type to match against
+    /* Document-method: next
+     * the second expression in the block of code
      */
-    rb_define_method(rb_cRESBODY, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
-
-    /* Document-method: body
-     * the expresion to evaluate if the exception type matches
-     */
-    rb_define_method(rb_cRESBODY, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cBLOCK, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
   }
 
   /* Document-class: Node::ALIAS
@@ -4744,48 +4891,73 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("second"));
   }
 
-  /* Document-class: Node::ARRAY
-   * Represents an array of elements.  Evaluation of this node creates a
-   * new Array by evalating the given expressions and placing them into
-   * the array.
+  /* Document-class: Node::DREGX_ONCE
+   * Represents a regular expression with interpolation with the 'once'
+   * flag set.  The regular expression is only interpolated the first
+   * time it is encountered.
    */
   {
-    VALUE rb_cARRAY = rb_define_class_under(rb_cNode, "ARRAY", rb_cNode);
+    VALUE rb_cDREGX_ONCE = rb_define_class_under(rb_cNode, "DREGX_ONCE", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_ARRAY] = rb_cARRAY;
-    rb_iv_set(rb_cARRAY, "__member__", members);
-    rb_iv_set(rb_cARRAY, "__type__", INT2NUM(NODE_ARRAY));
-    rb_define_singleton_method(rb_cARRAY, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_DREGX_ONCE] = rb_cDREGX_ONCE;
+    rb_iv_set(rb_cDREGX_ONCE, "__member__", members);
+    rb_iv_set(rb_cDREGX_ONCE, "__type__", INT2NUM(NODE_DREGX_ONCE));
+    rb_define_singleton_method(rb_cDREGX_ONCE, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the first element of the array
+    /* Document-method: lit
+     * a string
      */
-    rb_define_method(rb_cARRAY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-    rb_define_method(rb_cARRAY, "alen", node_alen, 0);
-    rb_ary_push(members, rb_str_new2("alen"));
+    rb_define_method(rb_cDREGX_ONCE, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
+
+    /* Document-method: cflag
+     * a bitfield containing the options used in the regular
+     * expression.  See DREGX for a list of valid values.
+     */
+    rb_define_method(rb_cDREGX_ONCE, "cflag", node_cflag, 0);
+    rb_ary_push(members, rb_str_new2("cflag"));
 
     /* Document-method: next
-     * the tail of the array
+     * a list of expressions to be appended onto the string
      */
-    rb_define_method(rb_cARRAY, "next", node_next, 0);
+    rb_define_method(rb_cDREGX_ONCE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
   }
 
-  /* Document-class: Node::NEXT
-   * Represents the 'next' keyword.
-   * Causes control to be transferred to the end of the loop, causing the
-   * next value in the sequence to be retrieved.
+  /* Document-class: Node::METHOD
+   * A placeholder for a method entry in a class's method table.
+   * 
+   * On ruby 1.9 this node type is also known as RUBY_VM_METHOD_NODE.
+   * Its use differs from that of NODE_METHOD in that it is used as the
+   * body of another METHOD node and is used to store the method's
+   * instruction sequence.
    */
   {
-    VALUE rb_cNEXT = rb_define_class_under(rb_cNode, "NEXT", rb_cNode);
+    VALUE rb_cMETHOD = rb_define_class_under(rb_cNode, "METHOD", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_NEXT] = rb_cNEXT;
-    rb_iv_set(rb_cNEXT, "__member__", members);
-    rb_iv_set(rb_cNEXT, "__type__", INT2NUM(NODE_NEXT));
-    rb_define_singleton_method(rb_cNEXT, "members", node_s_members, 0);
-    rb_define_method(rb_cNEXT, "stts", node_stts, 0);
-    rb_ary_push(members, rb_str_new2("stts"));
+    rb_cNodeSubclass[NODE_METHOD] = rb_cMETHOD;
+    rb_iv_set(rb_cMETHOD, "__member__", members);
+    rb_iv_set(rb_cMETHOD, "__type__", INT2NUM(NODE_METHOD));
+    rb_define_singleton_method(rb_cMETHOD, "members", node_s_members, 0);
+
+    /* Document-method: body
+     * the body of the method
+     */
+    rb_define_method(rb_cMETHOD, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+
+    /* Document-method: clss
+     * the class to which the method was added or the instruction
+     * sequence used to implement this method
+     */
+    rb_define_method(rb_cMETHOD, "clss", node_clss, 0);
+    rb_ary_push(members, rb_str_new2("clss"));
+
+    /* Document-method: noex
+     * the method's flags
+     */
+    rb_define_method(rb_cMETHOD, "noex", node_noex, 0);
+    rb_ary_push(members, rb_str_new2("noex"));
   }
 
   /* Document-class: Node::GASGN
@@ -4841,58 +5013,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::ATTRASGN
-   * Represents attribute assignment in the form:
-   *   recv.mid = args
-   * or:
-   *   recv.mid=(args).
-   */
-  {
-    VALUE rb_cATTRASGN = rb_define_class_under(rb_cNode, "ATTRASGN", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_ATTRASGN] = rb_cATTRASGN;
-    rb_iv_set(rb_cATTRASGN, "__member__", members);
-    rb_iv_set(rb_cATTRASGN, "__type__", INT2NUM(NODE_ATTRASGN));
-    rb_define_singleton_method(rb_cATTRASGN, "members", node_s_members, 0);
-
-    /* Document-method: args
-     * the arguments to the method
-     */
-    rb_define_method(rb_cATTRASGN, "args", node_args, 0);
-    rb_ary_push(members, rb_str_new2("args"));
-
-    /* Document-method: mid
-     * the id of the attribute, with a trailing '=' sign
-     */
-    rb_define_method(rb_cATTRASGN, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-
-    /* Document-method: recv
-     * the receiver of the method
-     */
-    rb_define_method(rb_cATTRASGN, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
-  }
-
-  /* Document-class: Node::BREAK
-   * Represents the 'break' keyword.  Causes control to be transferred
-   * out of the current loop.
-   */
-  {
-    VALUE rb_cBREAK = rb_define_class_under(rb_cNode, "BREAK", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_BREAK] = rb_cBREAK;
-    rb_iv_set(rb_cBREAK, "__member__", members);
-    rb_iv_set(rb_cBREAK, "__type__", INT2NUM(NODE_BREAK));
-    rb_define_singleton_method(rb_cBREAK, "members", node_s_members, 0);
-
-    /* Document-method: stts
-     * the value to be used as the "return" value of the loop, 0 if  nil is to be used.
-     */
-    rb_define_method(rb_cBREAK, "stts", node_stts, 0);
-    rb_ary_push(members, rb_str_new2("stts"));
-  }
-
   /* Document-class: Node::NTH_REF
    * Represents the nth match data item, e.g. $1, $2, etc.
    */
@@ -4917,34 +5037,6 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cnt"));
   }
 
-  /* Document-class: Node::DOT2
-   * Represents a range created with the form:
-   *   beg..end
-   * Creates a range which does not exclude the range end.
-   */
-  {
-    VALUE rb_cDOT2 = rb_define_class_under(rb_cNode, "DOT2", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DOT2] = rb_cDOT2;
-    rb_iv_set(rb_cDOT2, "__member__", members);
-    rb_iv_set(rb_cDOT2, "__type__", INT2NUM(NODE_DOT2));
-    rb_define_singleton_method(rb_cDOT2, "members", node_s_members, 0);
-
-    /* Document-method: beg
-     * the beginning of the range
-     */
-    rb_define_method(rb_cDOT2, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
-
-    /* Document-method: end
-     * the end of the range
-     */
-    rb_define_method(rb_cDOT2, "end", node_end, 0);
-    rb_ary_push(members, rb_str_new2("end"));
-    rb_define_method(rb_cDOT2, "state", node_state, 0);
-    rb_ary_push(members, rb_str_new2("state"));
-  }
-
   /* Document-class: Node::GVAR
    * Represents global variable retrieval.
    */
@@ -4965,80 +5057,66 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("entry"));
   }
 
-  /* Document-class: Node::DOT3
-   * Represents a range created with the form:
-   *   beg...end
-   * Creates a range which excludes the range end.
+  /* Document-class: Node::ITER
+   * Represents an iteration loop, e.g.:
+   *   iter do |*args|
+   *     assign args to var
+   *     body
+   *   end
+   * 
+   * A new block is created so that dynamic variables created inside the
+   * loop do not persist once the loop has terminated.
+   * 
+   * If the iter node is a POSTEXE node, indicates that the expression
+   * should be evaluated when the program terminates.
    */
   {
-    VALUE rb_cDOT3 = rb_define_class_under(rb_cNode, "DOT3", rb_cNode);
+    VALUE rb_cITER = rb_define_class_under(rb_cNode, "ITER", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DOT3] = rb_cDOT3;
-    rb_iv_set(rb_cDOT3, "__member__", members);
-    rb_iv_set(rb_cDOT3, "__type__", INT2NUM(NODE_DOT3));
-    rb_define_singleton_method(rb_cDOT3, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_ITER] = rb_cITER;
+    rb_iv_set(rb_cITER, "__member__", members);
+    rb_iv_set(rb_cITER, "__type__", INT2NUM(NODE_ITER));
+    rb_define_singleton_method(rb_cITER, "members", node_s_members, 0);
 
-    /* Document-method: beg
-     * the beginning of the range
+    /* Document-method: body
+     * the body of the loop
      */
-    rb_define_method(rb_cDOT3, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
+    rb_define_method(rb_cITER, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
 
-    /* Document-method: end
-     * the end of the range
+    /* Document-method: iter
+     * an expression which calls the desired iteration method, usually
+     * recv.each
      */
-    rb_define_method(rb_cDOT3, "end", node_end, 0);
-    rb_ary_push(members, rb_str_new2("end"));
-    rb_define_method(rb_cDOT3, "state", node_state, 0);
-    rb_ary_push(members, rb_str_new2("state"));
+    rb_define_method(rb_cITER, "iter", node_iter, 0);
+    rb_ary_push(members, rb_str_new2("iter"));
+
+    /* Document-method: var
+     * an assignment node which assigns the next value in the sequence
+     * to a variable, which may or may not be local.  May also be a
+     * multiple assignment.
+     */
+    rb_define_method(rb_cITER, "var", node_var, 0);
+    rb_ary_push(members, rb_str_new2("var"));
   }
 
-  /* Document-class: Node::CVASGN
-   * Represents class variable assignment in a method context.
+  /* Document-class: Node::VALIAS
+   * Represents an alias expression of the form:
+   *   alias 1st 2nd
+   * where 2nd is the name of a variable and 1st is the name of its new
+   * alias.
    */
   {
-    VALUE rb_cCVASGN = rb_define_class_under(rb_cNode, "CVASGN", rb_cNode);
+    VALUE rb_cVALIAS = rb_define_class_under(rb_cNode, "VALIAS", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CVASGN] = rb_cCVASGN;
-    rb_iv_set(rb_cCVASGN, "__member__", members);
-    rb_iv_set(rb_cCVASGN, "__type__", INT2NUM(NODE_CVASGN));
-    rb_define_singleton_method(rb_cCVASGN, "members", node_s_members, 0);
-
-    /* Document-method: value
-     * an expression whose result is the new value of the class
-     * variable
-     */
-    rb_define_method(rb_cCVASGN, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-
-    /* Document-method: vid
-     * the name of the class variable to assign
-     */
-    rb_define_method(rb_cCVASGN, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
-  }
-
-  /* Document-class: Node::SPLAT
-   * Represents the splat (*) operation as an rvalue, e.g.:
-   *   *head
-   * If the argument is an array, returns self.
-   * If the argument is nil, returns [nil].
-   * If the argument is any other value, returns the result of calling #to_a on the
-   * argument.
-   */
-  {
-    VALUE rb_cSPLAT = rb_define_class_under(rb_cNode, "SPLAT", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_SPLAT] = rb_cSPLAT;
-    rb_iv_set(rb_cSPLAT, "__member__", members);
-    rb_iv_set(rb_cSPLAT, "__type__", INT2NUM(NODE_SPLAT));
-    rb_define_singleton_method(rb_cSPLAT, "members", node_s_members, 0);
-
-    /* Document-method: head
-     * the argument to splat.
-     */
-    rb_define_method(rb_cSPLAT, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
+    rb_cNodeSubclass[NODE_VALIAS] = rb_cVALIAS;
+    rb_iv_set(rb_cVALIAS, "__member__", members);
+    rb_iv_set(rb_cVALIAS, "__type__", INT2NUM(NODE_VALIAS));
+    rb_define_singleton_method(rb_cVALIAS, "members", node_s_members, 0);
+    rb_define_method(rb_cVALIAS, "first", node_1st, 0);
+    rb_ary_push(members, rb_str_new2("first"));
+    rb_define_method(rb_cVALIAS, "second", node_2nd, 0);
+    rb_ary_push(members, rb_str_new2("second"));
   }
 
   /* Document-class: Node::MODULE
@@ -5116,107 +5194,130 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("var"));
   }
 
-  /* Document-class: Node::DVAR
-   * Represents dynamic local variable retrieval.  See also DASGN.
+  /* Document-class: Node::CALL
+   * Represents a method call in the form recv.mid(args).
    */
   {
-    VALUE rb_cDVAR = rb_define_class_under(rb_cNode, "DVAR", rb_cNode);
+    VALUE rb_cCALL = rb_define_class_under(rb_cNode, "CALL", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DVAR] = rb_cDVAR;
-    rb_iv_set(rb_cDVAR, "__member__", members);
-    rb_iv_set(rb_cDVAR, "__type__", INT2NUM(NODE_DVAR));
-    rb_define_singleton_method(rb_cDVAR, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_CALL] = rb_cCALL;
+    rb_iv_set(rb_cCALL, "__member__", members);
+    rb_iv_set(rb_cCALL, "__type__", INT2NUM(NODE_CALL));
+    rb_define_singleton_method(rb_cCALL, "members", node_s_members, 0);
 
-    /* Document-method: vid
-     * the name of the local variable to retrieve.
+    /* Document-method: args
+     * the arguments to the method
      */
-    rb_define_method(rb_cDVAR, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
+    rb_define_method(rb_cCALL, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
+
+    /* Document-method: mid
+     * the method id
+     */
+    rb_define_method(rb_cCALL, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
+
+    /* Document-method: recv
+     * the receiver of the method
+     */
+    rb_define_method(rb_cCALL, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
   }
 
-  /* Document-class: Node::DSTR
-   * Represents a string object with interpolation.  The node is
-   * evaluated by duplicating the string stored in the 'lit' element,
-   * then iterating over the nodes stored in the 'next' element.  Each
-   * node found should evalate to a string, and each resulting string is
-   * appended onto the regex.  Interpolation is represented with the
-   * EVSTR node.
-   */
-  {
-    VALUE rb_cDSTR = rb_define_class_under(rb_cNode, "DSTR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_DSTR] = rb_cDSTR;
-    rb_iv_set(rb_cDSTR, "__member__", members);
-    rb_iv_set(rb_cDSTR, "__type__", INT2NUM(NODE_DSTR));
-    rb_define_singleton_method(rb_cDSTR, "members", node_s_members, 0);
-
-    /* Document-method: lit
-     * a string
-     */
-    rb_define_method(rb_cDSTR, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-
-    /* Document-method: next
-     * a list of expressions to be appended onto the string
-     */
-    rb_define_method(rb_cDSTR, "next", node_next, 0);
-    rb_ary_push(members, rb_str_new2("next"));
-  }
-
-  /* Document-class: Node::RETRY
-   * Represents the retry keyword.
-   */
-  {
-    VALUE rb_cRETRY = rb_define_class_under(rb_cNode, "RETRY", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_RETRY] = rb_cRETRY;
-    rb_iv_set(rb_cRETRY, "__member__", members);
-    rb_iv_set(rb_cRETRY, "__type__", INT2NUM(NODE_RETRY));
-    rb_define_singleton_method(rb_cRETRY, "members", node_s_members, 0);
-  }
-
-  /* Document-class: Node::CLASS
-   * Represents a class definition, e.g.:
-   *   class cpath
-   *     body
+  /* Document-class: Node::DEFN
+   * Represents a method definition, e.g.:
+   *   def mid
+   *     defn
    *   end
-   * 
-   * or:
-   *   class cpath < super
-   *     body
-   *   end
-   * 
-   * The class definition is evaluated in a new lexical scope.
-   * 
-   * The result of the expression is the last expression evaluated in the
-   * body.
    */
   {
-    VALUE rb_cCLASS = rb_define_class_under(rb_cNode, "CLASS", rb_cNode);
+    VALUE rb_cDEFN = rb_define_class_under(rb_cNode, "DEFN", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CLASS] = rb_cCLASS;
-    rb_iv_set(rb_cCLASS, "__member__", members);
-    rb_iv_set(rb_cCLASS, "__type__", INT2NUM(NODE_CLASS));
-    rb_define_singleton_method(rb_cCLASS, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_DEFN] = rb_cDEFN;
+    rb_iv_set(rb_cDEFN, "__member__", members);
+    rb_iv_set(rb_cDEFN, "__type__", INT2NUM(NODE_DEFN));
+    rb_define_singleton_method(rb_cDEFN, "members", node_s_members, 0);
 
-    /* Document-method: cpath
-     * the name of the class to define
+    /* Document-method: defn
+     * the body of the method definition
      */
-    rb_define_method(rb_cCLASS, "cpath", node_cpath, 0);
-    rb_ary_push(members, rb_str_new2("cpath"));
+    rb_define_method(rb_cDEFN, "defn", node_defn, 0);
+    rb_ary_push(members, rb_str_new2("defn"));
+
+    /* Document-method: mid
+     * the name of the method* defn the body of the method
+     */
+    rb_define_method(rb_cDEFN, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
+
+    /* Document-method: noex
+     * the flags which should be used to define the method
+     */
+    rb_define_method(rb_cDEFN, "noex", node_noex, 0);
+    rb_ary_push(members, rb_str_new2("noex"));
+  }
+
+  /* Document-class: Node::TRUE
+   * Represents the keyword 'true'.
+   */
+  {
+    VALUE rb_cTRUE = rb_define_class_under(rb_cNode, "TRUE", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_TRUE] = rb_cTRUE;
+    rb_iv_set(rb_cTRUE, "__member__", members);
+    rb_iv_set(rb_cTRUE, "__type__", INT2NUM(NODE_TRUE));
+    rb_define_singleton_method(rb_cTRUE, "members", node_s_members, 0);
+  }
+
+  /* Document-class: Node::MASGN
+   * Represents multiple assignment.
+   */
+  {
+    VALUE rb_cMASGN = rb_define_class_under(rb_cNode, "MASGN", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_MASGN] = rb_cMASGN;
+    rb_iv_set(rb_cMASGN, "__member__", members);
+    rb_iv_set(rb_cMASGN, "__type__", INT2NUM(NODE_MASGN));
+    rb_define_singleton_method(rb_cMASGN, "members", node_s_members, 0);
+
+    /* Document-method: args
+     * TODO
+     */
+    rb_define_method(rb_cMASGN, "args", node_args, 0);
+    rb_ary_push(members, rb_str_new2("args"));
+
+    /* Document-method: head
+     * TODO
+     */
+    rb_define_method(rb_cMASGN, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+
+    /* Document-method: value
+     * TODO
+     */
+    rb_define_method(rb_cMASGN, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+  }
+
+  /* Document-class: Node::EVSTR
+   * Represents a single string interpolation.
+   * 
+   * Evaluates the given expression and converts its result to a string
+   * with #to_s.
+   */
+  {
+    VALUE rb_cEVSTR = rb_define_class_under(rb_cNode, "EVSTR", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_EVSTR] = rb_cEVSTR;
+    rb_iv_set(rb_cEVSTR, "__member__", members);
+    rb_iv_set(rb_cEVSTR, "__type__", INT2NUM(NODE_EVSTR));
+    rb_define_singleton_method(rb_cEVSTR, "members", node_s_members, 0);
 
     /* Document-method: body
-     * the body of the class definition
+     * an expression to evaluate
      */
-    rb_define_method(rb_cCLASS, "body", node_body, 0);
+    rb_define_method(rb_cEVSTR, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
-
-    /* Document-method: super
-     * an expression returning the base class, or false if there is no
-     * base class specified
-     */
-    rb_define_method(rb_cCLASS, "super", node_super, 0);
-    rb_ary_push(members, rb_str_new2("super"));
   }
 
   /* Document-class: Node::DASGN
@@ -5252,6 +5353,30 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("vid"));
   }
 
+  /* Document-class: Node::DSYM
+   * Represents a symbol with interpolation, e.g.:
+   *   :"#{next}"
+   * 
+   * The node is evaluated by duplicating the string stored in the 'lit'
+   * element, then iterating over the nodes stored in the 'next' element.
+   * Each node found should evalate to a string, and each resulting
+   * string is appended onto the original string.  The final resulting
+   * string is then converted into a symbol.  Interpolation is
+   * represented with the EVSTR node.
+   */
+  {
+    VALUE rb_cDSYM = rb_define_class_under(rb_cNode, "DSYM", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_DSYM] = rb_cDSYM;
+    rb_iv_set(rb_cDSYM, "__member__", members);
+    rb_iv_set(rb_cDSYM, "__type__", INT2NUM(NODE_DSYM));
+    rb_define_singleton_method(rb_cDSYM, "members", node_s_members, 0);
+    rb_define_method(rb_cDSYM, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
+    rb_define_method(rb_cDSYM, "next", node_next, 0);
+    rb_ary_push(members, rb_str_new2("next"));
+  }
+
   /* Document-class: Node::NIL
    * Represents the keyword 'nil'.
    */
@@ -5264,25 +5389,28 @@ void define_node_subclass_methods()
     rb_define_singleton_method(rb_cNIL, "members", node_s_members, 0);
   }
 
-  /* Document-class: Node::IVAR
-   * A placeholder for an attribute reader method, which can added to a
-   * class by using attr_reader:
-   *   attr_reader :attribute
-   * Its writer counterpart is ATTRSET.
+  /* Document-class: Node::BMETHOD
+   * A placeholder for a method defined using define_method, e.g.:
+   *   define_method(:foo) {
+   *     ...
+   *   }
+   * 
+   * See also DMETHOD.
    */
   {
-    VALUE rb_cIVAR = rb_define_class_under(rb_cNode, "IVAR", rb_cNode);
+    VALUE rb_cBMETHOD = rb_define_class_under(rb_cNode, "BMETHOD", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_IVAR] = rb_cIVAR;
-    rb_iv_set(rb_cIVAR, "__member__", members);
-    rb_iv_set(rb_cIVAR, "__type__", INT2NUM(NODE_IVAR));
-    rb_define_singleton_method(rb_cIVAR, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_BMETHOD] = rb_cBMETHOD;
+    rb_iv_set(rb_cBMETHOD, "__member__", members);
+    rb_iv_set(rb_cBMETHOD, "__type__", INT2NUM(NODE_BMETHOD));
+    rb_define_singleton_method(rb_cBMETHOD, "members", node_s_members, 0);
 
-    /* Document-method: vid
-     * the name of the attribute, with a leading '@' sign
+    /* Document-method: cval
+     * the Proc object passed to define_method, which contains the body
+     * of the method
      */
-    rb_define_method(rb_cIVAR, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
+    rb_define_method(rb_cBMETHOD, "cval", node_cval, 0);
+    rb_ary_push(members, rb_str_new2("cval"));
   }
 
   /* Document-class: Node::LVAR
@@ -5305,185 +5433,76 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("cnt"));
   }
 
-  /* Document-class: Node::MATCH2
-   * Represents a match in a conditional with a regular expression using
-   * interpolation, e.g.:
-   *   if /#{recv}/ then
-   *     ...
-   *   end
-   * 
-   * which is equivalent to:
-   *   if /#{recv}/ =~ $_ then
-   *     ...
-   *   end
-   * 
-   * or a match with a regular expression on the left hand side and an
-   * expression on the right hand side, e.g.:
-   * 
-   *   /recv/ =~ value
+  /* Document-class: Node::ARGSCAT
+   * Represents the concatenation of a list of arguments and a splatted
+   * value, e.g.:
+   *   a, b, *value
+   * Evaluates head to create an array.  Evaluates body and performs a
+   * splat operation on the result to create another array (see SPLAT).
+   * Concatenates the the second array onto the end of the first to
+   * produce the result.
    */
   {
-    VALUE rb_cMATCH2 = rb_define_class_under(rb_cNode, "MATCH2", rb_cNode);
+    VALUE rb_cARGSCAT = rb_define_class_under(rb_cNode, "ARGSCAT", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_MATCH2] = rb_cMATCH2;
-    rb_iv_set(rb_cMATCH2, "__member__", members);
-    rb_iv_set(rb_cMATCH2, "__type__", INT2NUM(NODE_MATCH2));
-    rb_define_singleton_method(rb_cMATCH2, "members", node_s_members, 0);
+    rb_cNodeSubclass[NODE_ARGSCAT] = rb_cARGSCAT;
+    rb_iv_set(rb_cARGSCAT, "__member__", members);
+    rb_iv_set(rb_cARGSCAT, "__type__", INT2NUM(NODE_ARGSCAT));
+    rb_define_singleton_method(rb_cARGSCAT, "members", node_s_members, 0);
+
+    /* Document-method: head
+     * a list of fixed arguments
+     */
+    rb_define_method(rb_cARGSCAT, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
+
+    /* Document-method: body
+     * the last argument, which will be splatted onto the end of the
+     * fixed arguments
+     */
+    rb_define_method(rb_cARGSCAT, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
+  }
+
+  /* Document-class: Node::CDECL
+   * Represents constant assignment of the form:
+   *   vid = value
+   */
+  {
+    VALUE rb_cCDECL = rb_define_class_under(rb_cNode, "CDECL", rb_cNode);
+    members = rb_ary_new();
+    rb_cNodeSubclass[NODE_CDECL] = rb_cCDECL;
+    rb_iv_set(rb_cCDECL, "__member__", members);
+    rb_iv_set(rb_cCDECL, "__type__", INT2NUM(NODE_CDECL));
+    rb_define_singleton_method(rb_cCDECL, "members", node_s_members, 0);
 
     /* Document-method: value
-     * the expression on the right hand side of the match operator, or
-     * an expression returning $_ if there is nothing on the right hand
-     * side
+     * the value to be assigned to the constant
      */
-    rb_define_method(rb_cMATCH2, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-
-    /* Document-method: recv
-     * the regular expression on the left hand side of the match
-     * operator
-     */
-    rb_define_method(rb_cMATCH2, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
-  }
-
-  /* Document-class: Node::FLIP2
-   * Represents part of an awk-like flip-flop expression of the form:
-   *   if beg..end then
-   *     body
-   *   end
-   */
-  {
-    VALUE rb_cFLIP2 = rb_define_class_under(rb_cNode, "FLIP2", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_FLIP2] = rb_cFLIP2;
-    rb_iv_set(rb_cFLIP2, "__member__", members);
-    rb_iv_set(rb_cFLIP2, "__type__", INT2NUM(NODE_FLIP2));
-    rb_define_singleton_method(rb_cFLIP2, "members", node_s_members, 0);
-
-    /* Document-method: beg
-     * the beginning of the range
-     */
-    rb_define_method(rb_cFLIP2, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
-
-    /* Document-method: end
-     * the end of the range
-     */
-    rb_define_method(rb_cFLIP2, "end", node_end, 0);
-    rb_ary_push(members, rb_str_new2("end"));
-
-    /* Document-method: cnt
-     * the index into the local variable table of the special variable
-     * to use in the flip-flop expression (usually 2 for $_)
-     */
-    rb_define_method(rb_cFLIP2, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
-  }
-
-  /* Document-class: Node::CONST
-   * Represents a constant lookup in the current class.  The current
-   * class is the class in which the containing scope was defined.  The
-   * result of the expression is the value of the constant.
-   */
-  {
-    VALUE rb_cCONST = rb_define_class_under(rb_cNode, "CONST", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CONST] = rb_cCONST;
-    rb_iv_set(rb_cCONST, "__member__", members);
-    rb_iv_set(rb_cCONST, "__type__", INT2NUM(NODE_CONST));
-    rb_define_singleton_method(rb_cCONST, "members", node_s_members, 0);
-
-    /* Document-method: vid
-     * the name of the constant to look up
-     */
-    rb_define_method(rb_cCONST, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
-  }
-
-  /* Document-class: Node::MATCH3
-   * Represents a regular expression match of the form:
-   *   recv =~ /value/
-   * 
-   * where recv is an expression that returns an object and value is a
-   * regular expression literal.
-   */
-  {
-    VALUE rb_cMATCH3 = rb_define_class_under(rb_cNode, "MATCH3", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_MATCH3] = rb_cMATCH3;
-    rb_iv_set(rb_cMATCH3, "__member__", members);
-    rb_iv_set(rb_cMATCH3, "__type__", INT2NUM(NODE_MATCH3));
-    rb_define_singleton_method(rb_cMATCH3, "members", node_s_members, 0);
-
-    /* Document-method: value
-     * the right hand side of the match
-     */
-    rb_define_method(rb_cMATCH3, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-
-    /* Document-method: recv
-     * the left hand side of the match
-     */
-    rb_define_method(rb_cMATCH3, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
-  }
-
-  /* Document-class: Node::IASGN
-   * Represents instance variable assignment.
-   */
-  {
-    VALUE rb_cIASGN = rb_define_class_under(rb_cNode, "IASGN", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_IASGN] = rb_cIASGN;
-    rb_iv_set(rb_cIASGN, "__member__", members);
-    rb_iv_set(rb_cIASGN, "__type__", INT2NUM(NODE_IASGN));
-    rb_define_singleton_method(rb_cIASGN, "members", node_s_members, 0);
-
-    /* Document-method: value
-     * the value to assign to the instance variable
-     */
-    rb_define_method(rb_cIASGN, "value", node_value, 0);
+    rb_define_method(rb_cCDECL, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
 
     /* Document-method: vid
-     * the name of the instance variable, with a leading '@' sign
+     * the name of the constant to be assigned, all uppercase
      */
-    rb_define_method(rb_cIASGN, "vid", node_vid, 0);
+    rb_define_method(rb_cCDECL, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
   }
 
-  /* Document-class: Node::FLIP3
-   * Represents part of a sed-like flip-flop expression of the form:
-   *   if beg..end then
-   *     body
-   *   end
+  /* Document-class: Node::CFUNC
+   * A placeholder for a function implemented in C.
    */
   {
-    VALUE rb_cFLIP3 = rb_define_class_under(rb_cNode, "FLIP3", rb_cNode);
+    VALUE rb_cCFUNC = rb_define_class_under(rb_cNode, "CFUNC", rb_cNode);
     members = rb_ary_new();
-    rb_cNodeSubclass[NODE_FLIP3] = rb_cFLIP3;
-    rb_iv_set(rb_cFLIP3, "__member__", members);
-    rb_iv_set(rb_cFLIP3, "__type__", INT2NUM(NODE_FLIP3));
-    rb_define_singleton_method(rb_cFLIP3, "members", node_s_members, 0);
-
-    /* Document-method: beg
-     * the beginning of the range
-     */
-    rb_define_method(rb_cFLIP3, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
-
-    /* Document-method: end
-     * the end of the range
-     */
-    rb_define_method(rb_cFLIP3, "end", node_end, 0);
-    rb_ary_push(members, rb_str_new2("end"));
-
-    /* Document-method: cnt
-     * the index into the local variable table of the special variable
-     * to use in the flip-flop expression (usually 2 for $_)
-     */
-    rb_define_method(rb_cFLIP3, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
+    rb_cNodeSubclass[NODE_CFUNC] = rb_cCFUNC;
+    rb_iv_set(rb_cCFUNC, "__member__", members);
+    rb_iv_set(rb_cCFUNC, "__type__", INT2NUM(NODE_CFUNC));
+    rb_define_singleton_method(rb_cCFUNC, "members", node_s_members, 0);
+    rb_define_method(rb_cCFUNC, "cfnc", node_cfnc, 0);
+    rb_ary_push(members, rb_str_new2("cfnc"));
+    rb_define_method(rb_cCFUNC, "argc", node_argc, 0);
+    rb_ary_push(members, rb_str_new2("argc"));
   }
 
   /* Document-class: Node::OR
@@ -5512,25 +5531,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cOR, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
-  }
-
-  /* Document-class: Node::CVAR
-   * Represents a class variable retrieval.  The result of the expression
-   * is the value of the class variable.
-   */
-  {
-    VALUE rb_cCVAR = rb_define_class_under(rb_cNode, "CVAR", rb_cNode);
-    members = rb_ary_new();
-    rb_cNodeSubclass[NODE_CVAR] = rb_cCVAR;
-    rb_iv_set(rb_cCVAR, "__member__", members);
-    rb_iv_set(rb_cCVAR, "__type__", INT2NUM(NODE_CVAR));
-    rb_define_singleton_method(rb_cCVAR, "members", node_s_members, 0);
-
-    /* Document-method: vid
-     * the name of the class variable, with two leading '@' characters.
-     */
-    rb_define_method(rb_cCVAR, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
   }
 
   /* Document-class: Node::YIELD

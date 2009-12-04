@@ -185,9 +185,8 @@ enum ruby_vminsn_type {
 
   BIN(answer)                    = 78,
 
+  VM_INSTRUCTION_SIZE            = 79
 };
-
-#define VM_INSTRUCTION_SIZE 79
 
 /** -*-c-*-
   This file contains instruction information for yarv instruction sequence.
