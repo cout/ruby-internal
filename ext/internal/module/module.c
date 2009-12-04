@@ -5,6 +5,7 @@
 #include <ruby/st.h>
 #include "vm_core.h"
 #include "eval_intern.h"
+#include "cfp.h"
 #else
 #include <rubysig.h>
 #include <st.h>
@@ -335,17 +336,11 @@ static VALUE module_name_proc = Qnil;
 
 #ifdef RUBY_VM
 
-#if defined(HAVE_VM_GET_RUBY_LEVEL_NEXT_CFP)
-/* Declared and defined in vm.c */
-rb_control_frame_t *
-vm_get_ruby_level_next_cfp(rb_thread_t *th, rb_control_frame_t *cfp);
-#endif
-
 static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
 {
   rb_thread_t * th = GET_THREAD();
-#if defined(HAVE_VM_GET_RUBY_LEVEL_NEXT_CFP)
-  rb_control_frame_t * cfp = vm_get_ruby_level_next_cfp(th, th->cfp);
+#if defined(HAVE_RB_VM_GET_RUBY_LEVEL_NEXT_CFP)
+  rb_control_frame_t * cfp = rb_vm_get_ruby_level_next_cfp(th, th->cfp);
 #elif defined(HAVE_VM_GET_RUBY_LEVEL_CFP)
   rb_control_frame_t * cfp = vm_get_ruby_level_cfp(th, th->cfp);
 #else
