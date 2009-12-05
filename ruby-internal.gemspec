@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = 'ruby-internal'
-  s.version = '0.6.0'
+  s.version = '0.7.0'
   s.summary = 'A library that provides acccess to the ' + \
               'internals of the ruby interpreter'
   s.homepage = 'http://rubystuff.org/nodewrap/'
