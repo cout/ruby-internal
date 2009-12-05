@@ -1,7 +1,21 @@
-This is ruby-internal, a library that provides access to the internals
-of the ruby interpreter.
+Ruby-internal is Ruby module that provides direct access to Ruby's (MRI or
+YARV) internal data structures.
 
-See the file LICENSE for license and copyright information.
+How is ruby-internal useful? You can:
+
+* dump and load methods and procs and classes
+* inspect and pretty-print ascii charts of node trees
+* inspect and print ascii charts of class hierarchies
+* use the provided code obfuscator (nwobfusc.rb) so your code can't easily be read.
+* use it to build a just-in-time compiler (see Ludicrous).
+
+== Installation
+
+To install ruby-internal:
+
+  $ gem install ruby-internal
+
+== Building from source
 
 To build and run the tests:
   ruby setup.rb config
@@ -11,16 +25,195 @@ Or, if you are on ruby 1.9 (or another version of ruby that doesn't have
 pre-parsed ruby source included in the distribution), you'll need to
 pass a special command-line option in the config step so the build
 scripts can find ruby's source code:
+
   ruby setup.rb config --ruby-source-path=/path/to/ruby
   ruby setup.rb setup
 
 To install:
   ruby install.rb install
 
-See the generated documentation (in the doc/ directory) and the examples
-(in the directory example/) for usage.
+== Sample code
 
-Some notes about security:
+This will dump the class Foo (including its instance methods, class variables,
+etc.) and re-load it:
+
+  :include: sample/dump_class.rb
+
+== Ruby-internal and irb
+
+Ruby-internal is very useful as a tool for digging into the internals of Ruby
+and figuring out what the interpreter is doing with your code. To use
+ruby-internal with irb, put the following in your .irbrc:
+
+  :include: sample/irbrc
+
+Now you can print node trees:
+
+  irb(main):001:0> pp (proc { 1 + 1 }.body)
+  NODE_NEWLINE at (irb):1
+  |-nth = 1
+  +-next = NODE_CALL at (irb):1
+    |-recv = NODE_LIT at (irb):1
+    | +-lit = 1
+    |-args = NODE_ARRAY at (irb):1
+    | |-alen = 1
+    | |-head = NODE_LIT at (irb):1
+    | | +-lit = 1
+    | +-next = false
+    +-mid = :+
+  => nil
+
+And view class hierarchies:
+
+  irb(main):004:0> puts Object.new.classtree
+  #<Object:0x40330ce8>
+  +-class = Object
+    |-class = #<Class:Object>
+    | |-class = Class
+    | | |-class = #<Class:Class>
+    | | | |-class = #<Class:Class> (*)
+    | | | +-super = #<Class:Module>
+    | | |   |-class = Class (*)
+    | | |   +-super = #<Class:Object> (*)
+    | | +-super = Module
+    | |   |-class = #<Class:Module> (*)
+    | |   +-super = Object (*)
+    | +-super = Class (*)
+    +-super = #<PP::ObjectMixin?:0x40349568>
+      +-class = PP::ObjectMixin?
+        |-class = Module (*)
+        +-super = #<Kernel:0x4033507c>
+          +-class = Kernel
+  => nil
+
+View method signatures:
+
+  irb(main):015:0> def foo(a, b, *rest, &block); end; method(:foo).signature
+  => #<MethodSig::Signature:0x4037093c @origin_class=Object, @arg_info={:b=>"b",
+  :block=>"&block", :a=>"a", :rest=>"*rest"}, @name="foo", @arg_names=[:a,
+  :b, :rest, :block]>
+  irb(main):016:0> proc { |x, y, *rest| }.signature
+  => #<Proc::Signature:0x4036cf30 @args=#<Proc::Arguments:0x4036d020 @rest_arg=2,
+  @multiple_assignment=true, @names=[:x, :y, :rest]>, @arg_info={:x=>"x", :y=>"y",
+  :rest=>"*rest"}>
+
+And reconstruct compiled methods:
+
+  irb(main):001:0> def foo(a, b, *rest, &block)
+  irb(main):002:1>   begin
+  irb(main):003:2*     if not a and not b then
+  irb(main):004:3*       raise "Need more input!"
+  irb(main):005:3>     end
+  irb(main):006:2>     return a + b
+  irb(main):007:2>   ensure
+  irb(main):008:2*     puts "In ensure block"
+  irb(main):009:2>   end
+  irb(main):010:1> end
+  => nil
+  irb(main):011:0> m = method(:foo)
+  => #<Method: Object#foo>
+  irb(main):012:0> puts m.as_code
+  def foo(a, b, *rest, &block)
+    begin
+      (raise("Need more input!")) if (not a and not b)
+      return a + b
+    ensure
+      puts("In ensure block")
+    end
+  end
+  => nil
+
+== YARV support
+
+Yes, ruby-internal works with YARV, too. The difference when using YARV
+is that sometimes you have nodes, and sometimes you have instruction
+sequences. So whereas pre-YARV you would have a pure AST, with YARV you
+get structures that look like this:
+
+  irb(main):001:0> def foo; 1 + 1; end
+  => nil
+  irb(main):002:0> pp method(:foo).body  
+  NODE_METHOD at (irb):1
+  |-noex = PUBLIC
+  |-body = <ISeq:foo@(irb)>
+  | |-0000 trace            8
+  | |-0002 trace            1
+  | |-0004 putobject        1
+  | |-0006 putobject        1
+  | |-0008 opt_plus         
+  | |-0009 trace            16
+  | +-0011 leave            
+  +-cnt = 0
+
+You can also access the original AST with Node.compile:
+
+  irb(main):001:0> n = Node.compile_string('1+1')
+  => #>Node::SCOPE:0x40420af0>
+  irb(main):002:0> pp n
+  NODE_SCOPE at (compiled):1
+  |-rval = NODE_CALL at (compiled):1
+  | |-recv = NODE_LIT at (compiled):1
+  | | +-lit = 1
+  | |-args = NODE_ARRAY at (compiled):1
+  | | |-alen = 1
+  | | |-head = NODE_LIT at (compiled):1
+  | | | +-lit = 1
+  | | +-next = false
+  | +-mid = :+
+  |-tbl = nil
+  +-next = false
+
+compile it to a bytecode sequence:
+
+  irb(main):003:0> is = n.bytecode_compile()
+  => <ISeq:<main>@(compiled)>
+  irb(main):004:0> puts is.disasm
+  == disasm: >ISeq:>main>@(compiled)>=====================================
+  0000 trace            1                                               (   1)
+  0002 putobject        1
+  0004 putobject        1
+  0006 opt_plus         
+  0007 leave            
+  => nil
+
+iterate over the bytecode sequence:
+
+  irb(main):004:0> is.each { |i| puts "#{i.inspect} #{i.length} #{i.operand_types.inspect}" }
+  #<VM::Instruction::TRACE:0x40412324 @operands=[1]> 2 [:num]
+  #<VM::Instruction::PUTOBJECT:0x404121d0 @operands=[1]> 2 [:value]
+  #<VM::Instruction::PUTOBJECT:0x4041207c @operands=[1]> 2 [:value]
+  #<VM::Instruction::OPT_PLUS:0x40411f28 @operands=[]> 1 []
+  #<VM::Instruction::LEAVE:0x40411e24 @operands=[]> 1 []
+  => nil
+
+then decompile it:
+
+  irb(main):005:0> require 'as_expression'
+  => true
+  irb(main):006:0> is.as_expression
+  => "1 + 1"
+
+There are still a few missing features (particularly in the decompiler),
+but expect to see more exciting tools for working with bytecode in the
+future!
+
+== Other tools
+
+Ruby-internal comes with two useful tools, nwdump and nwobfusc. The
+nwdump tool works in much the same way as the older Pragmatic nodedump
+tool. If you require it from the command line:
+
+  $ ruby -rinternal/node/dump test.rb
+
+it will dump your program's syntax tree. The nwobfusc tool is similar:
+
+  $ ruby -rinternal/obfusc test.rb > test2.rb
+
+but its output is an obfuscated version of your program. The program
+must be run on the same version of both ruby-internal and the
+interpreter.
+
+== Some notes about security
 
 - Data can always be inspected.
 - Methods that could potentially cause a crash if used incorrectly are
@@ -28,4 +221,9 @@ Some notes about security:
 - Methods that could allow access to potentially sensitive data are
   disallowed with $SAFE >= 4.
 - Methods that load marshalled data do taint checks with $SAFE >= 1.
+
+== Future directions
+
+* Load/dump the state of the ruby interpreter
+* Manipulate the AST/bytecode on-the-fly 
 
