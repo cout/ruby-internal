@@ -48,6 +48,7 @@ class Nodes
     @nodes = {}
     nodes.each do |name, node|
       members = {}
+      # TODO: is there any way to enforce order here?
       (node['members'] || {}).each do |member_name, member|
         member ||= {}
         members[member_name] = MemberInfo.new(
@@ -64,7 +65,7 @@ class Nodes
   end
 
   def each(&block)
-    @nodes.each(&block)
+    @nodes.sort.each(&block)
   end
 
   def [](name)

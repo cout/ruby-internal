@@ -83,6 +83,45 @@ iseq_alloc(VALUE klass)
     MEMZERO(iseq, rb_iseq_t, 1);
     return obj;
 }
+static void
+set_relation(rb_iseq_t *iseq, const VALUE parent)
+{
+    const int type = iseq->type;
+    rb_thread_t *th = GET_THREAD();
+
+    /* set class nest stack */
+    if (type == ISEQ_TYPE_TOP) {
+	/* toplevel is private */
+	iseq->cref_stack = NEW_BLOCK(th->top_wrapper ? th->top_wrapper : rb_cObject);
+	iseq->cref_stack->nd_file = 0;
+	iseq->cref_stack->nd_visi = NOEX_PRIVATE;
+    }
+    else if (type == ISEQ_TYPE_METHOD || type == ISEQ_TYPE_CLASS) {
+	iseq->cref_stack = NEW_BLOCK(0); /* place holder */
+	iseq->cref_stack->nd_file = 0;
+    }
+    else if (RTEST(parent)) {
+	rb_iseq_t *piseq;
+	GetISeqPtr(parent, piseq);
+	iseq->cref_stack = piseq->cref_stack;
+    }
+
+    if (type == ISEQ_TYPE_TOP ||
+	type == ISEQ_TYPE_METHOD || type == ISEQ_TYPE_CLASS) {
+	iseq->local_iseq = iseq;
+    }
+    else if (RTEST(parent)) {
+	rb_iseq_t *piseq;
+	GetISeqPtr(parent, piseq);
+	iseq->local_iseq = piseq->local_iseq;
+    }
+
+    if (RTEST(parent)) {
+	rb_iseq_t *piseq;
+	GetISeqPtr(parent, piseq);
+	iseq->parent_iseq = piseq;
+    }
+}
 static VALUE
 prepare_iseq_build(rb_iseq_t *iseq,
 		   VALUE name, VALUE filename,
