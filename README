@@ -1,5 +1,5 @@
-Ruby-internal is Ruby module that provides direct access to Ruby's (MRI or
-YARV) internal data structures.
+Ruby-internal is a Ruby library that provides direct access to Ruby's
+(MRI or YARV) internal data structures.
 
 How is ruby-internal useful? You can:
 
