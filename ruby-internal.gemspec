@@ -42,8 +42,8 @@ END
   s.files = patterns.collect { |p| Dir.glob(p) }.flatten
 
   s.executables = [
-    'bin/ruby-internal-node-dump',
-    'bin/ruby-internal-obfuscate',
+    'ruby-internal-node-dump',
+    'ruby-internal-obfuscate',
   ]
 
   s.extensions = 'Rakefile'
