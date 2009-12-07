@@ -43,5 +43,10 @@ class Node
       end
     end
   end
+
+  def to_a
+    raise NotImplementedError, "#to_a not defined for #{self.class}"
+  end
+
 end
 
