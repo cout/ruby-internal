@@ -2873,6 +2873,9 @@ static VALUE node_vid(VALUE self)
 }
 
 /*
+ * call-seq:
+ *   Node.members => Array
+ * 
  * Return an array of strings containing the names of the node class's
  * members.
  */
