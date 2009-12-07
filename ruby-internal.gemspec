@@ -38,6 +38,8 @@ END
     'Rakefile',
     'bin/ruby-internal-node-dump',
     'bin/ruby-internal-obfuscate',
+    'sample/dump_class.rb',
+    'sample/irbrc',
   ]
   s.files = patterns.collect { |p| Dir.glob(p) }.flatten
 
