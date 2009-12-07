@@ -2,35 +2,15 @@
 
 require 'pp'
 require 'internal/node/pp'
-require 'optparse'
 
-dash_e = []
+filename = ARGV[0]
 
-args = ARGV
+if not filename then
+  puts "Usage: #{$0} <filename>"
+  exit 1
+fi
 
-opts = OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [switches] [--] [programfile] [arguments]"
-  opts.summary_width = 15
-  opts.summary_indent = '  '
-
-  opts.on(
-      "-e line",
-      "one line of script. Several -e's allowed. Omit [programfile]") do |line|
-    dash_e << line
-  end
-
-  opts.order!(args) do |arg|
-    args.unshift arg
-    opts.terminate
-  end
-end
-
-if dash_e.size > 0 then
-  str = dash_e.join("\n")
-else
-  filename = ARGV[0]
-  str = File.read(filename)
-end
+str = File.read(filename)
 
 node = Node.compile_string(str)
 
