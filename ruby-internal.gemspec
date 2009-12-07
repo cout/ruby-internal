@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = 'ruby-internal'
-  s.version = '0.7.0'
+  s.version = '0.7.1'
   s.summary = 'A library that provides acccess to the ' + \
               'internals of the ruby interpreter'
   s.homepage = 'http://rubystuff.org/nodewrap/'
@@ -36,8 +36,15 @@ END
     'metaconfig',
     'setup.rb',
     'Rakefile',
+    'bin/ruby-internal-node-dump',
+    'bin/ruby-internal-obfuscate',
   ]
   s.files = patterns.collect { |p| Dir.glob(p) }.flatten
+
+  s.executables = [
+    'bin/ruby-internal-node-dump',
+    'bin/ruby-internal-obfuscate',
+  ]
 
   s.extensions = 'Rakefile'
   s.test_files = Dir.glob('test/test_*.rb')
