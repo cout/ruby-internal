@@ -1,0 +1,18 @@
+#!/usr/bin/ruby
+
+require 'pp'
+require 'internal/node/pp'
+
+filename = ARGV[0]
+
+if not filename then
+  puts "Usage: #{$0} <filename>"
+  exit 1
+fi
+
+str = File.read(filename)
+
+node = Node.compile_string(str)
+
+pp node
+
