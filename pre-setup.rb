@@ -1,4 +1,5 @@
 alias generate_files_dir_lib noop
+alias generate_files_dir_bin noop
 
 def generate_files_dir_ext(rel)
   return unless extdir?(curr_srcdir())
