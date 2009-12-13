@@ -226,6 +226,74 @@ static VALUE iseq_arg_opt_table(VALUE self)
   return ary;
 }
 
+#define hidden_obj_p(obj) (!SPECIAL_CONST_P(obj) && !RBASIC(obj)->klass)
+
+static VALUE operand_to_value(VALUE insn, int op_idx, VALUE operand)
+{
+  switch(insn_op_type(insn, op_idx))
+  {
+    case TS_VALUE:
+      if (hidden_obj_p(operand)) {
+          switch (BUILTIN_TYPE(operand)) {
+            case T_STRING:
+              operand = rb_str_replace(rb_str_new(0, 0), operand);
+              break;
+            case T_ARRAY:
+              operand = rb_ary_replace(rb_ary_new2(0), operand);
+              break;
+          }
+      }
+      return operand;
+
+    case TS_LINDEX:
+    case TS_DINDEX:
+    case TS_NUM:
+      return INT2FIX(operand);
+
+    case TS_ISEQ:
+    {
+      rb_iseq_t * iseq = (rb_iseq_t *)operand;
+      if(iseq)
+      {
+        return iseq->self;
+      }
+      else
+      {
+        return Qnil;
+      }
+    }
+
+    case TS_GENTRY:
+    {
+      struct global_entry *entry = (struct global_entry *)operand;
+      return ID2SYM(rb_intern(rb_id2name(entry->id)));
+    }
+
+    case TS_OFFSET:
+      /* TODO */
+      return Qnil;
+
+    case TS_VARIABLE:
+      /* TODO */
+      return Qnil;
+
+    case TS_CDHASH:
+      /* TODO */
+      return Qnil;
+
+    case TS_IC:
+    {
+      NODE * ic = (NODE *)operand;
+      return wrap_node_as(ic, rb_cInlineCache);
+    }
+
+    case TS_ID:
+      return ID2SYM(operand);
+  }
+
+  rb_raise(rb_eArgError, "Unknown operand type");
+}
+
 /* call-seq:
  *   iseq.each(pc_start=0, &block) => nil
  *
@@ -253,75 +321,20 @@ static VALUE iseq_each(int argc, VALUE * argv, VALUE self)
       seq < iseqdat->iseq + iseqdat->iseq_size;
       )
   {
-    VALUE insn = *seq++;
-    int op_type_idx;
+    VALUE insn = *seq;
+    int op_idx;
     int len = insn_len(insn);
-    VALUE args = rb_ary_new();
+    VALUE operands = rb_ary_new();
 
-    for(op_type_idx = 0; op_type_idx < len-1; ++op_type_idx, ++seq)
+    for(op_idx = 0; op_idx < len-1; ++op_idx)
     {
-      switch(insn_op_type(insn, op_type_idx))
-      {
-        case TS_VALUE:
-          rb_ary_push(args, *seq);
-          break;
-
-        case TS_LINDEX:
-        case TS_DINDEX:
-        case TS_NUM:
-          rb_ary_push(args, INT2FIX(*seq));
-          break;
-
-        case TS_ISEQ:
-        {
-          rb_iseq_t * iseq = (rb_iseq_t *)*seq;
-          if(iseq)
-          {
-            rb_ary_push(args, iseq->self);
-          }
-          else
-          {
-            rb_ary_push(args, Qnil);
-          }
-          break;
-        }
-
-        case TS_GENTRY:
-        {
-          struct global_entry *entry = (struct global_entry *)*seq;
-          rb_ary_push(args, ID2SYM(rb_intern(rb_id2name(entry->id))));
-          break;
-        }
-
-        case TS_OFFSET:
-          rb_ary_push(args, LONG2NUM(*seq));
-          /* TODO */
-          break;
-
-        case TS_VARIABLE:
-          rb_ary_push(args, Qnil);
-          /* TODO */
-          break;
-
-        case TS_CDHASH:
-          rb_ary_push(args, Qnil);
-          /* TODO */
-          break;
-
-        case TS_IC:
-        {
-          NODE * ic = (NODE *)*seq;
-          rb_ary_push(args, wrap_node_as(ic, rb_cInlineCache));
-          break;
-        }
-
-        case TS_ID:
-          rb_ary_push(args, ID2SYM(*seq));
-          break;
-      }
+      VALUE operand = seq[op_idx + 1];
+      rb_ary_push(operands, operand_to_value(insn, op_idx, operand));
     }
 
-    rb_yield(allocate_instruction(insn, args));
+    rb_yield(allocate_instruction(insn, operands));
+
+    seq += len;
   }
 
   return Qnil;
