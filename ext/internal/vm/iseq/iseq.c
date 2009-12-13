@@ -247,8 +247,11 @@ static VALUE operand_to_value(VALUE insn, int op_idx, VALUE operand)
 
     case TS_LINDEX:
     case TS_DINDEX:
-    case TS_NUM:
+    case TS_OFFSET:
       return INT2FIX(operand);
+
+    case TS_NUM:
+      return UINT2NUM(operand);
 
     case TS_ISEQ:
     {
@@ -268,10 +271,6 @@ static VALUE operand_to_value(VALUE insn, int op_idx, VALUE operand)
       struct global_entry *entry = (struct global_entry *)operand;
       return ID2SYM(rb_intern(rb_id2name(entry->id)));
     }
-
-    case TS_OFFSET:
-      /* TODO */
-      return Qnil;
 
     case TS_VARIABLE:
       /* TODO */
