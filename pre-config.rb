@@ -5,6 +5,13 @@ rescue LoadError
   FileUtils = File
 end
 
+# Make sure we look in `pwd`/ext before system directories (for
+# mkmf-ruby-internal.rb)
+ext_dir = File.join(Dir.pwd, 'ext')
+$: << ext_dir
+ENV['RUBYLIB'] ||= ''
+ENV['RUBYLIB'] += ext_dir
+
 FileUtils.rm_f 'ext/Makefile'
 
 ruby_source_path = config('ruby-source-path')
