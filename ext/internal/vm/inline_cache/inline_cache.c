@@ -15,8 +15,15 @@
  */
 static VALUE inline_cache_klass(VALUE self)
 {
-  /* TODO: returning the real value can crash the interpreter */
-  return Qnil;
+  IC inline_cache = unwrap_node(self);
+  if (inline_cache->ic_class == Qundef)
+  {
+    return Qnil;
+  }
+  else
+  {
+    return inline_cache->ic_class;
+  }
 }
 
 /*
@@ -27,8 +34,8 @@ static VALUE inline_cache_klass(VALUE self)
  */
 static VALUE inline_cache_value(VALUE self)
 {
-  IC inline_cache = unwrap_node(self);
-  return inline_cache->ic_value;
+  /* TODO: Wrap the LABEL object (from compile.c) */
+  return Qnil;
 }
 
 /*
