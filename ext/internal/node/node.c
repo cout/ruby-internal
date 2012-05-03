@@ -224,9 +224,9 @@ static VALUE node_flags(VALUE self)
  */
 static VALUE node_nd_file(VALUE self)
 {
+#ifdef HAVE_RB_SOURCE_FILENAME
   NODE * n;
   Data_Get_Struct(self, NODE, n);
-#ifdef HAVE_RB_SOURCE_FILENAME
   if(n->nd_file)
   {
     return rb_str_new2(n->nd_file);
@@ -306,8 +306,16 @@ static VALUE node_bracket(VALUE node, VALUE member)
 {
   ID id = SYMBOL_P(member)
     ? SYM2ID(member)
-    : rb_intern(STR2CSTR(member));
+    : rb_intern(StringValuePtr(member));
   return rb_funcall(node, id, 0);
+}
+
+static VALUE node_classname(VALUE node)
+{
+  VALUE str = rb_str_new2("#<");
+  rb_str_cat2(str, rb_class2name(CLASS_OF(node)));
+  rb_str_cat2(str, " ");
+  return str;
 }
 
 #ifdef HAVE_RB_PROTECT_INSPECT
@@ -316,9 +324,7 @@ static VALUE node_inspect_protect(VALUE node)
 static VALUE node_inspect_protect(VALUE node, VALUE dummy, int recur)
 #endif
 {
-  VALUE str = rb_str_new2("#<");
-  rb_str_cat2(str, rb_class2name(CLASS_OF(node)));
-  rb_str_cat2(str, " ");
+  VALUE str = node_classname(node);
   VALUE members = node_members(node);
   int j;
 
@@ -501,10 +507,19 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
   }
   else
   {
+#ifdef HAVE_RB_SOURCE_FILENAME
     VALUE filename = node->nd_file
       ? rb_str_new2(node->nd_file)
       : rb_str_new2("<unknown>");
+#else
+    VALUE filename = Qnil;
+#endif
+
+    VALUE filepath = Qnil; /* TODO */
+
     VALUE iseq;
+    rb_proc_t * p;
+    VALUE proc;
 
     if(nd_type(node) != NODE_SCOPE)
     {
@@ -519,6 +534,9 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
         node,
         rb_str_new2("<compiled>"),
         filename,
+#if RUBY_VERSION_CODE >= 192
+        filepath,
+#endif
         self,
         ISEQ_TYPE_TOP);
 
@@ -527,9 +545,6 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
 
     /* VALUE result = rb_iseq_eval(iseq);
     return result; */
-
-    rb_proc_t * p;
-    VALUE proc;
 
     proc = create_proc(rb_cProc, Qnil, iseq_check(iseq));
     GetProcPtr(proc, p);
@@ -646,9 +661,12 @@ NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE
   NODE * n = NEW_NIL();
   VALUE s3, s2, s1, rb_nd_file, rb_flags;
   unsigned long flags;
-  char *nd_file = 0;
   Node_Type_Descrip const *descrip;
   NODE tmp_node;
+
+#ifdef HAVE_RB_SOURCE_FILENAME
+  char *nd_file = 0;
+#endif
 
   nd_set_type(&tmp_node, NODE_NIL);
 
@@ -656,7 +674,7 @@ NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE
   s3 = rb_ary_pop(arr);
   s2 = rb_ary_pop(arr);
   s1 = rb_ary_pop(arr);
-  rb_nd_file = rb_ary_pop(arr);
+  rb_nd_file = rb_ary_pop(arr); /* TODO: warning: set but not used */
   rb_flags = rb_ary_pop(arr);
   flags = NUM2INT(rb_flags);
   tmp_node.flags = flags;
@@ -686,7 +704,10 @@ NODE * load_node_from_hash(VALUE arr, VALUE orig_node_id, VALUE node_hash, VALUE
    */
   memcpy(n, &tmp_node, sizeof(NODE));
   n->flags = flags;
+
+#ifdef HAVE_RB_SOURCE_FILENAME
   n->nd_file = nd_file;
+#endif
 
   return n;
 }
@@ -758,7 +779,7 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
   file = NIL_P(file) ? rb_str_new2("(compiled)") : file;
   line = NIL_P(line) ? INT2NUM(1) : line;
 
-  node = rb_compile_string(STR2CSTR(file), str, NUM2INT(line));
+  node = rb_compile_string(StringValuePtr(file), str, NUM2INT(line));
 
 #ifdef RUBY_VM
   if(!node)
@@ -788,8 +809,11 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
  */
 static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
 {
+  NODE * node;
   VALUE name = Qnil;
   VALUE filename = Qnil;
+  VALUE filepath = Qnil; /* TODO */
+
   rb_scan_args(argc, argv, "02", &name, &filename);
 
   if(name == Qnil)
@@ -802,12 +826,15 @@ static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
     filename = name;
   }
 
-  NODE * node = unwrap_node(self);
+  node = unwrap_node(self);
 
   return rb_iseq_new(
       node,
       name,
       filename,
+#if RUBY_VERSION_CODE >= 192
+      filepath,
+#endif
       Qfalse,
       ISEQ_TYPE_TOP);
 }
@@ -823,7 +850,7 @@ static VALUE node_bytecode_compile(int argc, VALUE * argv, VALUE self)
 static VALUE node_dump(VALUE self, VALUE limit)
 {
   NODE * n;
-  VALUE node_hash, arr;
+  VALUE node_hash, arr, s;
 
   if(rb_safe_level() >= 4)
   {
@@ -836,7 +863,7 @@ static VALUE node_dump(VALUE self, VALUE limit)
   arr = rb_ary_new();
   rb_ary_push(arr, node_id(n));
   rb_ary_push(arr, node_hash);
-  VALUE s =  marshal_dump(arr, limit);
+  s =  marshal_dump(arr, limit);
   return s;
 }
 
@@ -1051,7 +1078,7 @@ void Init_node(void)
   {
     int actual_ruby_version_code = 0;
     VALUE ruby_version_str = rb_const_get(rb_cObject, rb_intern("RUBY_VERSION"));
-    char const * s = STR2CSTR(ruby_version_str);
+    char const * s = StringValuePtr(ruby_version_str);
 
     for(; *s != '\0'; ++s)
     {

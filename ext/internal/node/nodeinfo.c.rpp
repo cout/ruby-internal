@@ -61,6 +61,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
     case NEN_NONE:
       return Qnil;
 #ruby <<END
+  $: << '.' # TODO: hack
   require 'read_node_h'
   require 'nodes'
   require 'node_type_descrip'
