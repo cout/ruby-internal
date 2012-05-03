@@ -19,6 +19,7 @@ ruby_include_path = config('ruby-include-path')
 
 set_config('cached-files', 'no')
 
+# If ruby source path was specified, set paths
 if ruby_source_path != '' then
 
   if ruby_include_path == '' then
@@ -36,6 +37,7 @@ if ruby_source_path != '' then
   @config.config_opt << "--ruby-include-path=#{@config['ruby-include-path']}"
 end
 
+# If ruby source path is blank, use cached files
 if ruby_source_path == '' then
   set_config('cached-files', 'yes')
   cached_dir = "ext/cached/ruby-#{RUBY_VERSION}"
