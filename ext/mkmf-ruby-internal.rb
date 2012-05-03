@@ -73,7 +73,7 @@ END
       dest_file = rpp_file.sub(/\.rpp$/, '')
       append_to_makefile << <<END
 #{dest_file}: #{rpp_file} #{rb_files.join(' ')}
-\t$(RUBY) #{base_dir}/rubypp.rb #{rpp_file} #{dest_file}
+\trubypp #{rpp_file} #{dest_file}
 END
     end
 

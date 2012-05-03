@@ -8,6 +8,8 @@ spec = Gem::Specification.new do |s|
   s.author = 'Paul Brannan'
   s.email = 'curlypaul924@gmail.com'
 
+  s.add_dependency 'rubypp' => '>= 0.0.1'
+
   s.description = <<-END
 Ruby-Internal is Ruby module that provides direct access to Ruby's
 internal data structures.
@@ -17,7 +19,6 @@ END
     'lib/**/*.rb',
     'ext/mkmf-ruby-internal.rb',
     'ext/ruby_source_dir.rb',
-    'ext/rubypp.rb',
     'ext/internal/**/*.rpp',
     'ext/internal/**/*.c',
     'ext/internal/**/*.h',
