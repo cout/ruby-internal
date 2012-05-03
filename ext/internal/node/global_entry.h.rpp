@@ -11,16 +11,22 @@ st_table * rb_global_tbl;
   File.open(variable_c_location) do |variable_c|
     write = false
     stopwrite = false
+    prev_line = ''
     while (line = variable_c.gets) != nil do
       case line
-      when /^struct global_entry/
+      when /^rb_global_entry\(.*\)/,
+           /^struct global_variable {/
+        puts prev_line
         write = true
         stopwrite = false
+      when /^#define (global_entry|gvar_getter_t|gvar_setter_t|gvar_marker_t|undef_getter|undef_setter|undef_marker)/
+        puts line
       when /^\}/
-        stopwrite = true if write
+        stopwrite = true
       end
       puts line if write
-      break if stopwrite
+      write = false if stopwrite
+      prev_line = line
     end
   end
 END
