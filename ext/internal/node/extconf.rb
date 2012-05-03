@@ -1,8 +1,6 @@
 $: << '../..'
 require 'mkmf-ruby-internal'
 
-ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
-
 have_type('st_data_t', [ 'ruby.h', 'st.h' ]) or
 have_type('st_data_t', [ 'ruby.h', 'ruby/st.h'])
 

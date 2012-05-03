@@ -1,6 +1,6 @@
 #include <ruby.h>
 #include "internal/node/ruby_internal_node.h"
-#include "method.h"
+#include "internal_method.h"
 
 #ifdef RUBY_VM
 #include "vm_core.h"
@@ -91,7 +91,11 @@ static VALUE method_oid(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
+#if RUBY_VERSION_CODE >= 192
+  return ID2SYM(m->me->def->original_id);
+#else
   return ID2SYM(m->oid);
+#endif
 }
 
 /*
@@ -107,7 +111,11 @@ static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
+#if RUBY_VERSION_CODE >= 192
+  return m->me->klass;
+#else
   return METHOD_OCLASS(m);
+#endif
 }
 
 /*
@@ -140,7 +148,11 @@ static VALUE method_body(VALUE method)
     rb_raise(rb_eSecurityError, "Insecure: can't get method body");
   }
   Data_Get_Struct(method, struct METHOD, m);
+#if RUBY_VERSION_CODE >= 192
+  return m->me->def->body.iseq->self; /* TODO: body is a union; is this right? */
+#else
   return wrap_node(m->body);
+#endif
 }
 
 /*
@@ -166,8 +178,13 @@ static VALUE method_dump(VALUE self, VALUE limit)
 
   arr = rb_ary_new();
   Data_Get_Struct(self, struct METHOD, method);
+#if RUBY_VERSION_CODE >= 192
+  rb_ary_push(arr, rb_mod_name(method->me->klass));
+  rb_ary_push(arr, Qnil); /* TODO */
+#else
   rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));
   rb_ary_push(arr, rb_mod_name(METHOD_RCLASS(method)));
+#endif
   if(rb_class_of(self) == rb_cUnboundMethod)
   {
     rb_ary_push(arr, Qnil);
@@ -177,7 +194,11 @@ static VALUE method_dump(VALUE self, VALUE limit)
     rb_ary_push(arr, method->recv);
   }
   rb_ary_push(arr, ID2SYM(method->id));
+#if RUBY_VERSION_CODE >= 192
+  rb_ary_push(arr, ID2SYM(method->me->def->original_id));
+#else
   rb_ary_push(arr, ID2SYM(method->oid));
+#endif
   rb_ary_push(arr, method_body(self));
 
   return marshal_dump(arr, limit);
@@ -194,7 +215,6 @@ static VALUE method_load(VALUE klass, VALUE str)
   struct METHOD * method;
   VALUE rarr = marshal_load(str);
   VALUE * arr;
-  NODE * n;
   VALUE retval;
 
   if(   rb_safe_level() >= 4
@@ -215,15 +235,25 @@ static VALUE method_load(VALUE klass, VALUE str)
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY_PTR(rarr);
+#if RUBY_VERSION_CODE >= 192
+  method->me->klass =
+    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
+  method->me->def->original_id = SYM2ID(arr[4]);
+  GetISeqPtr(arr[5], method->me->def->body.iseq);
+#else
   METHOD_OCLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
   METHOD_RCLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[1]);
+  method->oid = SYM2ID(arr[4]);
+  {
+    NODE * n;
+    Data_Get_Struct(arr[5], NODE, n);
+    method->body = n;
+  }
+#endif
   method->recv = arr[2];
   method->id = SYM2ID(arr[3]);
-  method->oid = SYM2ID(arr[4]);
-  Data_Get_Struct(arr[5], NODE, n);
-  method->body = n;
 
   if(klass == rb_cUnboundMethod)
   {

@@ -52,7 +52,6 @@ END
   s.extensions = 'Rakefile'
   s.test_files = Dir.glob('test/test_*.rb')
 
-  s.has_rdoc = true
   s.extra_rdoc_files = [ 'README' ]
 
   s.require_paths << 'ext'
