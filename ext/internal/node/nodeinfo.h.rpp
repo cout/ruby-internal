@@ -9,7 +9,8 @@ enum Node_Elem_Name
 {
   NEN_NONE,
 #ruby <<END
-  require 'read_node_h.rb'
+  $: << '.' # TODO: hack
+  require 'read_node_h'
 
   NODEINFO.sort.each do |node_elem_name, node_elem_ref|
     puts "  NEN_#{node_elem_name.upcase},"

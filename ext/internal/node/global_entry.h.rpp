@@ -3,6 +3,7 @@
 
 #ruby <<END
   $: << '../..'
+  $: << '.' # TODO: hack
   require 'ruby_source_dir'
   variable_c_location = "#{RUBY_SOURCE_DIR}/variable.c"
   File.open(variable_c_location) do |variable_c|
