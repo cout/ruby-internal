@@ -109,3 +109,23 @@ if ruby_version_code >= 190 then
   end
 end
 
+module Kernel
+  if not method_defined?(:try_const)
+    alias_method :try_const, :try_constant
+  end
+
+  if not method_defined?(:checking_message)
+    def checking_message(checking_for, headers = nil, opt = "")
+      return checking_for
+    end
+  end
+
+  if not method_defined?(:have_const)
+    def have_const(const, headers = nil, opt = "", &b)
+      checking_for checking_message([*const].compact.join(' '), headers, opt) do
+        try_const(const, headers, opt, &b)
+      end
+    end
+  end
+end
+

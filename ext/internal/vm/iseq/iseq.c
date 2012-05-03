@@ -2,6 +2,7 @@
 #include "insns_info.inc"
 
 #include "internal/node/ruby_internal_node.h"
+#include "internal/node/global_entry.h"
 #include "internal/module/module.h"
 #include "internal/vm/instruction/instruction.h"
 

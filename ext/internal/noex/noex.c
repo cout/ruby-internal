@@ -2,6 +2,10 @@
 
 #include "internal/node/ruby_internal_node.h"
 
+#ifdef RUBY_VM
+#include "method.h"
+#endif
+
 void Init_noex(void)
 {
   /*

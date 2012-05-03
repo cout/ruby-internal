@@ -1,26 +1,6 @@
 $: << '../..'
 require 'mkmf-ruby-internal'
 
-module Kernel
-  if not method_defined?(:try_const)
-    alias_method :try_const, :try_constant
-  end
-
-  if not method_defined?(:checking_message)
-    def checking_message(checking_for, headers = nil, opt = "")
-      return checking_for
-    end
-  end
-
-  if not method_defined?(:have_const)
-    def have_const(const, headers = nil, opt = "", &b)
-      checking_for checking_message([*const].compact.join(' '), headers, opt) do
-        try_const(const, headers, opt, &b)
-      end
-    end
-  end
-end
-
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 
 have_type('st_data_t', [ 'ruby.h', 'st.h' ]) or

@@ -25,7 +25,9 @@ void Init_constants(void)
   rb_define_const(rb_cRubyVM, "CALL_TAILCALL_BIT", INT2NUM(VM_CALL_TAILCALL_BIT));
   rb_define_const(rb_cRubyVM, "CALL_TAILRECURSION_BIT", INT2NUM(VM_CALL_TAILRECURSION_BIT));
   rb_define_const(rb_cRubyVM, "CALL_SUPER_BIT", INT2NUM(VM_CALL_SUPER_BIT));
+#ifdef HAVE_RUBY_CALL_SEND_BIT
   rb_define_const(rb_cRubyVM, "CALL_SEND_BIT", INT2NUM(VM_CALL_SEND_BIT));
+#endif
   rb_define_const(rb_cRubyVM, "SPECIAL_OBJECT_VMCORE", INT2NUM(VM_SPECIAL_OBJECT_VMCORE));
   rb_define_const(rb_cRubyVM, "SPECIAL_OBJECT_CBASE", INT2NUM(VM_SPECIAL_OBJECT_CBASE));
 #endif

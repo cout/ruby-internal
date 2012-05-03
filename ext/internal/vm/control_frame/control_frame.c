@@ -85,11 +85,20 @@ static VALUE control_frame_proc(VALUE control_frame)
  */
 static VALUE control_frame_method_id(VALUE control_frame)
 {
+  ID method_id;
   struct RubyInternalControlFrame * cfp;
+
   Data_Get_Struct(control_frame, struct RubyInternalControlFrame, cfp);
-  if(cfp->control_frame->method_id)
+
+#if RUBY_VERSION_CODE >= 192
+  method_id = cfp->control_frame->me->called_id; /* TODO: right? */
+#else
+  method_id = cfp->control_frame->method_id;
+#endif
+
+  if(method_id)
   {
-    return ID2SYM(cfp->control_frame->method_id);
+    return ID2SYM(method_id);
   }
   else
   {
@@ -105,9 +114,18 @@ static VALUE control_frame_method_id(VALUE control_frame)
  */
 static VALUE control_frame_method_class(VALUE control_frame)
 {
+  VALUE klass;
   struct RubyInternalControlFrame * cfp;
+
   Data_Get_Struct(control_frame, struct RubyInternalControlFrame, cfp);
-  return cfp->control_frame->method_class;
+
+#if RUBY_VERSION_CODE >= 192
+  klass = cfp->control_frame->me->klass; /* TODO: right? */
+#else
+  klass = cfp->control_frame->method_class;
+#endif
+
+  return klass;
 }
 
 /*

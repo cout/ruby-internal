@@ -2,6 +2,9 @@
 
 #ifdef RUBY_VM
 
+#include "iseq.h"
+#include "vm_core.h"
+
 #ruby <<END
   $:.unshift '../../..'
   require 'ruby_source_dir'

@@ -2,9 +2,13 @@ wd = Dir.pwd()
 metaconfig_dir = File.join(File.dirname(__FILE__), '..')
 Dir.chdir metaconfig_dir
 begin
-  require 'setup.rb'
+  $: << '.' # TODO: hack
+  require 'setup'
   require 'rbconfig'
-  config = ConfigTable.new(Config::CONFIG)
+  if not defined?(RbConfig) then
+    RbConfig = Config
+  end
+  config = ConfigTable.new(RbConfig::CONFIG)
   config.load_standard_entries
   config.load_script 'metaconfig'
   config.load_savefile

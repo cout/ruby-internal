@@ -1,8 +1,9 @@
 #ifndef ruby_internal_iseq_load__inc_
 #define ruby_internal_iseq_load__inc_
 
-#include "internal/yarv-headers/gc.h"
-#include "internal/yarv-headers/iseq.h"
+#include "gc.h"
+#include "iseq.h"
+#include "vm_core.h"
 
 #ruby <<END
   ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
@@ -19,9 +20,11 @@
     File.open(iseq_c_location) do |input|
       input.each_line do |line|
         case line
-        when /^(iseq_load|iseq_alloc|iseq_mark|iseq_free|compile_data_free|make_compile_option|make_compile_option_value|prepare_iseq_build|cleanup_iseq_build|set_relation)/
+        when /^(iseq_load|iseq_alloc|iseq_mark|iseq_free|compile_data_free|make_compile_option|make_compile_option_value|prepare_iseq_build|cleanup_iseq_build|set_relation|iseq_memsize)/
           write = true
           puts prev_line
+        when /^static.*iseq_data_type.*=/
+          write = true
         when /^static.*COMPILE_OPTION_DEFAULT.*=/
           write = true
         when /^static.*COMPILE_OPTION_FALSE.*=/
