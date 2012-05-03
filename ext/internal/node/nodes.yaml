@@ -128,6 +128,8 @@ ATTRSET:
 
   is_method_node: true
 
+  version: '(0, 191]'
+
 BACK_REF:
   doc: |
     Represents one of the regex back reference variables:
@@ -270,6 +272,8 @@ CFUNC:
     argc: the number of arguments the function takes, or -1 or -2
 
   is_method_node: true
+
+  version: '(0, 191]'
 
 CDECL:
   doc: |
@@ -733,7 +737,8 @@ FBODY:
     head:
       type: node
       doc: the method body
-  version: (0, 190)
+
+  version: '(0, 190)'
 
 FBODY(2):
   doc: |
@@ -751,7 +756,7 @@ FBODY(2):
     cnt:
       doc: the method's flags
     #'
-  version: '[190, oo)'
+  version: '[190, 191)'
 
 FCALL:
   doc: |
@@ -1152,7 +1157,7 @@ METHOD(2):
     noex:
       doc: the method's flags
   #'
-  version: '[190, oo)'
+  version: '[190, 191)'
 
 MODULE:
   doc: |
