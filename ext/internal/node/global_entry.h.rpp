@@ -1,6 +1,8 @@
 #ifndef global_entry__h_
 #define global_entry__h_
 
+st_table * rb_global_tbl;
+
 #ruby <<END
   $: << '../..'
   $: << '.' # TODO: hack

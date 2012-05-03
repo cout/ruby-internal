@@ -130,7 +130,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -257,20 +257,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       END
     when /\.value$/
       puts <<-END
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_#{node_elem_name}) =
