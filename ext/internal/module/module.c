@@ -609,7 +609,7 @@ static VALUE module_dump(VALUE self, VALUE limit)
   return str;
 }
 
-static void include_modules(module, included_modules)
+static void include_modules(VALUE module, VALUE included_modules)
 {
   size_t j;
   VALUE v;
