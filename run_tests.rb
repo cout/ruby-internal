@@ -1,3 +1,4 @@
+$: << '.' # TODO: hack
 require 'test/test_helpers'
 
 def run_tests
