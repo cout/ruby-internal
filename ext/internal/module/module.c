@@ -16,7 +16,11 @@
 #endif
 
 #ifndef RCLASS_IV_TBL
-#define RCLASS_IV_TBL(c) RCLASS(c)->iv_tbl
+#  ifdef HAVE_STRUCT_RCLASS_IV_INDEX_TBL
+#    define RCLASS_IV_TBL(c) RCLASS(c)->iv_index_tbl
+#  else
+#    define RCLASS_IV_TBL(c) RCLASS(c)->iv_tbl
+#  endif
 #endif
 
 #ifndef RCLASS_M_TBL
@@ -214,7 +218,7 @@ static VALUE included_modules_list(VALUE module)
 {
   VALUE included_modules = rb_mod_included_modules(module);
   VALUE included_module_list = rb_ary_new();
-  size_t j;
+  long j;
 
   for(j = 0; j < RARRAY_LEN(included_modules); ++j)
   {
@@ -775,10 +779,12 @@ void Init_module(void)
   rb_global_variable(&module_name_proc);
 
 #if RUBY_VERSION_CODE >= 180
-  VALUE rb_mNodewrap = rb_define_module("Nodewrap");
-  rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
-  rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
-  rb_define_singleton_method(rb_cClass_Restorer, "_load", class_restorer_load, 1);
+  {
+    VALUE rb_mNodewrap = rb_define_module("Nodewrap");
+    rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
+    rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
+    rb_define_singleton_method(rb_cClass_Restorer, "_load", class_restorer_load, 1);
+  }
 #endif
 
 #if RUBY_VERSION_CODE == 180
