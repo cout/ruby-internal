@@ -133,13 +133,13 @@ static VALUE proc_dump(VALUE self, VALUE limit)
   {
 #ifdef RUBY_VM
     rb_proc_t * p;
-    VALUE iseq;
+    VALUE iseq, str;
     rb_iseq_t * iseqdat;
     GetProcPtr(self, p);
     iseq = p->block.iseq->self;
     iseqdat = iseq_check(iseq);
     iseqdat->type = ISEQ_TYPE_TOP; /* TODO: is this right? */
-    VALUE str = marshal_dump(iseq, limit);
+    str = marshal_dump(iseq, limit);
     return str;
 #else
     struct BLOCK * b;
