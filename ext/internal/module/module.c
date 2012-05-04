@@ -395,7 +395,9 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
     rb_raise(rb_eSecurityError, "Insecure: can't add method");
   }
 
-#ifdef RUBY_VM
+#if RUBY_VERSION_CODE >= 192
+  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+#elif RUBY_VERSION_CODE >= 190
   if(rb_obj_is_kind_of(node, rb_cISeq))
   {
     rb_iseq_t *iseqdat = iseq_check(node);
@@ -419,7 +421,9 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
 
   Data_Get_Struct(node, NODE, n);
 
-#ifdef RUBY_VM
+#if RUBY_VERSION_CODE >= 192
+  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+#elif RUBY_VERSION_CODE >= 190
   if(nd_type(n) != NODE_METHOD)
   {
     rb_raise(
@@ -438,11 +442,16 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
 
 add_node:
 #endif
+
+#if RUBY_VERSION_CODE >= 192
+  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+#else
   /* TODO: if noex is NOEX_MODFUNC, add this method as a module function
    * (that is, both as an instance and singleton method)
    */
   rb_add_method(klass, SYM2ID(id), n, NUM2INT(noex));
   return Qnil;
+#endif
 }
 
 /* 
@@ -642,7 +651,11 @@ static int add_method_iter(VALUE name, VALUE value, VALUE module)
         rb_class2name(CLASS_OF(value)));
   }
   Data_Get_Struct(value, NODE, n);
+#if RUBY_VERSION_CODE >= 192
+  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+#elif RUBY_VERSION_CODE >= 190
   rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
+#endif
   return ST_CONTINUE;
 }
 
