@@ -549,7 +549,7 @@ void Init_iseq(void)
       "end",
       "cont",
       "sp",
-      0);
+      (void *)0);
   rb_const_set(rb_cISeq, rb_intern("CatchTableEntry"), rb_cCatchTableEntry);
 
   rb_const_set(rb_cISeq, rb_intern("CATCH_TYPE_RESCUE"), CATCH_TYPE_RESCUE);
