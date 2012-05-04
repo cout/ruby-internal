@@ -22,6 +22,14 @@ static VALUE rb_cUnboundMethod = Qnil;
 #define RARRAY_PTR(a) RARRAY(a)->ptr
 #endif
 
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+#  define UNWRAP_METHOD(method, m) \
+   TypedData_Get_Struct(method, struct METHOD, &method_data_type, m);
+#else
+#  define UNWRAP_METHOD(method, m) \
+   Data_Get_Struct(method, struct METHOD, m)
+#endif
+
 static VALUE rb_mMarshal;
 
 static VALUE marshal_dump(VALUE obj, VALUE limit)
@@ -58,7 +66,7 @@ static VALUE lookup_module_proc = Qnil;
 static VALUE method_receiver(VALUE method)
 {
   struct METHOD * m;
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
   return m->recv;
 }
 
@@ -74,7 +82,7 @@ static VALUE method_receiver(VALUE method)
 static VALUE method_id(VALUE method)
 {
   struct METHOD * m;
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
   return ID2SYM(m->id);
 }
 
@@ -90,7 +98,7 @@ static VALUE method_id(VALUE method)
 static VALUE method_oid(VALUE method)
 {
   struct METHOD * m;
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
 #if RUBY_VERSION_CODE >= 193
   return ID2SYM(m->me->def->original_id);
 #elif RUBY_VERSION_CODE >= 192
@@ -112,7 +120,7 @@ static VALUE method_oid(VALUE method)
 static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
 #if RUBY_VERSION_CODE >= 193
   return m->me->klass;
 #elif RUBY_VERSION_CODE >= 192
@@ -131,7 +139,7 @@ static VALUE method_origin_class(VALUE method)
 static VALUE method_attached_class(VALUE method)
 {
   struct METHOD * m;
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
   return CLASS_OF(m->recv);
 }
 
@@ -151,7 +159,7 @@ static VALUE method_body(VALUE method)
     /* no access to potentially sensitive data from the sandbox */
     rb_raise(rb_eSecurityError, "Insecure: can't get method body");
   }
-  Data_Get_Struct(method, struct METHOD, m);
+  UNWRAP_METHOD(method, m);
 #if RUBY_VERSION_CODE >= 193
   return m->me->def->body.iseq->self; /* TODO: body is a union; is this right? */
 #elif RUBY_VERSION_CODE >= 192
@@ -183,7 +191,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
   }
 
   arr = rb_ary_new();
-  Data_Get_Struct(self, struct METHOD, method);
+  UNWRAP_METHOD(self, method);
 #if RUBY_VERSION_CODE >= 193
   rb_ary_push(arr, rb_mod_name(method->me->klass));
   rb_ary_push(arr, Qnil); /* TODO */
@@ -244,7 +252,7 @@ static VALUE method_load(VALUE klass, VALUE str)
   /* Create a METHOD object -- doesn't matter which method we use */
   retval = rb_funcall(
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
-  Data_Get_Struct(retval, struct METHOD, method);
+  UNWRAP_METHOD(retval, method);
   arr = RARRAY_PTR(rarr);
 #if RUBY_VERSION_CODE >= 193
   method->me->klass =
@@ -289,6 +297,8 @@ void Init_method(void)
 #ifndef HAVE_RB_CMETHOD
   rb_cMethod = rb_const_get(rb_cObject, rb_intern("Method"));
 #endif
+
+  /* TODO: ruby 1.9 has this function but not 1.8 */
   rb_define_method(rb_cMethod, "receiver", method_receiver, 0);
 
   /* For rdoc: rb_cUnboundMethod = rb_define_class("UnboundMethod", rb_cObject) */

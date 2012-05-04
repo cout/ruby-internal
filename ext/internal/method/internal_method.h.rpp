@@ -9,6 +9,14 @@
 
 #include "internal/node/ruby_internal_node.h"
 
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE (!FALSE)
+#endif
+
 #ruby <<END
   $: << '../..'
   require 'ruby_source_dir'
@@ -24,9 +32,17 @@
     File.open(file) do |eval_c|
       write = false
       stopwrite = false
+      prev_line = nil
       while (line = eval_c.gets) != nil do
         case line
         when /^struct (METHOD)/
+          write = true
+          stopwrite = false
+        when /rb_data_type_t method_data_type = {/
+          write = true
+          stopwrite = false
+        when /^(bm_mark|bm_free|bm_memsize)/
+          puts prev_line
           write = true
           stopwrite = false
         when /^\}/
@@ -46,6 +62,7 @@
           write = false
           puts ''
         end
+        prev_line = line
       end
     end
   end
