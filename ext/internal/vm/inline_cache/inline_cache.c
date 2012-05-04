@@ -15,7 +15,7 @@
  */
 static VALUE inline_cache_klass(VALUE self)
 {
-  IC inline_cache = unwrap_node(self);
+  IC inline_cache = (IC)unwrap_node(self);
   if (inline_cache->ic_class == Qundef)
   {
     return Qnil;
@@ -46,7 +46,7 @@ static VALUE inline_cache_value(VALUE self)
  */
 static VALUE inline_cache_vmstat(VALUE self)
 {
-  IC inline_cache = unwrap_node(self);
+  IC inline_cache = (IC)unwrap_node(self);
   return INT2NUM(inline_cache->ic_vmstat);
 }
 
