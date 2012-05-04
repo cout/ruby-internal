@@ -38,13 +38,6 @@
         when /^struct (METHOD)/
           write = true
           stopwrite = false
-        when /rb_data_type_t method_data_type = {/
-          write = true
-          stopwrite = false
-        when /^(bm_mark|bm_free|bm_memsize)/
-          puts prev_line
-          write = true
-          stopwrite = false
         when /^\}/
           stopwrite = true
         when /VALUE oclass/

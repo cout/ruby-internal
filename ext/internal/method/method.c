@@ -23,11 +23,25 @@ static VALUE rb_cUnboundMethod = Qnil;
 #endif
 
 #ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
 #  define UNWRAP_METHOD(method, m) \
-   TypedData_Get_Struct(method, struct METHOD, &method_data_type, m);
+   TypedData_Get_Struct(method, struct METHOD, p_method_data_type, m);
+
+  static rb_data_type_t const * p_method_data_type;
+
+  void init_method_data_type()
+  {
+    /* Create a METHOD object -- doesn't matter which method we use */
+    VALUE retval = rb_funcall(
+        rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
+    p_method_data_type = RTYPEDDATA_TYPE(retval);
+  }
+
 #else
+
 #  define UNWRAP_METHOD(method, m) \
    Data_Get_Struct(method, struct METHOD, m)
+
 #endif
 
 static VALUE rb_mMarshal;
@@ -321,5 +335,9 @@ void Init_method(void)
 
   lookup_module_proc = rb_eval_string(lookup_module_str);
   rb_global_variable(&lookup_module_proc);
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+  init_method_data_type();
+#endif
 }
 
