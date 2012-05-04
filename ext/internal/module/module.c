@@ -428,11 +428,13 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
         rb_class2name(CLASS_OF(n)));
   }
 
-  rb_iseq_t *iseqdat = iseq_check((VALUE)n->nd_body);
-  set_cref_stack(iseqdat, klass, noex);
-  iseqdat->klass = klass;
-  iseqdat->defined_method_id = SYM2ID(id);
-  n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
+  {
+    rb_iseq_t *iseqdat = iseq_check((VALUE)n->nd_body);
+    set_cref_stack(iseqdat, klass, noex);
+    iseqdat->klass = klass;
+    iseqdat->defined_method_id = SYM2ID(id);
+    n = NEW_METHOD(iseqdat->self, klass, NUM2INT(noex));
+  }
 
 add_node:
 #endif
@@ -615,7 +617,7 @@ static VALUE module_dump(VALUE self, VALUE limit)
 
 static void include_modules(VALUE module, VALUE included_modules)
 {
-  size_t j;
+  long j;
   VALUE v;
   VALUE name;
 
