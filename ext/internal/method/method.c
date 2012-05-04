@@ -207,32 +207,32 @@ static VALUE method_dump(VALUE self, VALUE limit)
   arr = rb_ary_new();
   UNWRAP_METHOD(self, method);
 #if RUBY_VERSION_CODE >= 193
-  rb_ary_push(arr, rb_mod_name(method->me->klass));
-  rb_ary_push(arr, Qnil); /* TODO */
+  rb_ary_push(arr, rb_mod_name(method->me->klass));           /* [0] */
+  rb_ary_push(arr, Qnil); /* TODO */                          /* [1] */
 #elif RUBY_VERSION_CODE >= 192
-  rb_ary_push(arr, rb_mod_name(method->me.klass));
-  rb_ary_push(arr, Qnil); /* TODO */
+  rb_ary_push(arr, rb_mod_name(method->me.klass));            /* [0] */
+  rb_ary_push(arr, Qnil); /* TODO */                          /* [1] */
 #else
-  rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));
-  rb_ary_push(arr, rb_mod_name(METHOD_RCLASS(method)));
+  rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));       /* [2] */
+  rb_ary_push(arr, rb_mod_name(METHOD_RCLASS(method)));       /* [3] */
 #endif
   if(rb_class_of(self) == rb_cUnboundMethod)
   {
-    rb_ary_push(arr, Qnil);
+    rb_ary_push(arr, Qnil);                                   /* [4] */
   }
   else
   {
-    rb_ary_push(arr, method->recv);
+    rb_ary_push(arr, method->recv);                           /* [4] */
   }
   rb_ary_push(arr, ID2SYM(method->id));
 #if RUBY_VERSION_CODE >= 193
-  rb_ary_push(arr, ID2SYM(method->me->def->original_id));
+  rb_ary_push(arr, ID2SYM(method->me->def->original_id));     /* [5] */
 #elif RUBY_VERSION_CODE >= 192
-  rb_ary_push(arr, ID2SYM(method->me.def->original_id));
+  rb_ary_push(arr, ID2SYM(method->me.def->original_id));      /* [5] */
 #else
-  rb_ary_push(arr, ID2SYM(method->oid));
+  rb_ary_push(arr, ID2SYM(method->oid));                      /* [5] */
 #endif
-  rb_ary_push(arr, method_body(self));
+  rb_ary_push(arr, method_body(self));                        /* [6] */
 
   return marshal_dump(arr, limit);
 }
@@ -246,6 +246,7 @@ static VALUE method_dump(VALUE self, VALUE limit)
 static VALUE method_load(VALUE klass, VALUE str)
 {
   struct METHOD * method;
+
   VALUE rarr = marshal_load(str);
   VALUE * arr;
   VALUE retval;
@@ -267,6 +268,7 @@ static VALUE method_load(VALUE klass, VALUE str)
   retval = rb_funcall(
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
   UNWRAP_METHOD(retval, method);
+
   arr = RARRAY_PTR(rarr);
 #if RUBY_VERSION_CODE >= 193
   method->me->klass =
