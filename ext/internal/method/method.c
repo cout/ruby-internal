@@ -91,8 +91,10 @@ static VALUE method_oid(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   return ID2SYM(m->me->def->original_id);
+#elif RUBY_VERSION_CODE >= 192
+  return ID2SYM(m->me.def->original_id);
 #else
   return ID2SYM(m->oid);
 #endif
@@ -111,8 +113,10 @@ static VALUE method_origin_class(VALUE method)
 {
   struct METHOD * m;
   Data_Get_Struct(method, struct METHOD, m);
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   return m->me->klass;
+#elif RUBY_VERSION_CODE >= 192
+  return m->me.klass;
 #else
   return METHOD_OCLASS(m);
 #endif
@@ -148,8 +152,10 @@ static VALUE method_body(VALUE method)
     rb_raise(rb_eSecurityError, "Insecure: can't get method body");
   }
   Data_Get_Struct(method, struct METHOD, m);
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   return m->me->def->body.iseq->self; /* TODO: body is a union; is this right? */
+#elif RUBY_VERSION_CODE >= 192
+  return m->me.def->body.iseq->self; /* TODO: body is a union; is this right? */
 #else
   return wrap_node(m->body);
 #endif
@@ -178,8 +184,11 @@ static VALUE method_dump(VALUE self, VALUE limit)
 
   arr = rb_ary_new();
   Data_Get_Struct(self, struct METHOD, method);
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   rb_ary_push(arr, rb_mod_name(method->me->klass));
+  rb_ary_push(arr, Qnil); /* TODO */
+#elif RUBY_VERSION_CODE >= 192
+  rb_ary_push(arr, rb_mod_name(method->me.klass));
   rb_ary_push(arr, Qnil); /* TODO */
 #else
   rb_ary_push(arr, rb_mod_name(METHOD_OCLASS(method)));
@@ -194,8 +203,10 @@ static VALUE method_dump(VALUE self, VALUE limit)
     rb_ary_push(arr, method->recv);
   }
   rb_ary_push(arr, ID2SYM(method->id));
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   rb_ary_push(arr, ID2SYM(method->me->def->original_id));
+#elif RUBY_VERSION_CODE >= 192
+  rb_ary_push(arr, ID2SYM(method->me.def->original_id));
 #else
   rb_ary_push(arr, ID2SYM(method->oid));
 #endif
@@ -235,11 +246,16 @@ static VALUE method_load(VALUE klass, VALUE str)
       rb_cObject, rb_intern("method"), 1, ID2SYM(rb_intern("__id__")));
   Data_Get_Struct(retval, struct METHOD, method);
   arr = RARRAY_PTR(rarr);
-#if RUBY_VERSION_CODE >= 192
+#if RUBY_VERSION_CODE >= 193
   method->me->klass =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
   method->me->def->original_id = SYM2ID(arr[4]);
   GetISeqPtr(arr[5], method->me->def->body.iseq);
+#elif RUBY_VERSION_CODE >= 192
+  method->me.klass =
+    rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
+  method->me.def->original_id = SYM2ID(arr[4]);
+  GetISeqPtr(arr[5], method->me.def->body.iseq);
 #else
   METHOD_OCLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
