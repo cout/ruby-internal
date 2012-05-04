@@ -1,3 +1,4 @@
+$: << '.' # TODO: hack
 require 'run_tests'
 require 'generate_rdoc'
 
