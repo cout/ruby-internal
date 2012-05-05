@@ -4,7 +4,30 @@
 #include "gc.h"
 #include "iseq.h"
 #include "vm_core.h"
+#include "internal/method/internal_method.h"
 
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
+  static rb_data_type_t const * p_iseq_data_type;
+
+  static void init_iseq_data_type()
+  {
+    rb_proc_t * p;
+    VALUE body;
+
+    VALUE binding = rb_binding_new();
+    VALUE new_proc = rb_funcall(
+        rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+    GetProcPtr(new_proc, p);
+    body = p->block.iseq->self;
+
+    p_iseq_data_type = RTYPEDDATA_TYPE(body);
+  }
+
+#else
+
+#endif
+#
 #ruby <<END
   ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 
@@ -23,13 +46,13 @@
         when /^(iseq_load|iseq_alloc|iseq_mark|iseq_free|compile_data_free|make_compile_option|make_compile_option_value|prepare_iseq_build|cleanup_iseq_build|set_relation|iseq_memsize)/
           write = true
           puts prev_line
-        when /^static.*iseq_data_type.*=/
-          write = true
         when /^static.*COMPILE_OPTION_DEFAULT.*=/
           write = true
         when /^static.*COMPILE_OPTION_FALSE.*=/
           write = true
           stopwrite = true
+        when /TypedData_Make_Struct.*\&iseq_data_type/
+          line.gsub!(/\&iseq_data_type/, 'p_iseq_data_type')
         when /^#define CHECK_/,
              /^static inline VALUE CHECK_/
           write = true

@@ -368,7 +368,7 @@ static VALUE iseq_insn_line(VALUE self, VALUE n)
 static VALUE iseq_catch_table(VALUE self)
 {
   rb_iseq_t *iseqdat = iseq_check(self);
-  unsigned long j;
+  long j;
 
   VALUE catch_table = rb_ary_new();
 
@@ -473,8 +473,10 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
   }
 
   arr = marshal_load(str);
+  rb_p(arr);
   convert_placeholders_to_modules(arr);
 
+  printf("calling iseq_load\n");
   VALUE iseq = iseq_load(Qnil, arr, 0, Qnil);
   return iseq;
 }
@@ -504,6 +506,7 @@ void Init_iseq(void)
 
   rb_require("internal/node");
   rb_require("internal/module");
+  rb_require("internal/method");
   rb_require("internal/vm/instruction");
   rb_require("internal/vm/inline_cache");
 
@@ -562,6 +565,10 @@ void Init_iseq(void)
   /* Prevent compiler warnings about unused static functions */
   insn_name(0);
   insn_op_types(0);
+#endif
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+  init_iseq_data_type();
 #endif
 }
 
