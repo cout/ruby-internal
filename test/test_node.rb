@@ -42,9 +42,23 @@ class TC_Node < Test::Unit::TestCase
     n = m.body
     d = Marshal.dump(n)
     n2 = Marshal.load(d)
-    assert_equal n.nd_file, n2.nd_file
-    assert_equal n.nd_type, n2.nd_type
-    assert_equal n.flags,   n2.flags
+    case n2
+    when Node
+      # 1.9.1 and earlier
+      assert_equal n.nd_file, n2.nd_file
+      assert_equal n.nd_type, n2.nd_type
+      assert_equal n.flags,   n2.flags
+    when RubyVM::InstructionSequence
+      # 1.9.2 and later
+      assert_equal n.name, n2.name
+      assert_equal n.filename, n2.filename
+      assert_equal n.argc, n2.argc
+      assert_equal n.arg_simple, n2.arg_simple
+      assert_equal n.arg_rest, n2.arg_rest
+      assert_equal n.arg_block, n2.arg_block
+    else
+      fail "Unexpeced type #{n2.class}"
+    end
     klass = Class.new;
     klass.instance_eval do
       add_method(:foo, n2, Noex::PUBLIC)
@@ -72,6 +86,8 @@ class TC_Node < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run
+  $: << '.' # TODO: hack
+  require 'test_helpers'
+  run_all_tests
 end
 
