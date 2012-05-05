@@ -477,7 +477,7 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
   convert_placeholders_to_modules(arr);
 
   printf("calling iseq_load\n");
-  VALUE iseq = iseq_load(Qnil, arr, 0, Qnil);
+  VALUE iseq = iseq_load(rb_cISeq, arr, 0, Qnil);
   return iseq;
 }
 
