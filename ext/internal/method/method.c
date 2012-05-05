@@ -275,6 +275,7 @@ static VALUE method_load(VALUE klass, VALUE str)
 #if RUBY_VERSION_CODE >= 192
   METHOD_KLASS(method) =
     rb_funcall(lookup_module_proc, rb_intern("call"), 1, arr[0]);
+  METHOD_DEF(method) = xmalloc(sizeof(*METHOD_DEF(method)));
   METHOD_DEF(method)->type = VM_METHOD_TYPE_ISEQ;
   METHOD_DEF(method)->original_id = SYM2ID(arr[4]);
   METHOD_DEF(method)->alias_count = 0;
