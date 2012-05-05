@@ -139,6 +139,6 @@ class TC_Dump_Module < Test::Unit::TestCase
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run
+  # exit Test::Unit::AutoRunner.run
 end
 

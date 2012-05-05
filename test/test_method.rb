@@ -40,14 +40,21 @@ class TC_Method < Test::Unit::TestCase
     n = m.body
     if defined?(RubyVM::InstructionSequence) then
       # YARV
-      assert_equal Node::METHOD, n.class
+      assert n.class == RubyVM::InstructionSequence || # 1.9.2 and later
+             n.class == Node::METHOD                   # 1.9.1 and earlier
     else
       # pre-YARV
       assert_equal Node::SCOPE, n.class
     end
   end
 
-  def test_marshal_method
+  def test_dump_method
+    o = MarshalMethodHelper.new
+    m = o.method(:foo)
+    d = Marshal.dump(m)
+  end
+
+  def test_load_method
     o = MarshalMethodHelper.new
     m = o.method(:foo)
     d = Marshal.dump(m)
@@ -55,7 +62,13 @@ class TC_Method < Test::Unit::TestCase
     assert_equal m.call, m2.call
   end
 
-  def test_marshal_unbound_method
+  def test_dump_unbound_method
+    o = MarshalMethodHelper.new
+    u = o.method(:foo).unbind
+    d = Marshal.dump(u)
+  end
+
+  def test_load_unbound_method
     o = MarshalMethodHelper.new
     u = o.method(:foo).unbind
     d = Marshal.dump(u)
@@ -64,9 +77,14 @@ class TC_Method < Test::Unit::TestCase
     m2 = u.bind(o)
     assert_equal m.call, m2.call
   end
+
+  def test_method_oid
+    m = method(:foo)
+    oid = m.method_oid
+  end
 end
 
 if __FILE__ == $0 then
-  exit Test::Unit::AutoRunner.run
+  # exit Test::Unit::AutoRunner.run
 end
 
