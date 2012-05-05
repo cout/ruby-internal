@@ -396,13 +396,23 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
   }
 
 #if RUBY_VERSION_CODE >= 192
-  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+  if(rb_obj_is_kind_of(node, rb_cISeq))
+  {
+    rb_iseq_t *iseqdat = iseq_check(node);
+    set_cref_stack(iseqdat, klass, noex);
+    iseqdat->klass = klass;
+    iseqdat->defined_method_id = SYM2ID(id);
+
+    rb_add_method(klass, SYM2ID(id), VM_METHOD_TYPE_ISEQ, iseqdat, NUM2INT(noex));
+
+    return Qnil;
+  }
+
 #elif RUBY_VERSION_CODE >= 190
   if(rb_obj_is_kind_of(node, rb_cISeq))
   {
     rb_iseq_t *iseqdat = iseq_check(node);
-    /* TODO: any restrictions on what kinds of iseqs we can add here?
-     */
+    /* TODO: any restrictions on what kinds of iseqs we can add here? */
     set_cref_stack(iseqdat, klass, noex);
     iseqdat->klass = klass;
     iseqdat->defined_method_id = SYM2ID(id);
@@ -422,7 +432,7 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
   Data_Get_Struct(node, NODE, n);
 
 #if RUBY_VERSION_CODE >= 192
-  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+  rb_raise(rb_eRuntimeError, "Unable to add node on this version of ruby");
 #elif RUBY_VERSION_CODE >= 190
   if(nd_type(n) != NODE_METHOD)
   {
@@ -441,10 +451,11 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
   }
 
 add_node:
+
 #endif
 
 #if RUBY_VERSION_CODE >= 192
-  rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
+  rb_raise(rb_eRuntimeError, "Unable to add node on this version of ruby");
 #else
   /* TODO: if noex is NOEX_MODFUNC, add this method as a module function
    * (that is, both as an instance and singleton method)
