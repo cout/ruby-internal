@@ -8,7 +8,7 @@ spec = Gem::Specification.new do |s|
   s.author = 'Paul Brannan'
   s.email = 'curlypaul924@gmail.com'
 
-  s.add_dependency 'rubypp' => '>= 0.0.1'
+  s.add_dependency 'rubypp', '>= 0.0.1'
 
   s.description = <<-END
 Ruby-Internal is Ruby module that provides direct access to Ruby's
