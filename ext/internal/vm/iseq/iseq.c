@@ -473,10 +473,8 @@ static VALUE iseq_marshal_load(VALUE klass, VALUE str)
   }
 
   arr = marshal_load(str);
-  rb_p(arr);
   convert_placeholders_to_modules(arr);
 
-  printf("calling iseq_load\n");
   VALUE iseq = iseq_load(rb_cISeq, arr, 0, Qnil);
   return iseq;
 }
