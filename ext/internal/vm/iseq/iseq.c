@@ -11,12 +11,40 @@
 #ifdef RUBY_VM
 
 #include "vm_core.h"
-
-#include "iseq_load.inc"
+#include "gc.h"
+#include "internal/method/internal_method.h"
 
 #ifdef HAVE_ISEQ_H
 #include "iseq.h"
 #endif
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
+#  undef GET_THREAD
+#  undef GetThreadPtr
+#  define GetThreadPtr(obj, ptr) \
+   TypedData_Get_Struct((obj), rb_thread_t, p_ruby_threadptr_data_type, (ptr))
+
+  static rb_data_type_t const * p_ruby_threadptr_data_type;
+
+  static rb_thread_t * GET_THREAD()
+  {
+    VALUE thread = rb_thread_current();
+    rb_thread_t * th;
+    ID * local_tbl;
+    GetThreadPtr(thread, th);
+    return th;
+  }
+
+  static void init_ruby_threadptr_data_type()
+  {
+    VALUE thread = rb_thread_current();
+    p_ruby_threadptr_data_type = RTYPEDDATA_TYPE(thread);
+  }
+
+#endif
+
+#include "iseq_load.inc"
 
 #ifndef RARRAY_LEN
 #define RARRAY_LEN(a) RARRAY(a)->len
@@ -567,6 +595,7 @@ void Init_iseq(void)
 
 #ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
   init_iseq_data_type();
+  init_ruby_threadptr_data_type();
 #endif
 }
 

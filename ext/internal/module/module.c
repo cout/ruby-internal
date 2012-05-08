@@ -39,6 +39,22 @@
 #define RARRAY_PTR(a) RARRAY(a)->ptr
 #endif
 
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
+#  undef GetThreadPtr
+#  define GetThreadPtr(obj, ptr) \
+   TypedData_Get_Struct((obj), rb_thread_t, p_ruby_threadptr_data_type, (ptr))
+
+  static rb_data_type_t const * p_ruby_threadptr_data_type;
+
+  static void init_ruby_threadptr_data_type()
+  {
+    VALUE thread = rb_thread_current();
+    p_ruby_threadptr_data_type = RTYPEDDATA_TYPE(thread);
+  }
+
+#endif
+
 static VALUE rb_cNode;
 
 static VALUE rb_mMarshal;
@@ -831,5 +847,9 @@ void Init_module(void)
 
   rb_define_method(rb_cModule, "_dump", module_dump, 1);
   rb_define_singleton_method(rb_cModule, "_load", module_load, 1);
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+  init_ruby_threadptr_data_type();
+#endif
 }
 

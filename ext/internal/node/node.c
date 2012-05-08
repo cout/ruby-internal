@@ -32,6 +32,22 @@
 #define RARRAY_PTR(a) RARRAY(a)->ptr
 #endif
 
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
+#  undef GetThreadPtr
+#  define GetThreadPtr(obj, ptr) \
+   TypedData_Get_Struct((obj), rb_thread_t, p_ruby_threadptr_data_type, (ptr))
+
+  static rb_data_type_t const * p_ruby_threadptr_data_type;
+
+  static void init_ruby_threadptr_data_type()
+  {
+    VALUE thread = rb_thread_current();
+    p_ruby_threadptr_data_type = RTYPEDDATA_TYPE(thread);
+  }
+
+#endif
+
 static VALUE rb_cNode = Qnil;
 static VALUE rb_cNodeType = Qnil;
 VALUE rb_cNodeSubclass[NODE_LAST];
@@ -526,8 +542,9 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
       /* TODO: This is kinda hokey */
       VALUE thread = rb_thread_current();
       rb_thread_t * th;
+      ID * local_tbl;
       GetThreadPtr(thread, th);
-      ID * local_tbl = th->cfp->iseq
+      local_tbl = th->cfp->iseq
         ? th->cfp->iseq->local_table
         : 0;
       node = NEW_NODE(NODE_SCOPE, local_tbl, node, 0);
@@ -1175,6 +1192,10 @@ void Init_node(void)
       "$ruby_cref",
       ruby_cref_getter,
       ruby_cref_setter);
+#endif
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+  init_ruby_threadptr_data_type();
 #endif
 }
 
