@@ -524,8 +524,11 @@ VALUE eval_ruby_node(NODE * node, VALUE self, VALUE cref)
     if(nd_type(node) != NODE_SCOPE)
     {
       /* TODO: This is kinda hokey */
-      ID * local_tbl = ruby_current_thread->cfp->iseq
-        ? ruby_current_thread->cfp->iseq->local_table
+      VALUE thread = rb_thread_current();
+      rb_thread_t * th;
+      GetThreadPtr(thread, th);
+      ID * local_tbl = th->cfp->iseq
+        ? th->cfp->iseq->local_table
         : 0;
       node = NEW_NODE(NODE_SCOPE, local_tbl, node, 0);
     }
@@ -784,7 +787,10 @@ static VALUE node_compile_string(int argc, VALUE * argv, VALUE self)
 #ifdef RUBY_VM
   if(!node)
   {
-    rb_exc_raise(GET_THREAD()->errinfo);
+    VALUE thread = rb_thread_current();
+    rb_thread_t * th;
+    GetThreadPtr(thread, th);
+    rb_exc_raise(th->errinfo);
   }
 #else
   if(ruby_nerrs > 0)

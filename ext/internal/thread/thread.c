@@ -61,21 +61,27 @@ void * ruby_current_thread_jmp_buf()
 {
   /* jmp_buf is guaranteed to be an array type that can decay to a
    * pointer */
-  rb_thread_t * const th = GET_THREAD();
+  VALUE thread = rb_thread_current();
+  rb_thread_t * th;
+  GetThreadPtr(thread, th);
   return th->tag->buf;
 }
 
 /* For Ludicrous */
 void * ruby_current_thread_tag(void * tag)
 {
-  rb_thread_t * const th = GET_THREAD();
+  VALUE thread = rb_thread_current();
+  rb_thread_t * th;
+  GetThreadPtr(thread, th);
   return th->tag;
 }
 
 /* For Ludicrous */
 void ruby_set_current_thread_tag(void * tag)
 {
-  rb_thread_t * const th = GET_THREAD();
+  VALUE thread = rb_thread_current();
+  rb_thread_t * th;
+  GetThreadPtr(thread, th);
   th->tag = tag;
 }
 

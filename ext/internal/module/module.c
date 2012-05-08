@@ -11,6 +11,10 @@
 #include <st.h>
 #endif
 
+#ifdef HAVE_INTERNAL_H
+#include "internal.h"
+#endif
+
 #ifndef RCLASS_SUPER
 #define RCLASS_SUPER(c) RCLASS(c)->super
 #endif
@@ -342,17 +346,24 @@ static VALUE module_name_proc = Qnil;
 
 static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
 {
-  rb_thread_t * th = GET_THREAD();
+  VALUE thread = rb_thread_current();
+  rb_thread_t * th;
+  GetThreadPtr(thread, th);
 #if defined(HAVE_RB_VM_GET_RUBY_LEVEL_NEXT_CFP)
   rb_control_frame_t * cfp = rb_vm_get_ruby_level_next_cfp(th, th->cfp);
+#define HAVE_CFP
 #elif defined(HAVE_VM_GET_RUBY_LEVEL_CFP)
   rb_control_frame_t * cfp = vm_get_ruby_level_cfp(th, th->cfp);
+#define HAVE_CFP
 #else
-#error No function to get cfp
+  rb_raise(rb_eRuntimeError, "No function to get cfp");
 #endif
+
+#ifdef HAVE_CFP
   iseqdat->cref_stack = NEW_BLOCK(klass);
   iseqdat->cref_stack->nd_visi = noex;
   iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */
+#endif
 }
 
 /* From iseq.c */
