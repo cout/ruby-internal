@@ -228,7 +228,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -322,7 +322,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -565,7 +565,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -689,7 +689,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -897,7 +897,7 @@ VALUE dump_node_elem(enum Node_Elem_Name nen, NODE * n, VALUE node_hash)
           else
           {
             path = rb_class_path(klass);
-            if(STR2CSTR(path)[0] == '#')
+            if(StringValuePtr(path)[0] == '#')
             {
               rb_raise(rb_eArgError, "cannot dump anonymous class");
             }
@@ -1152,20 +1152,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_CLSS:
     {
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_clss) =
@@ -1241,20 +1244,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_CVAL:
     {
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_cval) =
@@ -1480,20 +1486,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_LIT:
     {
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_lit) =
@@ -1606,20 +1615,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_ORIG:
     {
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_orig) =
@@ -1846,20 +1858,23 @@ void load_node_elem(enum Node_Elem_Name nen, VALUE v, NODE * n, VALUE node_hash,
       }
     case NEN_TVAL:
     {
+      int flags;
       Check_Type(v, T_ARRAY);
       if(RARRAY_LEN(v) != 2)
       {
         rb_raise(rb_eArgError, "wrong size for array");
       }
-      int flags = NUM2INT(RARRAY_PTR(v)[0]);
+      flags = NUM2INT(RARRAY_PTR(v)[0]);
       switch(flags & T_MASK)
       {
         case T_CLASS:
         case T_MODULE:
         {
-          VALUE str = RARRAY_PTR(v)[1];
+          VALUE str, klass;
+
+          str = RARRAY_PTR(v)[1];
           Check_Type(str, T_STRING);
-          VALUE klass = rb_path2class(STR2CSTR(str));
+          klass = rb_path2class(StringValuePtr(str));
           if(flags & FL_SINGLETON)
           {
             *(VALUE *)(&n->nd_tval) =
@@ -2910,10 +2925,10 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cALIAS, "__member__", members);
     rb_iv_set(rb_cALIAS, "__type__", INT2NUM(NODE_ALIAS));
     rb_define_singleton_method(rb_cALIAS, "members", node_s_members, 0);
-    rb_define_method(rb_cALIAS, "first", node_1st, 0);
-    rb_ary_push(members, rb_str_new2("first"));
     rb_define_method(rb_cALIAS, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
+    rb_define_method(rb_cALIAS, "first", node_1st, 0);
+    rb_ary_push(members, rb_str_new2("first"));
   }
 
   /* Document-class: Node::ALLOCA
@@ -2937,17 +2952,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cALLOCA, "cfnc", node_cfnc, 0);
     rb_ary_push(members, rb_str_new2("cfnc"));
 
-    /* Document-method: value
-     * a pointer to the previously allocated temporary node
-     */
-    rb_define_method(rb_cALLOCA, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
-
     /* Document-method: cnt
      * the number of bytes allocated
      */
     rb_define_method(rb_cALLOCA, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
+
+    /* Document-method: value
+     * a pointer to the previously allocated temporary node
+     */
+    rb_define_method(rb_cALLOCA, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
   }
 #endif
 
@@ -2966,17 +2981,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cAND, "__type__", INT2NUM(NODE_AND));
     rb_define_singleton_method(rb_cAND, "members", node_s_members, 0);
 
-    /* Document-method: first
-     * the expression on the left hand side
-     */
-    rb_define_method(rb_cAND, "first", node_1st, 0);
-    rb_ary_push(members, rb_str_new2("first"));
-
     /* Document-method: second
      * the expression on the right hand side
      */
     rb_define_method(rb_cAND, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
+
+    /* Document-method: first
+     * the expression on the left hand side
+     */
+    rb_define_method(rb_cAND, "first", node_1st, 0);
+    rb_ary_push(members, rb_str_new2("first"));
   }
 
   /* Document-class: Node::ARGS
@@ -2996,18 +3011,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cARGS, "rest", node_rest, 0);
     rb_ary_push(members, rb_str_new2("rest"));
 
+    /* Document-method: cnt
+     * the number of required arguments
+     */
+    rb_define_method(rb_cARGS, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
+
     /* Document-method: opt
      * a list of assignment nodes to assign default values to the
      * optional arguments if no argument is specified
      */
     rb_define_method(rb_cARGS, "opt", node_opt, 0);
     rb_ary_push(members, rb_str_new2("opt"));
-
-    /* Document-method: cnt
-     * the number of required arguments
-     */
-    rb_define_method(rb_cARGS, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::ARGSCAT
@@ -3027,18 +3042,18 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cARGSCAT, "__type__", INT2NUM(NODE_ARGSCAT));
     rb_define_singleton_method(rb_cARGSCAT, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * a list of fixed arguments
-     */
-    rb_define_method(rb_cARGSCAT, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: body
      * the last argument, which will be splatted onto the end of the
      * fixed arguments
      */
     rb_define_method(rb_cARGSCAT, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
+
+    /* Document-method: head
+     * a list of fixed arguments
+     */
+    rb_define_method(rb_cARGSCAT, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::ARGSPUSH
@@ -3055,10 +3070,10 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cARGSPUSH, "__member__", members);
     rb_iv_set(rb_cARGSPUSH, "__type__", INT2NUM(NODE_ARGSPUSH));
     rb_define_singleton_method(rb_cARGSPUSH, "members", node_s_members, 0);
-    rb_define_method(rb_cARGSPUSH, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
     rb_define_method(rb_cARGSPUSH, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
+    rb_define_method(rb_cARGSPUSH, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::ARRAY
@@ -3074,19 +3089,19 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cARRAY, "__type__", INT2NUM(NODE_ARRAY));
     rb_define_singleton_method(rb_cARRAY, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the first element of the array
-     */
-    rb_define_method(rb_cARRAY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-    rb_define_method(rb_cARRAY, "alen", node_alen, 0);
-    rb_ary_push(members, rb_str_new2("alen"));
-
     /* Document-method: next
      * the tail of the array
      */
     rb_define_method(rb_cARRAY, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+    rb_define_method(rb_cARRAY, "alen", node_alen, 0);
+    rb_ary_push(members, rb_str_new2("alen"));
+
+    /* Document-method: head
+     * the first element of the array
+     */
+    rb_define_method(rb_cARRAY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::ATTRASGN
@@ -3103,6 +3118,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cATTRASGN, "__type__", INT2NUM(NODE_ATTRASGN));
     rb_define_singleton_method(rb_cATTRASGN, "members", node_s_members, 0);
 
+    /* Document-method: recv
+     * the receiver of the method
+     */
+    rb_define_method(rb_cATTRASGN, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
+
     /* Document-method: args
      * the arguments to the method
      */
@@ -3114,12 +3135,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cATTRASGN, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
-
-    /* Document-method: recv
-     * the receiver of the method
-     */
-    rb_define_method(rb_cATTRASGN, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
   }
 
   /* Document-class: Node::ATTRSET
@@ -3158,19 +3173,19 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cBACK_REF, "__type__", INT2NUM(NODE_BACK_REF));
     rb_define_singleton_method(rb_cBACK_REF, "members", node_s_members, 0);
 
-    /* Document-method: nth
-     * the integer representation of the character of the variable to
-     * reference, one of '&', '`', '\'', or '+'
-     */
-    rb_define_method(rb_cBACK_REF, "nth", node_nth, 0);
-    rb_ary_push(members, rb_str_new2("nth"));
-
     /* Document-method: cnt
      * the index into the local variable table where the match data is
      * stored
      */
     rb_define_method(rb_cBACK_REF, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
+
+    /* Document-method: nth
+     * the integer representation of the character of the variable to
+     * reference, one of '&', '`', '\'', or '+'
+     */
+    rb_define_method(rb_cBACK_REF, "nth", node_nth, 0);
+    rb_ary_push(members, rb_str_new2("nth"));
   }
 
   /* Document-class: Node::BEGIN
@@ -3207,17 +3222,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cBLOCK, "__type__", INT2NUM(NODE_BLOCK));
     rb_define_singleton_method(rb_cBLOCK, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the first expression in the block of code
-     */
-    rb_define_method(rb_cBLOCK, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: next
      * the second expression in the block of code
      */
     rb_define_method(rb_cBLOCK, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+
+    /* Document-method: head
+     * the first expression in the block of code
+     */
+    rb_define_method(rb_cBLOCK, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::BLOCK_ARG
@@ -3331,17 +3346,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cCALL, "args", node_args, 0);
     rb_ary_push(members, rb_str_new2("args"));
 
-    /* Document-method: mid
-     * the method id
-     */
-    rb_define_method(rb_cCALL, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-
     /* Document-method: recv
      * the receiver of the method
      */
     rb_define_method(rb_cCALL, "recv", node_recv, 0);
     rb_ary_push(members, rb_str_new2("recv"));
+
+    /* Document-method: mid
+     * the method id
+     */
+    rb_define_method(rb_cCALL, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
   }
 
   /* Document-class: Node::CASE
@@ -3359,12 +3374,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cCASE, "__type__", INT2NUM(NODE_CASE));
     rb_define_singleton_method(rb_cCASE, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the value to select on
-     */
-    rb_define_method(rb_cCASE, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: body
      * a linked list of nodes, each node representing a when
      * conditional
@@ -3373,6 +3382,12 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("body"));
     rb_define_method(rb_cCASE, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+
+    /* Document-method: head
+     * the value to select on
+     */
+    rb_define_method(rb_cCASE, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::CDECL
@@ -3440,6 +3455,13 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cCLASS, "__type__", INT2NUM(NODE_CLASS));
     rb_define_singleton_method(rb_cCLASS, "members", node_s_members, 0);
 
+    /* Document-method: super
+     * an expression returning the base class, or false if there is no
+     * base class specified
+     */
+    rb_define_method(rb_cCLASS, "super", node_super, 0);
+    rb_ary_push(members, rb_str_new2("super"));
+
     /* Document-method: cpath
      * the name of the class to define
      */
@@ -3451,13 +3473,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cCLASS, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
-
-    /* Document-method: super
-     * an expression returning the base class, or false if there is no
-     * base class specified
-     */
-    rb_define_method(rb_cCLASS, "super", node_super, 0);
-    rb_ary_push(members, rb_str_new2("super"));
   }
 
   /* Document-class: Node::COLON2
@@ -3476,17 +3491,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cCOLON2, "__type__", INT2NUM(NODE_COLON2));
     rb_define_singleton_method(rb_cCOLON2, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * an expression specifying the class in which to do the lookup
-     */
-    rb_define_method(rb_cCOLON2, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: mid
      * the name of the method or constant to call/look up
      */
     rb_define_method(rb_cCOLON2, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
+
+    /* Document-method: head
+     * an expression specifying the class in which to do the lookup
+     */
+    rb_define_method(rb_cCOLON2, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::COLON3
@@ -3545,6 +3560,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cCREF, "__type__", INT2NUM(NODE_CREF));
     rb_define_singleton_method(rb_cCREF, "members", node_s_members, 0);
 
+    /* Document-method: clss
+     * the new class to use for the cbase.
+     */
+    rb_define_method(rb_cCREF, "clss", node_clss, 0);
+    rb_ary_push(members, rb_str_new2("clss"));
+
     /* Document-method: body
      * always 0 (false)
      */
@@ -3556,12 +3577,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cCREF, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
-
-    /* Document-method: clss
-     * the new class to use for the cbase.
-     */
-    rb_define_method(rb_cCREF, "clss", node_clss, 0);
-    rb_ary_push(members, rb_str_new2("clss"));
   }
 
   /* Document-class: Node::CVAR
@@ -3761,17 +3776,17 @@ void define_node_subclass_methods()
     rb_define_method(rb_cDEFS, "defn", node_defn, 0);
     rb_ary_push(members, rb_str_new2("defn"));
 
-    /* Document-method: mid
-     * the name of the method* defn the body of the method
-     */
-    rb_define_method(rb_cDEFS, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
-
     /* Document-method: recv
      * the object to whose singleton class the new method is to be  added
      */
     rb_define_method(rb_cDEFS, "recv", node_recv, 0);
     rb_ary_push(members, rb_str_new2("recv"));
+
+    /* Document-method: mid
+     * the name of the method* defn the body of the method
+     */
+    rb_define_method(rb_cDEFS, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
   }
 
   /* Document-class: Node::DMETHOD
@@ -3810,12 +3825,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cDOT2, "__type__", INT2NUM(NODE_DOT2));
     rb_define_singleton_method(rb_cDOT2, "members", node_s_members, 0);
 
-    /* Document-method: beg
-     * the beginning of the range
-     */
-    rb_define_method(rb_cDOT2, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
-
     /* Document-method: end
      * the end of the range
      */
@@ -3823,6 +3832,12 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("end"));
     rb_define_method(rb_cDOT2, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cDOT2, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
   }
 
   /* Document-class: Node::DOT3
@@ -3838,12 +3853,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cDOT3, "__type__", INT2NUM(NODE_DOT3));
     rb_define_singleton_method(rb_cDOT3, "members", node_s_members, 0);
 
-    /* Document-method: beg
-     * the beginning of the range
-     */
-    rb_define_method(rb_cDOT3, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
-
     /* Document-method: end
      * the end of the range
      */
@@ -3851,6 +3860,12 @@ void define_node_subclass_methods()
     rb_ary_push(members, rb_str_new2("end"));
     rb_define_method(rb_cDOT3, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
+
+    /* Document-method: beg
+     * the beginning of the range
+     */
+    rb_define_method(rb_cDOT3, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
   }
 
   /* Document-class: Node::DREGX
@@ -3869,12 +3884,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cDREGX, "__type__", INT2NUM(NODE_DREGX));
     rb_define_singleton_method(rb_cDREGX, "members", node_s_members, 0);
 
-    /* Document-method: lit
-     * a string
-     */
-    rb_define_method(rb_cDREGX, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-
     /* Document-method: cflag
      * a bitfield containing the options used in the regular
      * expression.  Valid values include:
@@ -3891,6 +3900,12 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cDREGX, "cflag", node_cflag, 0);
     rb_ary_push(members, rb_str_new2("cflag"));
+
+    /* Document-method: lit
+     * a string
+     */
+    rb_define_method(rb_cDREGX, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
 
     /* Document-method: next
      * a list of expressions to be appended onto the string
@@ -3912,18 +3927,18 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cDREGX_ONCE, "__type__", INT2NUM(NODE_DREGX_ONCE));
     rb_define_singleton_method(rb_cDREGX_ONCE, "members", node_s_members, 0);
 
-    /* Document-method: lit
-     * a string
-     */
-    rb_define_method(rb_cDREGX_ONCE, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-
     /* Document-method: cflag
      * a bitfield containing the options used in the regular
      * expression.  See DREGX for a list of valid values.
      */
     rb_define_method(rb_cDREGX_ONCE, "cflag", node_cflag, 0);
     rb_ary_push(members, rb_str_new2("cflag"));
+
+    /* Document-method: lit
+     * a string
+     */
+    rb_define_method(rb_cDREGX_ONCE, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
 
     /* Document-method: next
      * a list of expressions to be appended onto the string
@@ -4060,17 +4075,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cENSURE, "__type__", INT2NUM(NODE_ENSURE));
     rb_define_singleton_method(rb_cENSURE, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the expression to protect
-     */
-    rb_define_method(rb_cENSURE, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: ensr
      * the expression to evaluate after the head is evaluated
      */
     rb_define_method(rb_cENSURE, "ensr", node_ensr, 0);
     rb_ary_push(members, rb_str_new2("ensr"));
+
+    /* Document-method: head
+     * the expression to protect
+     */
+    rb_define_method(rb_cENSURE, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::EVSTR
@@ -4119,11 +4134,11 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cFBODY, "__type__", INT2NUM(NODE_FBODY));
     rb_define_singleton_method(rb_cFBODY, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the method body
+    /* Document-method: mid
+     * the name of the method
      */
-    rb_define_method(rb_cFBODY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cFBODY, "mid", node_mid, 0);
+    rb_ary_push(members, rb_str_new2("mid"));
 
     /* Document-method: orig
      * the origin class
@@ -4131,11 +4146,11 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFBODY, "orig", node_orig, 0);
     rb_ary_push(members, rb_str_new2("orig"));
 
-    /* Document-method: mid
-     * the name of the method
+    /* Document-method: head
+     * the method body
      */
-    rb_define_method(rb_cFBODY, "mid", node_mid, 0);
-    rb_ary_push(members, rb_str_new2("mid"));
+    rb_define_method(rb_cFBODY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::FCALL
@@ -4180,11 +4195,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cFLIP2, "__type__", INT2NUM(NODE_FLIP2));
     rb_define_singleton_method(rb_cFLIP2, "members", node_s_members, 0);
 
-    /* Document-method: beg
-     * the beginning of the range
+    /* Document-method: cnt
+     * the index into the local variable table of the special variable
+     * to use in the flip-flop expression (usually 2 for $_)
      */
-    rb_define_method(rb_cFLIP2, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
+    rb_define_method(rb_cFLIP2, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
 
     /* Document-method: end
      * the end of the range
@@ -4192,12 +4208,11 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFLIP2, "end", node_end, 0);
     rb_ary_push(members, rb_str_new2("end"));
 
-    /* Document-method: cnt
-     * the index into the local variable table of the special variable
-     * to use in the flip-flop expression (usually 2 for $_)
+    /* Document-method: beg
+     * the beginning of the range
      */
-    rb_define_method(rb_cFLIP2, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
+    rb_define_method(rb_cFLIP2, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
   }
 
   /* Document-class: Node::FLIP3
@@ -4214,11 +4229,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cFLIP3, "__type__", INT2NUM(NODE_FLIP3));
     rb_define_singleton_method(rb_cFLIP3, "members", node_s_members, 0);
 
-    /* Document-method: beg
-     * the beginning of the range
+    /* Document-method: cnt
+     * the index into the local variable table of the special variable
+     * to use in the flip-flop expression (usually 2 for $_)
      */
-    rb_define_method(rb_cFLIP3, "beg", node_beg, 0);
-    rb_ary_push(members, rb_str_new2("beg"));
+    rb_define_method(rb_cFLIP3, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
 
     /* Document-method: end
      * the end of the range
@@ -4226,12 +4242,11 @@ void define_node_subclass_methods()
     rb_define_method(rb_cFLIP3, "end", node_end, 0);
     rb_ary_push(members, rb_str_new2("end"));
 
-    /* Document-method: cnt
-     * the index into the local variable table of the special variable
-     * to use in the flip-flop expression (usually 2 for $_)
+    /* Document-method: beg
+     * the beginning of the range
      */
-    rb_define_method(rb_cFLIP3, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
+    rb_define_method(rb_cFLIP3, "beg", node_beg, 0);
+    rb_ary_push(members, rb_str_new2("beg"));
   }
 
   /* Document-class: Node::FOR
@@ -4293,14 +4308,14 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cGASGN, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
+    rb_define_method(rb_cGASGN, "entry", node_entry, 0);
+    rb_ary_push(members, rb_str_new2("entry"));
 
     /* Document-method: vid
      * the name of the global variable, with a leading '$' character.
      */
     rb_define_method(rb_cGASGN, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
-    rb_define_method(rb_cGASGN, "entry", node_entry, 0);
-    rb_ary_push(members, rb_str_new2("entry"));
   }
 
   /* Document-class: Node::GVAR
@@ -4313,14 +4328,14 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cGVAR, "__member__", members);
     rb_iv_set(rb_cGVAR, "__type__", INT2NUM(NODE_GVAR));
     rb_define_singleton_method(rb_cGVAR, "members", node_s_members, 0);
+    rb_define_method(rb_cGVAR, "entry", node_entry, 0);
+    rb_ary_push(members, rb_str_new2("entry"));
 
     /* Document-method: vid
      * the name of the global variable to retrieve, with a leading '$'
      */
     rb_define_method(rb_cGVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
-    rb_define_method(rb_cGVAR, "entry", node_entry, 0);
-    rb_ary_push(members, rb_str_new2("entry"));
   }
 
   /* Document-class: Node::HASH
@@ -4433,18 +4448,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cIFUNC, "cfnc", node_cfnc, 0);
     rb_ary_push(members, rb_str_new2("cfnc"));
 
+    /* Document-method: state
+     * always 0
+     */
+    rb_define_method(rb_cIFUNC, "state", node_state, 0);
+    rb_ary_push(members, rb_str_new2("state"));
+
     /* Document-method: tval
      * the user-specified data to be passed as the second argument to
      * cfnc
      */
     rb_define_method(rb_cIFUNC, "tval", node_tval, 0);
     rb_ary_push(members, rb_str_new2("tval"));
-
-    /* Document-method: state
-     * always 0
-     */
-    rb_define_method(rb_cIFUNC, "state", node_state, 0);
-    rb_ary_push(members, rb_str_new2("state"));
   }
 
   /* Document-class: Node::ITER
@@ -4521,6 +4536,8 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cLASGN, "__member__", members);
     rb_iv_set(rb_cLASGN, "__type__", INT2NUM(NODE_LASGN));
     rb_define_singleton_method(rb_cLASGN, "members", node_s_members, 0);
+    rb_define_method(rb_cLASGN, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
 
     /* Document-method: value
      * the value to assign to the local variable
@@ -4533,8 +4550,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cLASGN, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
-    rb_define_method(rb_cLASGN, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::LIT
@@ -4566,14 +4581,14 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cLVAR, "__member__", members);
     rb_iv_set(rb_cLVAR, "__type__", INT2NUM(NODE_LVAR));
     rb_define_singleton_method(rb_cLVAR, "members", node_s_members, 0);
+    rb_define_method(rb_cLVAR, "cnt", node_cnt, 0);
+    rb_ary_push(members, rb_str_new2("cnt"));
 
     /* Document-method: vid
      * the name of the local variable to retrieve.
      */
     rb_define_method(rb_cLVAR, "vid", node_vid, 0);
     rb_ary_push(members, rb_str_new2("vid"));
-    rb_define_method(rb_cLVAR, "cnt", node_cnt, 0);
-    rb_ary_push(members, rb_str_new2("cnt"));
   }
 
   /* Document-class: Node::MASGN
@@ -4587,6 +4602,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cMASGN, "__type__", INT2NUM(NODE_MASGN));
     rb_define_singleton_method(rb_cMASGN, "members", node_s_members, 0);
 
+    /* Document-method: value
+     * TODO
+     */
+    rb_define_method(rb_cMASGN, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
     /* Document-method: args
      * TODO
      */
@@ -4598,12 +4619,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cMASGN, "head", node_head, 0);
     rb_ary_push(members, rb_str_new2("head"));
-
-    /* Document-method: value
-     * TODO
-     */
-    rb_define_method(rb_cMASGN, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
   }
 
   /* Document-class: Node::MATCH
@@ -4628,17 +4643,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cMATCH, "__type__", INT2NUM(NODE_MATCH));
     rb_define_singleton_method(rb_cMATCH, "members", node_s_members, 0);
 
-    /* Document-method: lit
-     * the regular expression to use in the condition.
-     */
-    rb_define_method(rb_cMATCH, "lit", node_lit, 0);
-    rb_ary_push(members, rb_str_new2("lit"));
-
     /* Document-method: value
      * the value to compare against
      */
     rb_define_method(rb_cMATCH, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
+
+    /* Document-method: lit
+     * the regular expression to use in the condition.
+     */
+    rb_define_method(rb_cMATCH, "lit", node_lit, 0);
+    rb_ary_push(members, rb_str_new2("lit"));
   }
 
   /* Document-class: Node::MATCH2
@@ -4865,17 +4880,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cNTH_REF, "__type__", INT2NUM(NODE_NTH_REF));
     rb_define_singleton_method(rb_cNTH_REF, "members", node_s_members, 0);
 
-    /* Document-method: nth
-     * the index of the match data item to retrieve
-     */
-    rb_define_method(rb_cNTH_REF, "nth", node_nth, 0);
-    rb_ary_push(members, rb_str_new2("nth"));
-
     /* Document-method: cnt
      * the index into the local variable table where the match data is stored
      */
     rb_define_method(rb_cNTH_REF, "cnt", node_cnt, 0);
     rb_ary_push(members, rb_str_new2("cnt"));
+
+    /* Document-method: nth
+     * the index of the match data item to retrieve
+     */
+    rb_define_method(rb_cNTH_REF, "nth", node_nth, 0);
+    rb_ary_push(members, rb_str_new2("nth"));
   }
 
   /* Document-class: Node::OPT_N
@@ -4934,18 +4949,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOP_ASGN1, "args", node_args, 0);
     rb_ary_push(members, rb_str_new2("args"));
 
+    /* Document-method: recv
+     * the receiver of the assignment
+     */
+    rb_define_method(rb_cOP_ASGN1, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
+
     /* Document-method: mid
      * 0, 1, or the name a method to call to calculate the value of the
      * rhs
      */
     rb_define_method(rb_cOP_ASGN1, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
-
-    /* Document-method: recv
-     * the receiver of the assignment
-     */
-    rb_define_method(rb_cOP_ASGN1, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
   }
 
   /* Document-class: Node::OP_ASGN2
@@ -4974,18 +4989,18 @@ void define_node_subclass_methods()
     rb_define_method(rb_cOP_ASGN2, "value", node_value, 0);
     rb_ary_push(members, rb_str_new2("value"));
 
+    /* Document-method: recv
+     * the receiver of the attribute
+     */
+    rb_define_method(rb_cOP_ASGN2, "recv", node_recv, 0);
+    rb_ary_push(members, rb_str_new2("recv"));
+
     /* Document-method: next
      * another node of type OP_ASGN2 which contains more information
      * about the assignment operation than can fit in this node alone
      */
     rb_define_method(rb_cOP_ASGN2, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
-
-    /* Document-method: recv
-     * the receiver of the attribute
-     */
-    rb_define_method(rb_cOP_ASGN2, "recv", node_recv, 0);
-    rb_ary_push(members, rb_str_new2("recv"));
   }
 
   /* Document-class: Node::OP_ASGN2_ARG
@@ -5001,12 +5016,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cOP_ASGN2_ARG, "__type__", INT2NUM(NODE_OP_ASGN2_ARG));
     rb_define_singleton_method(rb_cOP_ASGN2_ARG, "members", node_s_members, 0);
 
-    /* Document-method: vid
-     * The method to call on the receiver to retrieve the attribute
-     */
-    rb_define_method(rb_cOP_ASGN2_ARG, "vid", node_vid, 0);
-    rb_ary_push(members, rb_str_new2("vid"));
-
     /* Document-method: aid
      * The method to call on the receiver to set the attribute
      */
@@ -5020,6 +5029,12 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cOP_ASGN2_ARG, "mid", node_mid, 0);
     rb_ary_push(members, rb_str_new2("mid"));
+
+    /* Document-method: vid
+     * The method to call on the receiver to retrieve the attribute
+     */
+    rb_define_method(rb_cOP_ASGN2_ARG, "vid", node_vid, 0);
+    rb_ary_push(members, rb_str_new2("vid"));
   }
 
   /* Document-class: Node::OP_ASGN_AND
@@ -5068,6 +5083,12 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cOP_ASGN_OR, "__type__", INT2NUM(NODE_OP_ASGN_OR));
     rb_define_singleton_method(rb_cOP_ASGN_OR, "members", node_s_members, 0);
 
+    /* Document-method: value
+     * the right hand side of the assignment
+     */
+    rb_define_method(rb_cOP_ASGN_OR, "value", node_value, 0);
+    rb_ary_push(members, rb_str_new2("value"));
+
     /* Document-method: aid
      * if this indicator is nonzero, ruby will check to see if the
      * provided expression is defined, otherwise it will assume that
@@ -5075,12 +5096,6 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cOP_ASGN_OR, "aid", node_aid, 0);
     rb_ary_push(members, rb_str_new2("aid"));
-
-    /* Document-method: value
-     * the right hand side of the assignment
-     */
-    rb_define_method(rb_cOP_ASGN_OR, "value", node_value, 0);
-    rb_ary_push(members, rb_str_new2("value"));
 
     /* Document-method: recv
      * the receiver of the assignment
@@ -5104,17 +5119,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cOR, "__type__", INT2NUM(NODE_OR));
     rb_define_singleton_method(rb_cOR, "members", node_s_members, 0);
 
-    /* Document-method: first
-     * the expression on the left hand side
-     */
-    rb_define_method(rb_cOR, "first", node_1st, 0);
-    rb_ary_push(members, rb_str_new2("first"));
-
     /* Document-method: second
      * the expression on the right hand side
      */
     rb_define_method(rb_cOR, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
+
+    /* Document-method: first
+     * the expression on the left hand side
+     */
+    rb_define_method(rb_cOR, "first", node_1st, 0);
+    rb_ary_push(members, rb_str_new2("first"));
   }
 
   /* Document-class: Node::POSTEXE
@@ -5166,12 +5181,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cRESBODY, "__type__", INT2NUM(NODE_RESBODY));
     rb_define_singleton_method(rb_cRESBODY, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the next rescue
-     */
-    rb_define_method(rb_cRESBODY, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: args
      * the expression type to match against
      */
@@ -5183,6 +5192,12 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cRESBODY, "body", node_body, 0);
     rb_ary_push(members, rb_str_new2("body"));
+
+    /* Document-method: head
+     * the next rescue
+     */
+    rb_define_method(rb_cRESBODY, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::RESCUE
@@ -5222,11 +5237,11 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cRESCUE, "__type__", INT2NUM(NODE_RESCUE));
     rb_define_singleton_method(rb_cRESCUE, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the body of the block to evaluate
+    /* Document-method: resq
+     * the expression to be evaluated if an exception is raised
      */
-    rb_define_method(rb_cRESCUE, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
+    rb_define_method(rb_cRESCUE, "resq", node_resq, 0);
+    rb_ary_push(members, rb_str_new2("resq"));
 
     /* Document-method: else
      * the expression to be evaluated if no exception is raised
@@ -5234,11 +5249,11 @@ void define_node_subclass_methods()
     rb_define_method(rb_cRESCUE, "else", node_else, 0);
     rb_ary_push(members, rb_str_new2("else"));
 
-    /* Document-method: resq
-     * the expression to be evaluated if an exception is raised
+    /* Document-method: head
+     * the body of the block to evaluate
      */
-    rb_define_method(rb_cRESCUE, "resq", node_resq, 0);
-    rb_ary_push(members, rb_str_new2("resq"));
+    rb_define_method(rb_cRESCUE, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::RETRY
@@ -5293,17 +5308,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cSCLASS, "__type__", INT2NUM(NODE_SCLASS));
     rb_define_singleton_method(rb_cSCLASS, "members", node_s_members, 0);
 
-    /* Document-method: body
-     * the body of the class definition
-     */
-    rb_define_method(rb_cSCLASS, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-
     /* Document-method: recv
      * the object whose singleton class is to be modified
      */
     rb_define_method(rb_cSCLASS, "recv", node_recv, 0);
     rb_ary_push(members, rb_str_new2("recv"));
+
+    /* Document-method: body
+     * the body of the class definition
+     */
+    rb_define_method(rb_cSCLASS, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
   }
 
   /* Document-class: Node::SCOPE
@@ -5514,17 +5529,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cUNTIL, "__type__", INT2NUM(NODE_UNTIL));
     rb_define_singleton_method(rb_cUNTIL, "members", node_s_members, 0);
 
-    /* Document-method: body
-     * the body of the loop
-     */
-    rb_define_method(rb_cUNTIL, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-
     /* Document-method: cond
      * a condition to terminate the loop when it becomes true
      */
     rb_define_method(rb_cUNTIL, "cond", node_cond, 0);
     rb_ary_push(members, rb_str_new2("cond"));
+
+    /* Document-method: body
+     * the body of the loop
+     */
+    rb_define_method(rb_cUNTIL, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
     rb_define_method(rb_cUNTIL, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
   }
@@ -5542,10 +5557,10 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cVALIAS, "__member__", members);
     rb_iv_set(rb_cVALIAS, "__type__", INT2NUM(NODE_VALIAS));
     rb_define_singleton_method(rb_cVALIAS, "members", node_s_members, 0);
-    rb_define_method(rb_cVALIAS, "first", node_1st, 0);
-    rb_ary_push(members, rb_str_new2("first"));
     rb_define_method(rb_cVALIAS, "second", node_2nd, 0);
     rb_ary_push(members, rb_str_new2("second"));
+    rb_define_method(rb_cVALIAS, "first", node_1st, 0);
+    rb_ary_push(members, rb_str_new2("first"));
   }
 
   /* Document-class: Node::VCALL
@@ -5605,12 +5620,6 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cWHEN, "__type__", INT2NUM(NODE_WHEN));
     rb_define_singleton_method(rb_cWHEN, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * a value to compare against, or a condition to be tested
-     */
-    rb_define_method(rb_cWHEN, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: body
      * an expression to evaluate if the condition evaluates to true
      */
@@ -5622,6 +5631,12 @@ void define_node_subclass_methods()
      */
     rb_define_method(rb_cWHEN, "next", node_next, 0);
     rb_ary_push(members, rb_str_new2("next"));
+
+    /* Document-method: head
+     * a value to compare against, or a condition to be tested
+     */
+    rb_define_method(rb_cWHEN, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::WHILE
@@ -5638,17 +5653,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cWHILE, "__type__", INT2NUM(NODE_WHILE));
     rb_define_singleton_method(rb_cWHILE, "members", node_s_members, 0);
 
-    /* Document-method: body
-     * the body of the loop
-     */
-    rb_define_method(rb_cWHILE, "body", node_body, 0);
-    rb_ary_push(members, rb_str_new2("body"));
-
     /* Document-method: cond
      * a condition to terminate the loop when it becomes false
      */
     rb_define_method(rb_cWHILE, "cond", node_cond, 0);
     rb_ary_push(members, rb_str_new2("cond"));
+
+    /* Document-method: body
+     * the body of the loop
+     */
+    rb_define_method(rb_cWHILE, "body", node_body, 0);
+    rb_ary_push(members, rb_str_new2("body"));
     rb_define_method(rb_cWHILE, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
   }
@@ -5687,17 +5702,17 @@ void define_node_subclass_methods()
     rb_iv_set(rb_cYIELD, "__type__", INT2NUM(NODE_YIELD));
     rb_define_singleton_method(rb_cYIELD, "members", node_s_members, 0);
 
-    /* Document-method: head
-     * the value to yield
-     */
-    rb_define_method(rb_cYIELD, "head", node_head, 0);
-    rb_ary_push(members, rb_str_new2("head"));
-
     /* Document-method: state
      * if nonzero, splats the value before yielding
      */
     rb_define_method(rb_cYIELD, "state", node_state, 0);
     rb_ary_push(members, rb_str_new2("state"));
+
+    /* Document-method: head
+     * the value to yield
+     */
+    rb_define_method(rb_cYIELD, "head", node_head, 0);
+    rb_ary_push(members, rb_str_new2("head"));
   }
 
   /* Document-class: Node::ZARRAY

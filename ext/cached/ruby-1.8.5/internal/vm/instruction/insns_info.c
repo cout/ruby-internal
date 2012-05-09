@@ -2,6 +2,9 @@
 
 #ifdef RUBY_VM
 
+#include "iseq.h"
+#include "vm_core.h"
+
 
 VALUE instruction_class[VM_INSTRUCTION_SIZE];
 

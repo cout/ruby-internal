@@ -1,9 +1,28 @@
 #ifndef ruby_internal_iseq_load__inc_
 #define ruby_internal_iseq_load__inc_
 
-#include "internal/yarv-headers/gc.h"
-#include "internal/yarv-headers/iseq.h"
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
 
+  static rb_data_type_t const * p_iseq_data_type;
+
+  static void init_iseq_data_type()
+  {
+    rb_proc_t * p;
+    VALUE body;
+
+    VALUE binding = rb_binding_new();
+    VALUE new_proc = rb_funcall(
+        rb_cObject, rb_intern("eval"), 2, rb_str_new2("proc { }"), binding);
+    GetProcPtr(new_proc, p);
+    body = p->block.iseq->self;
+
+    p_iseq_data_type = RTYPEDDATA_TYPE(body);
+  }
+
+#else
+
+#endif
+#
 static void
 compile_data_free(struct iseq_compile_data *compile_data)
 {
@@ -124,7 +143,7 @@ set_relation(rb_iseq_t *iseq, const VALUE parent)
 }
 static VALUE
 prepare_iseq_build(rb_iseq_t *iseq,
-		   VALUE name, VALUE filename,
+		   VALUE name, VALUE filename, VALUE line_no,
 		   VALUE parent, VALUE type, VALUE block_opt,
 		   const rb_compile_option_t *option)
 {
@@ -133,6 +152,7 @@ prepare_iseq_build(rb_iseq_t *iseq,
 
     iseq->name = name;
     iseq->filename = filename;
+    iseq->line_no = line_no;
     iseq->defined_method_id = 0;
     iseq->mark_ary = rb_ary_new();
     RBASIC(iseq->mark_ary)->klass = 0;
@@ -166,6 +186,7 @@ prepare_iseq_build(rb_iseq_t *iseq,
     iseq->compile_data->storage_head->buff =
       (char *)(&iseq->compile_data->storage_head->buff + 1);
     iseq->compile_data->option = option;
+    iseq->compile_data->last_coverable_line = -1;
 
     set_relation(iseq, parent);
 
@@ -278,7 +299,7 @@ iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt)
     VALUE iseqval = iseq_alloc(self);
 
     VALUE magic, version1, version2, format_type, misc;
-    VALUE name, filename;
+    VALUE name, filename, line_no;
     VALUE type, body, locals, args, exception;
 
     VALUE iseq_type;
@@ -288,7 +309,7 @@ iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt)
     int i = 0;
 
     /* [magic, major_version, minor_version, format_type, misc,
-     *  name, filename,
+     *  name, filename, line_no,
      *  type, locals, args, exception_table, body]
      */
 
@@ -302,6 +323,7 @@ iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt)
 
     name        = CHECK_STRING(rb_ary_entry(data, i++));
     filename    = CHECK_STRING(rb_ary_entry(data, i++));
+    line_no     = CHECK_INTEGER(rb_ary_entry(data, i++));
 
     type        = CHECK_SYMBOL(rb_ary_entry(data, i++));
     locals      = CHECK_ARRAY(rb_ary_entry(data, i++));
@@ -343,7 +365,7 @@ iseq_load(VALUE self, VALUE data, VALUE parent, VALUE opt)
     }
 
     make_compile_option(&option, opt);
-    prepare_iseq_build(iseq, name, filename,
+    prepare_iseq_build(iseq, name, filename, line_no,
 		       parent, iseq_type, 0, &option);
 
     rb_iseq_build_from_ary(iseq, locals, args, exception, body);

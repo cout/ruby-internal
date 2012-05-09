@@ -2,6 +2,9 @@
 
 #ifdef RUBY_VM
 
+#include "iseq.h"
+#include "vm_core.h"
+
 static rb_compile_option_t COMPILE_OPTION_DEFAULT = {
     OPT_INLINE_CONST_CACHE, /* int inline_const_cache; */
     OPT_PEEPHOLE_OPTIMIZATION, /* int peephole_optimization; */
