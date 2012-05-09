@@ -3,7 +3,7 @@ require 'internal/vm/instruction'
 require 'internal/vm/inline_cache'
 require 'internal/vm/constants'
 
-module Nodewrap
+module Internal
 
 # A module for decoding YARV bytecode.
 #
@@ -13,7 +13,7 @@ module Nodewrap
 # could use this as a base for building one.
 #
 # Example usage:
-#   env = Nodewrap::ByteDecoder::Environment.new(is.local_table)
+#   env = Internal::ByteDecoder::Environment.new(is.local_table)
 #   is = RubyVM::InstructionSequence.new('1 + 1')
 #   is.bytedecode(env)
 #   env.expressions.each do |expr|
@@ -450,11 +450,11 @@ end
 
 end # ByteDecoder
 
-end # Nodewrap
+end # Internal
 
 class RubyVM
   class Instruction
-    include Nodewrap::ByteDecoder
+    include Internal::ByteDecoder
 
     class PUTOBJECT
       def bytedecode(env)
@@ -839,7 +839,7 @@ if __FILE__ == $0 then
   is = n.body
   puts is.disasm
 
-  env = Nodewrap::ByteDecoder::Environment.new(is.local_table)
+  env = Internal::ByteDecoder::Environment.new(is.local_table)
   s = ''
   # puts "local_table = #{is.local_table.inspect}"
   is.each do |i|

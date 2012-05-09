@@ -89,7 +89,7 @@ module MethodSig
     def default
       return @default if @default
 
-      env = Nodewrap::ByteDecoder::Environment.new(@iseq.local_table())
+      env = Internal::ByteDecoder::Environment.new(@iseq.local_table())
       local_table_idx = local_table_idx()
       @iseq.bytedecode(env, @pc_start) do |instr|
         RubyVM::Instruction::SETLOCAL === instr &&

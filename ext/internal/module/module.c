@@ -165,7 +165,7 @@ static VALUE class_restorer_dump(VALUE ruby_class_restorer, VALUE limit)
 
 /*
  * call-seq:
- *   Nodewrap::ClassRestorer.load => ClassRestorer
+ *   Internal::ClassRestorer.load => ClassRestorer
  *
  * Do not call this function.
  */
@@ -190,7 +190,7 @@ static VALUE ruby180_marshal_dump(int argc, VALUE * argv, VALUE klass)
     set_class_restore_state(argv[0]);
   }
 
-  VALUE str = rb_funcall2(klass, rb_intern("_Nodewrap__orig_dump"), argc, argv);
+  VALUE str = rb_funcall2(klass, rb_intern("_Internal__orig_dump"), argc, argv);
 
   if(class_restorer != Qnil)
   {
@@ -510,7 +510,7 @@ static VALUE module_uninclude(int argc, VALUE * argv, VALUE module)
  * call-seq:
  *   remove_features(mod) => mod
  *
- * When this module is unincluded from another, Nodewrap calls
+ * When this module is unincluded from another, Ruby Internal calls
  * remove_features in this module.  The default behavior is to remove
  * the constants, methods, and module variables of this module from
  * _mod_.  If this module has not been included by _mod_, an exception
@@ -828,15 +828,15 @@ void Init_module(void)
 
 #if RUBY_VERSION_CODE >= 180
   {
-    VALUE rb_mNodewrap = rb_define_module("Nodewrap");
-    rb_cClass_Restorer = rb_define_class_under(rb_mNodewrap, "ClassRestorer", rb_cObject);
+    VALUE rb_mInternal = rb_define_module("Internal");
+    rb_cClass_Restorer = rb_define_class_under(rb_mInternal, "ClassRestorer", rb_cObject);
     rb_define_method(rb_cClass_Restorer, "_dump", class_restorer_dump, 1);
     rb_define_singleton_method(rb_cClass_Restorer, "_load", class_restorer_load, 1);
   }
 #endif
 
 #if RUBY_VERSION_CODE == 180
-  rb_alias(CLASS_OF(rb_mMarshal), rb_intern("_Nodewrap__orig_dump"), rb_intern("dump"));
+  rb_alias(CLASS_OF(rb_mMarshal), rb_intern("_Internal__orig_dump"), rb_intern("dump"));
   rb_define_singleton_method(rb_mMarshal, "dump", ruby180_marshal_dump, -1);
 #endif
 
