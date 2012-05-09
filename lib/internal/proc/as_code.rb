@@ -3,6 +3,8 @@ require 'internal/proc'
 require 'internal/proc/signature'
 
 class Proc
+  # Return a string representation of a proc's definition/body,
+  # similarly to +Method#as_code+.
   def as_code(indent=0)
     sig = self.signature
     body_expression = self.body ? self.body.as_code(indent+1) : nil

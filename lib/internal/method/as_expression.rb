@@ -4,9 +4,8 @@ require 'internal/method/signature'
 require 'internal/method'
 
 module MethodAsExpression
-  # It doesn't entirely make sense to have Method#as_expression, because
-  # a method definition isn't an expression.  We have one anyway, to be
-  # consistent with Proc.
+  # Return a single-line string representation of a method
+  # TODO: this method would be more aptly named "as_expression_string".
   def as_expression
     sig = self.signature
     if self.body.respond_to?(:body) then
