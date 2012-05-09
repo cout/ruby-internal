@@ -15,7 +15,7 @@ st_table * rb_global_tbl;
     while (line = variable_c.gets) != nil do
       case line
       when /^rb_global_entry\(.*\)/,
-           /^struct global_variable {/
+           /^struct global_variable \{/
         puts prev_line
         write = true
         stopwrite = false
