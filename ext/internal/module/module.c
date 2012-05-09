@@ -5,7 +5,7 @@
 #include <ruby/st.h>
 #include "vm_core.h"
 #include "eval_intern.h"
-#include "cfp.h"
+#include "getcfp.h"
 #else
 #include <rubysig.h>
 #include <st.h>
@@ -364,22 +364,13 @@ static void set_cref_stack(rb_iseq_t * iseqdat, VALUE klass, VALUE noex)
 {
   VALUE thread = rb_thread_current();
   rb_thread_t * th;
-  GetThreadPtr(thread, th);
-#if defined(HAVE_RB_VM_GET_RUBY_LEVEL_NEXT_CFP)
-  rb_control_frame_t * cfp = rb_vm_get_ruby_level_next_cfp(th, th->cfp);
-#define HAVE_CFP
-#elif defined(HAVE_VM_GET_RUBY_LEVEL_CFP)
-  rb_control_frame_t * cfp = vm_get_ruby_level_cfp(th, th->cfp);
-#define HAVE_CFP
-#else
-  rb_raise(rb_eRuntimeError, "No function to get cfp");
-#endif
+  rb_control_frame_t * cfp;
 
-#ifdef HAVE_CFP
+  GetThreadPtr(thread, th);
+  cfp = getcfp(th, th->cfp);
   iseqdat->cref_stack = NEW_BLOCK(klass);
   iseqdat->cref_stack->nd_visi = noex;
   iseqdat->cref_stack->nd_next = cfp->iseq->cref_stack; /* TODO: use lfp? */
-#endif
 }
 
 /* From iseq.c */
@@ -691,7 +682,7 @@ static int add_method_iter(VALUE name, VALUE value, VALUE module)
   Data_Get_Struct(value, NODE, n);
 #if RUBY_VERSION_CODE >= 192
   rb_raise(rb_eRuntimeError, "NOT SUPPORTED");
-#elif RUBY_VERSION_CODE >= 190
+#else
   rb_add_method(module, SYM2ID(name), n->nd_body, n->nd_noex);
 #endif
   return ST_CONTINUE;
