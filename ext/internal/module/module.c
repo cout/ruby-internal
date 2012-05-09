@@ -421,7 +421,11 @@ static VALUE module_add_method(VALUE klass, VALUE id, VALUE node, VALUE noex)
     iseqdat->klass = klass;
     iseqdat->defined_method_id = SYM2ID(id);
 
+#ifdef HAVE_RB_ADD_METHOD
     rb_add_method(klass, SYM2ID(id), VM_METHOD_TYPE_ISEQ, iseqdat, NUM2INT(noex));
+#else
+    rb_raise(rb_eRuntimeError, "unable to call rb_add_method on 1.9.3");
+#endif
 
     return Qnil;
   }
