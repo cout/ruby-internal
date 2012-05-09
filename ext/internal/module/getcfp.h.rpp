@@ -1,0 +1,44 @@
+#ifndef getcfp__h
+#define getcfp__h
+
+#include "ruby.h"
+
+#ifdef RUBY_VM
+
+#include "vm_core.h"
+
+#ruby <<END
+$: << '../..'
+require 'ruby_source_dir'
+
+vm_c_location = "#{RUBY_SOURCE_DIR}/vm.c"
+if File.exists?(vm_c_location) then
+  File.open(vm_c_location) do |vm_c|
+    write = false
+    stopwrite = false
+    prev_line = nil
+    while (line = vm_c.gets) != nil do
+      case line
+      when /^(rb_vm_get_ruby_level_next_cfp|vm_get_ruby_level_cfp)/
+        puts "static #{prev_line}"
+        line.gsub!($1, 'getcfp')
+        write = true
+        stopwrite = false
+      when /^\}/
+        stopwrite = true if write
+      end
+      puts line if write
+      if stopwrite then
+        stopwrite = false
+        write = false
+        puts ''
+      end
+      prev_line = line
+    end
+  end
+end
+END
+
+#endif
+
+#endif
