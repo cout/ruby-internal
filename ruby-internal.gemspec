@@ -32,7 +32,7 @@ END
     'LEGAL',
     'LGPL',
     'LICENSE',
-    'README',
+    'README.rdoc',
     'TODO',
     'metaconfig',
     'setup.rb',
@@ -52,7 +52,7 @@ END
   s.extensions = 'Rakefile'
   s.test_files = Dir.glob('test/test_*.rb')
 
-  s.extra_rdoc_files = [ 'README' ]
+  s.extra_rdoc_files = [ 'README.rdoc' ]
 
   s.require_paths << 'ext'
 end
