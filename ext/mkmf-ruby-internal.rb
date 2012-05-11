@@ -98,14 +98,14 @@ END
 end
 
 base_dir = File.dirname(__FILE__)
-$CPPFLAGS << " -I#{base_dir}"
+$CPPFLAGS.gsub!(/^/, "-I#{base_dir} ")
 
 ruby_version_code = RUBY_VERSION.gsub(/\./, '').to_i
 if ruby_version_code >= 190 then
   if USING_CACHED_FILES then
-    $CPPFLAGS << " -I#{base_dir}/internal/yarv-headers"
+    $CPPFLAGS.gsub!(/^/, "-I#{base_dir}/internal/yarv-headers ")
   else
-    $CPPFLAGS << " -I#{RUBY_SOURCE_DIR}"
+    $CPPFLAGS.gsub!(/^/, "-I#{RUBY_SOURCE_DIR} ")
   end
 end
 
