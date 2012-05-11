@@ -28,7 +28,7 @@ st_table * rb_global_tbl;
         puts prev_line
         write = true
         stopwrite = false
-      when /^#define (global_entry|gvar_getter_t|gvar_setter_t|gvar_marker_t|undef_getter|undef_setter|undef_marker)/
+      when /^#define (global_entry|global_variable|gvar_getter_t|gvar_setter_t|gvar_marker_t|undef_getter|undef_setter|undef_marker|val_getter|val_setter|val_marker)/
         puts line
       when /^\}/
         stopwrite = true
