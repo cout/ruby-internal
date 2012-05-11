@@ -5,7 +5,7 @@ task :clean do
 end
 
 task :config do
-  ruby "setup.rb config"
+  ruby "setup.rb config --without-tests"
 end
 
 task :setup do
