@@ -60,7 +60,7 @@ class TC_Node < Test::Unit::TestCase
       fail "Unexpeced type #{n2.class}"
     end
     klass = Class.new;
-    klass.instance_eval do
+    klass.class_eval do
       add_method(:foo, n2, Noex::PUBLIC)
     end
     obj = klass.new
