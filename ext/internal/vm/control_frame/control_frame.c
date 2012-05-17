@@ -5,6 +5,22 @@
 
 #include "vm_core.h"
 
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+
+#  undef GetThreadPtr
+#  define GetThreadPtr(obj, ptr) \
+   TypedData_Get_Struct((obj), rb_thread_t, p_ruby_threadptr_data_type, (ptr))
+
+  static rb_data_type_t const * p_ruby_threadptr_data_type;
+
+  static void init_ruby_threadptr_data_type()
+  {
+    VALUE thread = rb_thread_current();
+    p_ruby_threadptr_data_type = RTYPEDDATA_TYPE(thread);
+  }
+
+#endif
+
 /* TODO: Using this class is dangerous, because the control frame can be
  * popped but a reference kept around to it.  It will still point to
  * valid memory, but the data itself will be invalid.
@@ -198,6 +214,10 @@ void Init_control_frame(void)
   rb_define_method(rb_cVmControlFrame, "method_id", control_frame_method_id, 0);
   rb_define_method(rb_cVmControlFrame, "method_class", control_frame_method_class, 0);
   rb_define_method(rb_cVmControlFrame, "prev", control_frame_prev, 0);
+#endif
+
+#ifdef HAVE_TYPE_STRUCT_RTYPEDDATA
+  init_ruby_threadptr_data_type();
 #endif
 }
 
