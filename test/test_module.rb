@@ -38,8 +38,6 @@ class TC_Module < Test::Unit::TestCase
     klass.class_eval do
       add_method(:foo, n, Noex::PUBLIC)
     end
-    p klass.methods.sort
-    p klass.instance_methods.sort
     obj = klass.new
     assert_equal 42, obj.foo
   end
