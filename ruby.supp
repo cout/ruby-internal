@@ -58,8 +58,20 @@
 }
 
 {
-  mark_locations_array(Value4)
+  mark_locations_array(Addr4)
   Memcheck:Addr4
+  fun:mark_locations_array
+}
+
+{
+  mark_locations_array(Value8)
+  Memcheck:Value8
+  fun:mark_locations_array
+}
+
+{
+  mark_locations_array(Addr8)
+  Memcheck:Addr8
   fun:mark_locations_array
 }
 
@@ -123,3 +135,22 @@
   Memcheck:Cond
   fun:th_make_env_each
 }
+
+{
+  gc_marks(Value8)
+  Memcheck:Value8
+  fun:gc_marks
+}
+
+{
+  gc_marks(Cond)
+  Memcheck:Cond
+  fun:gc_marks
+}
+
+{
+  mark_current_machine_context(Cond)
+  Memcheck:Cond
+  fun:mark_current_machine_context
+}
+
